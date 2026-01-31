@@ -51,12 +51,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        impact: {
-          orange: "hsl(var(--impact-orange))",
-          amber: "hsl(var(--impact-amber))",
-          navy: "hsl(var(--impact-navy))",
-          field: "hsl(var(--impact-field))",
-          glow: "hsl(var(--impact-glow))",
+        clubhouse: {
+          purple: "hsl(var(--clubhouse-purple))",
+          "purple-dark": "hsl(var(--clubhouse-purple-dark))",
+          "purple-light": "hsl(var(--clubhouse-purple-light))",
+          orange: "hsl(var(--clubhouse-orange))",
+          "orange-light": "hsl(var(--clubhouse-orange-light))",
+          glow: "hsl(var(--clubhouse-glow))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

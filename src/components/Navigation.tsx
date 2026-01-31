@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
+import clubhouseLogo from "@/assets/clubhouse-logo.png";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: Home },
@@ -22,13 +23,11 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-impact-amber flex items-center justify-center shadow-lg">
-              <span className="text-xl font-display text-white">IB</span>
-            </div>
-            <div className="hidden sm:block">
-              <span className="font-display text-xl tracking-wide text-foreground">IMPACT</span>
-              <span className="font-display text-xl tracking-wide text-primary ml-1">BASEBALL</span>
-            </div>
+            <img 
+              src={clubhouseLogo} 
+              alt="Clubhouse" 
+              className="h-12 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
