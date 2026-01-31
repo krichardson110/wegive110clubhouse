@@ -9,8 +9,8 @@ interface VideoCardProps {
 
 const categoryColors = {
   mind: "from-blue-500/20 to-blue-600/20 border-blue-500/30",
-  body: "from-primary/20 to-impact-amber/20 border-primary/30",
-  spirit: "from-purple-500/20 to-purple-600/20 border-purple-500/30",
+  body: "from-accent/20 to-clubhouse-orange-light/20 border-accent/30",
+  spirit: "from-primary/20 to-clubhouse-purple-light/20 border-primary/30",
 };
 
 const categoryLabels = {
@@ -36,8 +36,8 @@ const VideoCard = ({ title, duration, category, thumbnail }: VideoCardProps) => 
         
         {/* Play button overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform duration-300">
-            <Play className="w-6 h-6 text-primary-foreground fill-current ml-1" />
+          <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform duration-300">
+            <Play className="w-6 h-6 text-accent-foreground fill-current ml-1" />
           </div>
         </div>
         

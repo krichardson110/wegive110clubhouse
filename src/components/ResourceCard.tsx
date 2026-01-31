@@ -18,7 +18,7 @@ const ResourceCard = ({ title, description, icon, count }: ResourceCardProps) =>
   const Icon = iconMap[icon];
 
   return (
-    <div className="group relative overflow-hidden rounded-xl bg-card border border-border p-6 transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_30px_hsl(var(--impact-orange)/0.15)] cursor-pointer">
+    <div className="group relative overflow-hidden rounded-xl bg-card border border-border p-6 transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_30px_hsl(var(--clubhouse-purple)/0.2)] cursor-pointer">
       {/* Glow effect on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
@@ -28,7 +28,7 @@ const ResourceCard = ({ title, description, icon, count }: ResourceCardProps) =>
             <Icon className="w-6 h-6" />
           </div>
           {count && (
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20 text-primary">
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-accent/20 text-accent">
               {count} items
             </span>
           )}
@@ -41,7 +41,7 @@ const ResourceCard = ({ title, description, icon, count }: ResourceCardProps) =>
           {description}
         </p>
         
-        <div className="flex items-center text-primary text-sm font-medium group-hover:translate-x-1 transition-transform duration-300">
+        <div className="flex items-center text-accent text-sm font-medium group-hover:translate-x-1 transition-transform duration-300">
           Explore
           <ChevronRight className="w-4 h-4 ml-1" />
         </div>

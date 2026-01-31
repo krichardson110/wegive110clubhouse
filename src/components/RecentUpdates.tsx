@@ -5,13 +5,13 @@ const updates = [
     title: "New Hitting Mechanics Video Added",
     type: "Video",
     time: "2 hours ago",
-    color: "bg-primary",
+    color: "bg-accent",
   },
   {
     title: "Practice Schedule Updated for Next Week",
     type: "Schedule",
     time: "5 hours ago",
-    color: "bg-impact-field",
+    color: "bg-emerald-500",
   },
   {
     title: "Coach's Corner: Zoom Recording Available",
@@ -23,7 +23,7 @@ const updates = [
     title: "New Strength Training Program Released",
     type: "Workout",
     time: "2 days ago",
-    color: "bg-purple-500",
+    color: "bg-primary",
   },
 ];
 
@@ -37,7 +37,7 @@ const RecentUpdates = () => {
             <h2 className="font-display text-3xl sm:text-4xl text-foreground tracking-wide">
               RECENT UPDATES
             </h2>
-            <a href="#" className="text-primary text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
+            <a href="#" className="text-accent text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
               View all <ArrowRight className="w-4 h-4" />
             </a>
           </div>
@@ -65,7 +65,7 @@ const RecentUpdates = () => {
                     </span>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-accent group-hover:translate-x-1 transition-all" />
               </div>
             ))}
           </div>
