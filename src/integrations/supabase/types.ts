@@ -14,13 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chapters: {
+        Row: {
+          chapter_number: number
+          chapter_order: number
+          color_gradient: string | null
+          created_at: string
+          description: string | null
+          exercises: Json | null
+          icon_name: string | null
+          id: string
+          journey_id: string
+          key_takeaways: Json | null
+          published: boolean
+          readings: Json | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chapter_number?: number
+          chapter_order?: number
+          color_gradient?: string | null
+          created_at?: string
+          description?: string | null
+          exercises?: Json | null
+          icon_name?: string | null
+          id?: string
+          journey_id: string
+          key_takeaways?: Json | null
+          published?: boolean
+          readings?: Json | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chapter_number?: number
+          chapter_order?: number
+          color_gradient?: string | null
+          created_at?: string
+          description?: string | null
+          exercises?: Json | null
+          icon_name?: string | null
+          id?: string
+          journey_id?: string
+          key_takeaways?: Json | null
+          published?: boolean
+          readings?: Json | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journeys: {
+        Row: {
+          color_gradient: string | null
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          journey_order: number
+          published: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color_gradient?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          journey_order?: number
+          published?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color_gradient?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          journey_order?: number
+          published?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_super_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
