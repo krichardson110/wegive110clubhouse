@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X } from "lucide-react";
+import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Car } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
@@ -11,6 +11,7 @@ const navItems = [
   { name: "Videos", href: "/videos", icon: Video },
   { name: "Zoom Calls", href: "/zoom", icon: Users },
   { name: "Playbook", href: "/playbook", icon: BookOpen },
+  { name: "Drive 5", href: "https://wegive110.com", icon: Car, external: true },
 ];
 
 const Navigation = () => {
@@ -32,9 +33,25 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
+          {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
+              
+              if (item.external) {
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </a>
+                );
+              }
+              
               return (
                 <Link
                   key={item.name}
@@ -71,6 +88,23 @@ const Navigation = () => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
+              
+              if (item.external) {
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  >
+                    <Icon className="w-5 h-5" />
+                    {item.name}
+                  </a>
+                );
+              }
+              
               return (
                 <Link
                   key={item.name}
