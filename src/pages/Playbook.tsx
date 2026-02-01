@@ -1,10 +1,14 @@
+import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import PlaybookChapterCard from "@/components/PlaybookChapterCard";
 import { playbookChapters } from "@/data/playbook";
-import { BookOpen, Award, Target, TrendingUp } from "lucide-react";
+import { BookOpen, Award, Target, TrendingUp, Settings } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const Playbook = () => {
+  const { isSuperAdmin } = useAuth();
   const totalReadings = playbookChapters.reduce((acc, ch) => acc + ch.readings.length, 0);
   const totalExercises = playbookChapters.reduce((acc, ch) => acc + ch.exercises.length, 0);
 
@@ -20,19 +24,20 @@ const Playbook = () => {
           <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-accent/10 rounded-full blur-3xl" />
           
           <div className="relative z-10 container mx-auto px-4">
-            <div className="max-w-3xl">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 rounded-lg bg-primary/20 text-primary">
-                  <BookOpen className="w-8 h-8" />
+            <div className="flex items-start justify-between">
+              <div className="max-w-3xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-lg bg-primary/20 text-primary">
+                    <BookOpen className="w-8 h-8" />
+                  </div>
+                  <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                    Leadership Development
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-primary uppercase tracking-wider">
-                  Leadership Development
-                </span>
-              </div>
-              
-              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-foreground mb-4 tracking-wide">
-                LEADERSHIP <span className="gradient-text">PLAYBOOK</span>
-              </h1>
+                
+                <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-foreground mb-4 tracking-wide">
+                  LEADERSHIP <span className="gradient-text">PLAYBOOK</span>
+                </h1>
               
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
                 Develop the mindset and character traits that separate good players from great leaders. 
@@ -64,8 +69,17 @@ const Playbook = () => {
                 </div>
               </div>
             </div>
+            {isSuperAdmin && (
+              <Link to="/playbook/admin">
+                <Button variant="outline" size="sm" className="flex items-center gap-2 mt-4 sm:mt-0">
+                  <Settings className="w-4 h-4" />
+                  Manage Playbook
+                </Button>
+              </Link>
+            )}
           </div>
-        </section>
+        </div>
+      </section>
         
         {/* Progress Banner */}
         <section className="py-6 bg-secondary/30 border-y border-border">
