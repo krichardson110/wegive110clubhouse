@@ -3,6 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
   Edit,
   Trash2,
   ChevronDown,
@@ -37,6 +51,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Tables } from '@/integrations/supabase/types';
+import SortableChapterItem from './SortableChapterItem';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   BookOpen,
@@ -65,6 +80,7 @@ interface JourneyCardProps {
   onAddChapter: () => void;
   onEditChapter: (chapter: Tables<'chapters'>) => void;
   onDeleteChapter: (chapterId: string) => void;
+  onReorderChapters: (journeyId: string, chapters: Tables<'chapters'>[]) => void;
 }
 
 const JourneyCard = ({
@@ -75,9 +91,38 @@ const JourneyCard = ({
   onAddChapter,
   onEditChapter,
   onDeleteChapter,
+  onReorderChapters,
 }: JourneyCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const Icon = iconMap[journey.icon_name || 'BookOpen'] || BookOpen;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = chapters.findIndex((ch) => ch.id === active.id);
+      const newIndex = chapters.findIndex((ch) => ch.id === over.id);
+
+      const newChapters = [...chapters];
+      const [removed] = newChapters.splice(oldIndex, 1);
+      newChapters.splice(newIndex, 0, removed);
+
+      // Update chapter_order based on new positions
+      const updatedChapters = newChapters.map((ch, index) => ({
+        ...ch,
+        chapter_order: index,
+      }));
+
+      onReorderChapters(journey.id, updatedChapters);
+    }
+  };
 
   return (
     <Card className={`bg-gradient-to-br ${journey.color_gradient} border`}>
@@ -148,61 +193,25 @@ const JourneyCard = ({
                 No chapters yet. Add your first chapter to get started.
               </p>
             ) : (
-              chapters.map((chapter) => {
-                const ChapterIcon = iconMap[chapter.icon_name || 'BookOpen'] || BookOpen;
-                return (
-                  <div
-                    key={chapter.id}
-                    className="flex items-center justify-between p-3 bg-background/50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-primary">
-                        Ch. {chapter.chapter_number}
-                      </span>
-                      <ChapterIcon className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{chapter.title}</p>
-                        {chapter.subtitle && (
-                          <p className="text-xs text-muted-foreground">{chapter.subtitle}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={chapter.published ? 'default' : 'secondary'} className="text-xs">
-                        {chapter.published ? 'Published' : 'Draft'}
-                      </Badge>
-                      <Button variant="ghost" size="icon" onClick={() => onEditChapter(chapter)}>
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="w-3 h-3 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Chapter?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently delete "{chapter.title}". This action cannot be
-                              undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => onDeleteChapter(chapter.id)}
-                              className="bg-destructive text-destructive-foreground"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                );
-              })
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={chapters.map((ch) => ch.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {chapters.map((chapter) => (
+                    <SortableChapterItem
+                      key={chapter.id}
+                      chapter={chapter}
+                      onEdit={() => onEditChapter(chapter)}
+                      onDelete={() => onDeleteChapter(chapter.id)}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         )}

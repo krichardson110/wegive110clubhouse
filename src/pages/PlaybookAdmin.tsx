@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -10,7 +24,7 @@ import { Tables, Json } from '@/integrations/supabase/types';
 import { Plus, BookOpen, ArrowLeft, Loader2 } from 'lucide-react';
 import JourneyForm from '@/components/admin/JourneyForm';
 import ChapterForm from '@/components/admin/ChapterForm';
-import JourneyCard from '@/components/admin/JourneyCard';
+import SortableJourneyCard from '@/components/admin/SortableJourneyCard';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 
@@ -56,6 +70,13 @@ const PlaybookAdmin = () => {
   const [editingJourney, setEditingJourney] = useState<Journey | null>(null);
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
   const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (!authLoading) {
@@ -168,6 +189,45 @@ const PlaybookAdmin = () => {
     }
   };
 
+  const handleReorderJourneys = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = journeys.findIndex((j) => j.id === active.id);
+      const newIndex = journeys.findIndex((j) => j.id === over.id);
+
+      const newJourneys = [...journeys];
+      const [removed] = newJourneys.splice(oldIndex, 1);
+      newJourneys.splice(newIndex, 0, removed);
+
+      // Optimistic update
+      setJourneys(newJourneys);
+
+      // Update database
+      try {
+        const updates = newJourneys.map((journey, index) => ({
+          id: journey.id,
+          journey_order: index,
+        }));
+
+        for (const update of updates) {
+          const { error } = await supabase
+            .from('journeys')
+            .update({ journey_order: update.journey_order })
+            .eq('id', update.id);
+
+          if (error) throw error;
+        }
+
+        toast({ title: 'Reordered', description: 'Journey order updated.' });
+      } catch (error) {
+        console.error('Error reordering journeys:', error);
+        toast({ title: 'Error', description: 'Failed to save new order.', variant: 'destructive' });
+        fetchData(); // Revert on error
+      }
+    }
+  };
+
   // Chapter handlers
   const handleCreateChapter = async (data: ChapterFormData) => {
     if (!selectedJourneyId) return;
@@ -250,6 +310,32 @@ const PlaybookAdmin = () => {
     }
   };
 
+  const handleReorderChapters = async (journeyId: string, reorderedChapters: Chapter[]) => {
+    // Optimistic update
+    setChapters((prev) => {
+      const otherChapters = prev.filter((ch) => ch.journey_id !== journeyId);
+      return [...otherChapters, ...reorderedChapters];
+    });
+
+    // Update database
+    try {
+      for (const chapter of reorderedChapters) {
+        const { error } = await supabase
+          .from('chapters')
+          .update({ chapter_order: chapter.chapter_order })
+          .eq('id', chapter.id);
+
+        if (error) throw error;
+      }
+
+      toast({ title: 'Reordered', description: 'Chapter order updated.' });
+    } catch (error) {
+      console.error('Error reordering chapters:', error);
+      toast({ title: 'Error', description: 'Failed to save new order.', variant: 'destructive' });
+      fetchData(); // Revert on error
+    }
+  };
+
   const getChaptersForJourney = (journeyId: string) => {
     return chapters.filter((ch) => ch.journey_id === journeyId).sort((a, b) => a.chapter_order - b.chapter_order);
   };
@@ -303,7 +389,7 @@ const PlaybookAdmin = () => {
                   <h1 className="font-display text-3xl sm:text-4xl text-foreground tracking-wide">
                     PLAYBOOK <span className="gradient-text">ADMIN</span>
                   </h1>
-                  <p className="text-muted-foreground">Manage journeys and chapters</p>
+                  <p className="text-muted-foreground">Manage journeys and chapters • Drag to reorder</p>
                 </div>
               </div>
               <Button
@@ -321,7 +407,7 @@ const PlaybookAdmin = () => {
 
         {/* Journeys List */}
         <section className="py-8">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 pl-8">
             {journeys.length === 0 ? (
               <div className="text-center py-16 bg-card rounded-lg border border-border">
                 <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -340,30 +426,42 @@ const PlaybookAdmin = () => {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {journeys.map((journey) => (
-                  <JourneyCard
-                    key={journey.id}
-                    journey={journey}
-                    chapters={getChaptersForJourney(journey.id)}
-                    onEdit={() => {
-                      setEditingJourney(journey);
-                      setJourneyModalOpen(true);
-                    }}
-                    onDelete={() => handleDeleteJourney(journey.id)}
-                    onAddChapter={() => {
-                      setSelectedJourneyId(journey.id);
-                      setEditingChapter(null);
-                      setChapterModalOpen(true);
-                    }}
-                    onEditChapter={(chapter) => {
-                      setEditingChapter(chapter);
-                      setChapterModalOpen(true);
-                    }}
-                    onDeleteChapter={handleDeleteChapter}
-                  />
-                ))}
-              </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleReorderJourneys}
+              >
+                <SortableContext
+                  items={journeys.map((j) => j.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-4">
+                    {journeys.map((journey) => (
+                      <SortableJourneyCard
+                        key={journey.id}
+                        journey={journey}
+                        chapters={getChaptersForJourney(journey.id)}
+                        onEdit={() => {
+                          setEditingJourney(journey);
+                          setJourneyModalOpen(true);
+                        }}
+                        onDelete={() => handleDeleteJourney(journey.id)}
+                        onAddChapter={() => {
+                          setSelectedJourneyId(journey.id);
+                          setEditingChapter(null);
+                          setChapterModalOpen(true);
+                        }}
+                        onEditChapter={(chapter) => {
+                          setEditingChapter(chapter);
+                          setChapterModalOpen(true);
+                        }}
+                        onDeleteChapter={handleDeleteChapter}
+                        onReorderChapters={handleReorderChapters}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         </section>
