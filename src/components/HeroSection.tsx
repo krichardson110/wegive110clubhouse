@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
 import heroBg from "@/assets/hero-bg.jpg";
 
@@ -40,8 +41,8 @@ const HeroSection = () => {
                 Drive 5
               </a>
             </Button>
-            <Button variant="outline" size="lg">
-              Explore Resources
+            <Button variant="outline" size="lg" asChild>
+              <Link to="/playbook">Playbook</Link>
             </Button>
           </div>
         </div>
