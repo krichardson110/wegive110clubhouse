@@ -112,6 +112,45 @@ export type Database = {
         }
         Relationships: []
       }
+      wellness_videos: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          display_order: number
+          duration: string | null
+          id: string
+          published: boolean
+          title: string
+          updated_at: string
+          youtube_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration?: string | null
+          id?: string
+          published?: boolean
+          title: string
+          updated_at?: string
+          youtube_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration?: string | null
+          id?: string
+          published?: boolean
+          title?: string
+          updated_at?: string
+          youtube_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

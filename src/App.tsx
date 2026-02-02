@@ -7,6 +7,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import Index from "./pages/Index";
 import Workouts from "./pages/Workouts";
 import Videos from "./pages/Videos";
+import VideosAdmin from "./pages/VideosAdmin";
 import Playbook from "./pages/Playbook";
 import PlaybookAdmin from "./pages/PlaybookAdmin";
 import Schedule from "./pages/Schedule";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/videos" element={<Videos />} />
+            <Route path="/videos/admin" element={<VideosAdmin />} />
             <Route path="/playbook" element={<Playbook />} />
             <Route path="/playbook/admin" element={<PlaybookAdmin />} />
             <Route path="/schedule" element={<Schedule />} />
