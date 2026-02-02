@@ -10,7 +10,7 @@ const resources = [
     href: "/workouts",
   },
   {
-    title: "Game Schedule",
+    title: "Game & Practice Schedule",
     description: "Stay updated with upcoming games, practices, and team events. Never miss a beat.",
     icon: "schedule" as const,
     count: 12,

@@ -31,7 +31,7 @@ const HeroSection = () => {
           
           {/* Subheading */}
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            Your complete resource hub for workout plans, game schedules, training videos, and leadership development. Mind. Body. Spirit.
+            Your complete resource hub for workout plans, game & practice schedules, training videos, and leadership development. Mind. Body. Spirit.
           </p>
           
           {/* CTA Buttons */}

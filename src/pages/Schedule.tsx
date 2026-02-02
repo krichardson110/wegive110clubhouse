@@ -76,7 +76,7 @@ const Schedule = () => {
             </div>
             
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-foreground mb-4 tracking-wide">
-              GAME <span className="gradient-text">SCHEDULE</span>
+              GAME & PRACTICE <span className="gradient-text">SCHEDULE</span>
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl">
