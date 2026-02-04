@@ -1,24 +1,63 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WorkoutCategoryCard from "@/components/WorkoutCategoryCard";
-import { workoutCategories } from "@/data/workouts";
-import { Dumbbell, Search } from "lucide-react";
+import { Dumbbell, Search, Settings } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { WorkoutCategory, Workout, getIconComponent } from "@/types/workout";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Workouts = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { isSuperAdmin } = useAuth();
+
+  // Fetch categories with workouts
+  const { data: categories, isLoading } = useQuery({
+    queryKey: ["workout-categories-with-workouts"],
+    queryFn: async () => {
+      // Fetch categories
+      const { data: categoriesData, error: catError } = await supabase
+        .from("workout_categories")
+        .select("*")
+        .eq("published", true)
+        .order("display_order", { ascending: true });
+      
+      if (catError) throw catError;
+
+      // Fetch workouts
+      const { data: workoutsData, error: workError } = await supabase
+        .from("workouts")
+        .select("*")
+        .eq("published", true)
+        .order("display_order", { ascending: true });
+      
+      if (workError) throw workError;
+
+      // Combine categories with their workouts
+      const categoriesWithWorkouts = (categoriesData as WorkoutCategory[]).map(category => ({
+        ...category,
+        workouts: (workoutsData as Workout[]).filter(w => w.category_id === category.id),
+      }));
+
+      return categoriesWithWorkouts;
+    },
+  });
 
   // Filter categories based on search
-  const filteredCategories = workoutCategories.map(category => ({
+  const filteredCategories = categories?.map(category => ({
     ...category,
-    workouts: category.workouts.filter(workout =>
+    workouts: category.workouts?.filter(workout =>
       workout.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      workout.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })).filter(category => category.workouts.length > 0 || searchQuery === "");
+      (workout.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+    ) || []
+  })).filter(category => category.workouts.length > 0 || searchQuery === "") || [];
 
-  const totalWorkouts = workoutCategories.reduce((acc, cat) => acc + cat.workouts.length, 0);
+  const totalWorkouts = categories?.reduce((acc, cat) => acc + (cat.workouts?.length || 0), 0) || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,13 +71,23 @@ const Workouts = () => {
           
           <div className="relative z-10 container mx-auto px-4">
             <div className="max-w-3xl">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 rounded-lg bg-primary/20 text-primary">
-                  <Dumbbell className="w-8 h-8" />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-primary/20 text-primary">
+                    <Dumbbell className="w-8 h-8" />
+                  </div>
+                  <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                    Training Programs
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-primary uppercase tracking-wider">
-                  Training Programs
-                </span>
+                {isSuperAdmin && (
+                  <Link to="/workouts/admin">
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Manage Workouts
+                    </Button>
+                  </Link>
+                )}
               </div>
               
               <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-foreground mb-4 tracking-wide">
@@ -67,26 +116,42 @@ const Workouts = () => {
         {/* Categories Section */}
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <div className="space-y-4">
-              {filteredCategories.map((category, index) => (
-                <div
-                  key={category.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <WorkoutCategoryCard 
-                    category={category} 
-                    defaultExpanded={index === 0}
-                  />
-                </div>
-              ))}
-              
-              {filteredCategories.length === 0 && searchQuery && (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No workouts found matching "{searchQuery}"</p>
-                </div>
-              )}
-            </div>
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-xl bg-card border border-border p-5">
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="w-12 h-12 rounded-lg" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-5 w-40" />
+                        <Skeleton className="h-4 w-60" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredCategories.map((category, index) => (
+                  <div
+                    key={category.id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <WorkoutCategoryCard 
+                      category={category} 
+                      defaultExpanded={index === 0}
+                    />
+                  </div>
+                ))}
+                
+                {filteredCategories.length === 0 && searchQuery && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">No workouts found matching "{searchQuery}"</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
       </main>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { WorkoutCategory } from "@/data/workouts";
+import { WorkoutCategory, getIconComponent } from "@/types/workout";
 import WorkoutCard from "./WorkoutCard";
 
 interface WorkoutCategoryCardProps {
@@ -10,7 +10,8 @@ interface WorkoutCategoryCardProps {
 
 const WorkoutCategoryCard = ({ category, defaultExpanded = false }: WorkoutCategoryCardProps) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const Icon = category.icon;
+  const Icon = getIconComponent(category.icon_name);
+  const workouts = category.workouts || [];
 
   return (
     <div className="rounded-xl bg-card border border-border overflow-hidden transition-all duration-300 hover:border-primary/30">
@@ -20,7 +21,7 @@ const WorkoutCategoryCard = ({ category, defaultExpanded = false }: WorkoutCateg
         className="w-full flex items-center justify-between p-5 text-left hover:bg-secondary/30 transition-colors"
       >
         <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-lg bg-gradient-to-br ${category.color} border`}>
+          <div className={`p-3 rounded-lg bg-gradient-to-br ${category.color_gradient} border`}>
             <Icon className="w-6 h-6 text-foreground" />
           </div>
           <div>
@@ -35,7 +36,7 @@ const WorkoutCategoryCard = ({ category, defaultExpanded = false }: WorkoutCateg
         
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground hidden sm:block">
-            {category.workouts.length} workouts
+            {workouts.length} workouts
           </span>
           {isExpanded ? (
             <ChevronUp className="w-5 h-5 text-muted-foreground" />
@@ -49,11 +50,11 @@ const WorkoutCategoryCard = ({ category, defaultExpanded = false }: WorkoutCateg
       {isExpanded && (
         <div className="p-5 pt-0 border-t border-border/50 animate-fade-in">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-5">
-            {category.workouts.map((workout) => (
+            {workouts.map((workout) => (
               <WorkoutCard 
                 key={workout.id} 
                 workout={workout} 
-                categoryColor={category.color}
+                categoryColor={category.color_gradient}
               />
             ))}
           </div>
