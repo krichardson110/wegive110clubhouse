@@ -1,5 +1,5 @@
 import { Clock, Dumbbell, ChevronRight, Play } from "lucide-react";
-import { Workout } from "@/data/workouts";
+import { Workout } from "@/types/workout";
 
 interface WorkoutCardProps {
   workout: Workout;
@@ -13,8 +13,17 @@ const difficultyColors = {
 };
 
 const WorkoutCard = ({ workout, categoryColor }: WorkoutCardProps) => {
+  const handleClick = () => {
+    if (workout.youtube_id) {
+      window.open(`https://www.youtube.com/watch?v=${workout.youtube_id}`, "_blank");
+    }
+  };
+
   return (
-    <div className="group relative overflow-hidden rounded-xl bg-card border border-border p-5 transition-all duration-300 hover:border-primary/50 hover:shadow-lg cursor-pointer">
+    <div 
+      className="group relative overflow-hidden rounded-xl bg-card border border-border p-5 transition-all duration-300 hover:border-primary/50 hover:shadow-lg cursor-pointer"
+      onClick={handleClick}
+    >
       {/* Hover glow */}
       <div className={`absolute inset-0 bg-gradient-to-br ${categoryColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
       
@@ -36,10 +45,12 @@ const WorkoutCard = ({ workout, categoryColor }: WorkoutCardProps) => {
         
         {/* Meta info */}
         <div className="flex items-center gap-3 mb-3">
-          <span className="text-xs flex items-center gap-1 text-muted-foreground">
-            <Clock className="w-3.5 h-3.5" />
-            {workout.duration}
-          </span>
+          {workout.duration && (
+            <span className="text-xs flex items-center gap-1 text-muted-foreground">
+              <Clock className="w-3.5 h-3.5" />
+              {workout.duration}
+            </span>
+          )}
           <span className="text-xs flex items-center gap-1 text-muted-foreground">
             <Dumbbell className="w-3.5 h-3.5" />
             {workout.exercises} exercises
@@ -52,7 +63,7 @@ const WorkoutCard = ({ workout, categoryColor }: WorkoutCardProps) => {
             {workout.difficulty}
           </span>
           <span className="text-xs text-accent font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            Start Workout
+            {workout.youtube_id ? "Watch Video" : "Start Workout"}
             <ChevronRight className="w-3.5 h-3.5" />
           </span>
         </div>

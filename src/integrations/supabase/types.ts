@@ -151,6 +151,95 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_categories: {
+        Row: {
+          color_gradient: string
+          created_at: string
+          description: string | null
+          display_order: number
+          icon_name: string
+          id: string
+          name: string
+          published: boolean
+          updated_at: string
+        }
+        Insert: {
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon_name?: string
+          id?: string
+          name: string
+          published?: boolean
+          updated_at?: string
+        }
+        Update: {
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon_name?: string
+          id?: string
+          name?: string
+          published?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      workouts: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          difficulty: string
+          display_order: number
+          duration: string | null
+          exercises: number
+          id: string
+          published: boolean
+          title: string
+          updated_at: string
+          youtube_id: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          display_order?: number
+          duration?: string | null
+          exercises?: number
+          id?: string
+          published?: boolean
+          title: string
+          updated_at?: string
+          youtube_id?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          display_order?: number
+          duration?: string | null
+          exercises?: number
+          id?: string
+          published?: boolean
+          title?: string
+          updated_at?: string
+          youtube_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workouts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "workout_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
