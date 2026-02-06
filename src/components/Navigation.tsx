@@ -1,18 +1,33 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Car, LogIn, LogOut, MessageSquare } from "lucide-react";
+import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Car, LogIn, LogOut, MessageSquare, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
-const navItems = [
+const mainNavItems = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Clubhouse", href: "/community", icon: Users },
+];
+
+const trainingItems = [
   { name: "Workouts", href: "/workouts", icon: Dumbbell },
   { name: "Schedule", href: "/schedule", icon: Calendar },
+];
+
+const resourceItems = [
   { name: "Videos", href: "/videos", icon: Video },
-  { name: "Return & Report", href: "/return-report", icon: MessageSquare },
   { name: "Playbook", href: "/playbook", icon: BookOpen },
+  { name: "Return & Report", href: "/return-report", icon: MessageSquare },
+];
+
+const externalItems = [
   { name: "Drive 5", href: "https://wegive110.com", icon: Car, external: true },
 ];
 
@@ -20,6 +35,89 @@ const Navigation = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, loading, signOut } = useAuth();
+
+  const isActiveInGroup = (items: typeof trainingItems) => 
+    items.some(item => location.pathname === item.href);
+
+  const renderNavLink = (item: { name: string; href: string; icon: React.ElementType; external?: boolean }, onClick?: () => void) => {
+    const Icon = item.icon;
+    const isActive = location.pathname === item.href;
+    
+    if (item.external) {
+      return (
+        <a
+          key={item.name}
+          href={item.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClick}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-secondary"
+        >
+          <Icon className="w-4 h-4" />
+          {item.name}
+        </a>
+      );
+    }
+    
+    return (
+      <Link
+        key={item.name}
+        to={item.href}
+        onClick={onClick}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+        }`}
+      >
+        <Icon className="w-4 h-4" />
+        {item.name}
+      </Link>
+    );
+  };
+
+  const renderDropdown = (label: string, items: typeof trainingItems, icon: React.ElementType) => {
+    const Icon = icon;
+    const isActive = isActiveInGroup(items);
+    
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className={`flex items-center gap-2 px-3 py-2 h-auto text-sm font-medium transition-all duration-300 ${
+              isActive
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+            <ChevronDown className="w-3 h-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="bg-background border border-border z-50">
+          {items.map((item) => {
+            const ItemIcon = item.icon;
+            const isItemActive = location.pathname === item.href;
+            return (
+              <DropdownMenuItem key={item.name} asChild>
+                <Link
+                  to={item.href}
+                  className={`flex items-center gap-2 cursor-pointer ${
+                    isItemActive ? "bg-primary/10 text-primary" : ""
+                  }`}
+                >
+                  <ItemIcon className="w-4 h-4" />
+                  {item.name}
+                </Link>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -36,40 +134,17 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              
-              if (item.external) {
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  >
-                    <Icon className="w-4 h-4" />
-                    {item.name}
-                  </a>
-                );
-              }
-              
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.name}
-                </Link>
-              );
-            })}
+            {/* Main nav items */}
+            {mainNavItems.map((item) => renderNavLink(item))}
+            
+            {/* Training dropdown */}
+            {renderDropdown("Training", trainingItems, Dumbbell)}
+            
+            {/* Resources dropdown */}
+            {renderDropdown("Resources", resourceItems, BookOpen)}
+            
+            {/* External links */}
+            {externalItems.map((item) => renderNavLink(item))}
             
             {/* Auth Button */}
             {!loading && (
@@ -114,42 +189,26 @@ const Navigation = () => {
       {mobileMenuOpen && (
         <div className="md:hidden bg-background border-b border-border animate-fade-in">
           <div className="container mx-auto px-4 py-4 space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              
-              if (item.external) {
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  >
-                    <Icon className="w-5 h-5" />
-                    {item.name}
-                  </a>
-                );
-              }
-              
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
+            {/* All items shown in mobile */}
+            {mainNavItems.map((item) => renderNavLink(item, () => setMobileMenuOpen(false)))}
+            
+            {/* Training section */}
+            <div className="pt-2 pb-1">
+              <span className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Training</span>
+            </div>
+            {trainingItems.map((item) => renderNavLink(item, () => setMobileMenuOpen(false)))}
+            
+            {/* Resources section */}
+            <div className="pt-2 pb-1">
+              <span className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Resources</span>
+            </div>
+            {resourceItems.map((item) => renderNavLink(item, () => setMobileMenuOpen(false)))}
+            
+            {/* External */}
+            <div className="pt-2 pb-1">
+              <span className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">External</span>
+            </div>
+            {externalItems.map((item) => renderNavLink(item, () => setMobileMenuOpen(false)))}
             
             {/* Mobile Auth Button */}
             {!loading && (
@@ -160,7 +219,7 @@ const Navigation = () => {
                     signOut();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center gap-3 w-full justify-start px-4 py-3"
+                  className="flex items-center gap-3 w-full justify-start px-3 py-3"
                 >
                   <LogOut className="w-5 h-5" />
                   Sign Out
@@ -169,7 +228,7 @@ const Navigation = () => {
                 <Link
                   to="/auth"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-secondary"
                 >
                   <LogIn className="w-5 h-5" />
                   Sign In
