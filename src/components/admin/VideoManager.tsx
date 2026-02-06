@@ -3,13 +3,26 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink, ChevronDown, ChevronRight, FolderPlus } from "lucide-react";
+import { Plus, FolderPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import VideoCategoryForm from "./VideoCategoryForm";
 import VideoForm from "./VideoForm";
+import SortableVideoCategory from "./SortableVideoCategory";
 import * as Icons from "lucide-react";
 
 interface VideoCategory {
@@ -43,6 +56,13 @@ const VideoManager = () => {
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [addingToCategory, setAddingToCategory] = useState<string | undefined>();
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const { data: categories, isLoading: loadingCategories } = useQuery({
     queryKey: ["admin-video-categories"],
     queryFn: async () => {
@@ -50,7 +70,7 @@ const VideoManager = () => {
         .from("video_categories")
         .select("*")
         .order("display_order", { ascending: true });
-      
+
       if (error) throw error;
       return data as VideoCategory[];
     },
@@ -63,14 +83,14 @@ const VideoManager = () => {
         .from("videos")
         .select("*")
         .order("display_order", { ascending: true });
-      
+
       if (error) throw error;
       return data as Video[];
     },
   });
 
   const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev => {
+    setExpandedCategories((prev) => {
       const next = new Set(prev);
       if (next.has(categoryId)) {
         next.delete(categoryId);
@@ -97,9 +117,9 @@ const VideoManager = () => {
         .from("video_categories")
         .delete()
         .eq("id", categoryId);
-      
+
       if (error) throw error;
-      
+
       toast({ title: "Category deleted successfully" });
       queryClient.invalidateQueries({ queryKey: ["admin-video-categories"] });
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
@@ -119,9 +139,9 @@ const VideoManager = () => {
         .from("video_categories")
         .update({ published: !category.published })
         .eq("id", category.id);
-      
+
       if (error) throw error;
-      
+
       toast({ title: category.published ? "Category unpublished" : "Category published" });
       queryClient.invalidateQueries({ queryKey: ["admin-video-categories"] });
     } catch (error) {
@@ -147,13 +167,10 @@ const VideoManager = () => {
 
   const handleDeleteVideo = async (videoId: string) => {
     try {
-      const { error } = await supabase
-        .from("videos")
-        .delete()
-        .eq("id", videoId);
-      
+      const { error } = await supabase.from("videos").delete().eq("id", videoId);
+
       if (error) throw error;
-      
+
       toast({ title: "Video deleted successfully" });
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
     } catch (error) {
@@ -171,9 +188,9 @@ const VideoManager = () => {
         .from("videos")
         .update({ published: !video.published })
         .eq("id", video.id);
-      
+
       if (error) throw error;
-      
+
       toast({ title: video.published ? "Video unpublished" : "Video published" });
       queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
     } catch (error) {
@@ -186,7 +203,7 @@ const VideoManager = () => {
   };
 
   const getVideosByCategory = (categoryId: string) => {
-    return videos?.filter(v => v.category_id === categoryId) || [];
+    return videos?.filter((v) => v.category_id === categoryId) || [];
   };
 
   const getIcon = (iconName: string) => {
@@ -208,6 +225,79 @@ const VideoManager = () => {
       Activity: Icons.Activity,
     };
     return iconMap[iconName] || Icons.Video;
+  };
+
+  // Handle category reorder via drag and drop
+  const handleCategoryDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id && categories) {
+      const oldIndex = categories.findIndex((c) => c.id === active.id);
+      const newIndex = categories.findIndex((c) => c.id === over.id);
+
+      const newCategories = [...categories];
+      const [removed] = newCategories.splice(oldIndex, 1);
+      newCategories.splice(newIndex, 0, removed);
+
+      // Optimistically update UI
+      queryClient.setQueryData(["admin-video-categories"], newCategories);
+
+      // Update each category's display_order in the database
+      try {
+        const updates = newCategories.map((cat, index) => ({
+          id: cat.id,
+          display_order: index,
+        }));
+
+        for (const update of updates) {
+          await supabase
+            .from("video_categories")
+            .update({ display_order: update.display_order })
+            .eq("id", update.id);
+        }
+
+        toast({ title: "Categories reordered" });
+        queryClient.invalidateQueries({ queryKey: ["video-categories"] });
+      } catch (error) {
+        console.error("Error reordering categories:", error);
+        toast({
+          title: "Error reordering categories",
+          variant: "destructive",
+        });
+        queryClient.invalidateQueries({ queryKey: ["admin-video-categories"] });
+      }
+    }
+  };
+
+  // Handle video reorder within a category
+  const handleReorderVideos = async (updatedVideos: Video[]) => {
+    // Optimistically update UI
+    queryClient.setQueryData(["admin-videos"], (old: Video[] | undefined) => {
+      if (!old) return updatedVideos;
+      const otherVideos = old.filter(
+        (v) => !updatedVideos.some((uv) => uv.id === v.id)
+      );
+      return [...otherVideos, ...updatedVideos];
+    });
+
+    try {
+      for (const video of updatedVideos) {
+        await supabase
+          .from("videos")
+          .update({ display_order: video.display_order })
+          .eq("id", video.id);
+      }
+
+      toast({ title: "Videos reordered" });
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
+    } catch (error) {
+      console.error("Error reordering videos:", error);
+      toast({
+        title: "Error reordering videos",
+        variant: "destructive",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-videos"] });
+    }
   };
 
   const isLoading = loadingCategories || loadingVideos;
@@ -239,198 +329,42 @@ const VideoManager = () => {
             No categories yet. Add a category to get started.
           </div>
         ) : (
-          <div className="space-y-3">
-            {categories.map((category) => {
-              const categoryVideos = getVideosByCategory(category.id);
-              const isExpanded = expandedCategories.has(category.id);
-              const Icon = getIcon(category.icon_name);
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleCategoryDragEnd}
+          >
+            <SortableContext
+              items={categories.map((c) => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {categories.map((category) => {
+                  const categoryVideos = getVideosByCategory(category.id);
+                  const isExpanded = expandedCategories.has(category.id);
 
-              return (
-                <Collapsible
-                  key={category.id}
-                  open={isExpanded}
-                  onOpenChange={() => toggleCategory(category.id)}
-                >
-                  <div className={`rounded-lg border ${category.published ? "" : "opacity-60"}`}>
-                    <CollapsibleTrigger asChild>
-                      <div
-                        className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-secondary/50 rounded-t-lg bg-gradient-to-r ${category.color_gradient}`}
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 flex-shrink-0" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                        )}
-                        
-                        <Icon className="w-5 h-5 flex-shrink-0" />
-                        
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium">{category.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {categoryVideos.length} video{categoryVideos.length !== 1 ? "s" : ""}
-                            {!category.published && " • Draft"}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleToggleCategoryPublished(category)}
-                            title={category.published ? "Unpublish" : "Publish"}
-                          >
-                            {category.published ? (
-                              <Eye className="w-4 h-4" />
-                            ) : (
-                              <EyeOff className="w-4 h-4" />
-                            )}
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleAddVideo(category.id)}
-                            title="Add video to category"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditCategory(category)}
-                            title="Edit category"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" title="Delete category">
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Category</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete "{category.name}"? This will also delete all {categoryVideos.length} videos in this category.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteCategory(category.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-                    </CollapsibleTrigger>
-
-                    <CollapsibleContent>
-                      <div className="border-t">
-                        {categoryVideos.length === 0 ? (
-                          <div className="p-4 text-center text-muted-foreground text-sm">
-                            No videos in this category yet.
-                          </div>
-                        ) : (
-                          <div className="divide-y">
-                            {categoryVideos.map((video) => (
-                              <div
-                                key={video.id}
-                                className={`flex items-center gap-3 p-3 ${
-                                  video.published ? "" : "opacity-60"
-                                }`}
-                              >
-                                <div className="w-20 h-12 rounded overflow-hidden flex-shrink-0 bg-secondary">
-                                  <img
-                                    src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
-                                    alt={video.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                  <h5 className="font-medium text-sm truncate">{video.title}</h5>
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    {video.duration && <span>{video.duration}</span>}
-                                    {!video.published && (
-                                      <>
-                                        <span>•</span>
-                                        <span className="text-yellow-500">Draft</span>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1 flex-shrink-0">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleToggleVideoPublished(video)}
-                                    title={video.published ? "Unpublish" : "Publish"}
-                                  >
-                                    {video.published ? (
-                                      <Eye className="w-4 h-4" />
-                                    ) : (
-                                      <EyeOff className="w-4 h-4" />
-                                    )}
-                                  </Button>
-                                  
-                                  <a
-                                    href={`https://www.youtube.com/watch?v=${video.youtube_id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <Button variant="ghost" size="icon" title="Watch on YouTube">
-                                      <ExternalLink className="w-4 h-4" />
-                                    </Button>
-                                  </a>
-                                  
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleEditVideo(video)}
-                                    title="Edit"
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                  </Button>
-                                  
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="ghost" size="icon" title="Delete">
-                                        <Trash2 className="w-4 h-4 text-destructive" />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Delete Video</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Are you sure you want to delete "{video.title}"?
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteVideo(video.id)}>
-                                          Delete
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </CollapsibleContent>
-                  </div>
-                </Collapsible>
-              );
-            })}
-          </div>
+                  return (
+                    <SortableVideoCategory
+                      key={category.id}
+                      category={category}
+                      videos={categoryVideos}
+                      isExpanded={isExpanded}
+                      onToggleExpanded={() => toggleCategory(category.id)}
+                      onEdit={() => handleEditCategory(category)}
+                      onDelete={() => handleDeleteCategory(category.id)}
+                      onTogglePublished={() => handleToggleCategoryPublished(category)}
+                      onAddVideo={() => handleAddVideo(category.id)}
+                      onEditVideo={handleEditVideo}
+                      onDeleteVideo={handleDeleteVideo}
+                      onToggleVideoPublished={handleToggleVideoPublished}
+                      onReorderVideos={handleReorderVideos}
+                      getIcon={getIcon}
+                    />
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </CardContent>
 
