@@ -1,16 +1,38 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addMonths, subMonths, isToday } from "date-fns";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ScheduleEventCard from "@/components/ScheduleEventCard";
-import { scheduleEvents, getEventsForDate, eventTypeConfig, EventType } from "@/data/schedule";
+import { supabase } from "@/integrations/supabase/client";
+import { ScheduleEvent, EventType, eventTypeConfig } from "@/types/schedule";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const Schedule = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.email === "krichardson@wegive110.com";
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // Fetch events from database
+  const { data: scheduleEvents = [], isLoading } = useQuery({
+    queryKey: ["schedule-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("schedule_events")
+        .select("*")
+        .eq("published", true)
+        .order("event_date", { ascending: true });
+
+      if (error) throw error;
+      return data as ScheduleEvent[];
+    },
+  });
 
   // Get all days to display in the calendar grid
   const monthStart = startOfMonth(currentMonth);
@@ -19,6 +41,18 @@ const Schedule = () => {
   const calendarEnd = endOfWeek(monthEnd);
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
+  // Get events for a specific date
+  const getEventsForDate = (date: Date): ScheduleEvent[] => {
+    return scheduleEvents.filter(event => {
+      const eventDate = new Date(event.event_date + "T00:00:00");
+      return (
+        eventDate.getFullYear() === date.getFullYear() &&
+        eventDate.getMonth() === date.getMonth() &&
+        eventDate.getDate() === date.getDate()
+      );
+    });
+  };
+
   // Get events for selected date
   const selectedDateEvents = getEventsForDate(selectedDate);
 
@@ -26,15 +60,15 @@ const Schedule = () => {
   const today = new Date();
   const upcomingEvents = scheduleEvents
     .filter(event => {
-      const eventDate = new Date(event.date);
+      const eventDate = new Date(event.event_date + "T00:00:00");
       const diffDays = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return diffDays >= 0 && diffDays <= 7;
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
 
   // Check if a date has events
   const getEventsForDay = (date: Date) => {
-    return scheduleEvents.filter(event => isSameDay(new Date(event.date), date));
+    return scheduleEvents.filter(event => isSameDay(new Date(event.event_date + "T00:00:00"), date));
   };
 
   // Get the primary event type for a day (for coloring)
@@ -42,9 +76,9 @@ const Schedule = () => {
     const events = getEventsForDay(date);
     if (events.length === 0) return null;
     // Prioritize games
-    const game = events.find(e => e.type === "game");
+    const game = events.find(e => e.event_type === "game");
     if (game) return "game";
-    return events[0].type;
+    return events[0].event_type as EventType;
   };
 
   const navigateMonth = (direction: "prev" | "next") => {
@@ -66,13 +100,26 @@ const Schedule = () => {
           <div className="absolute top-1/2 right-1/3 w-[400px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
           
           <div className="relative z-10 container mx-auto px-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-lg bg-primary/20 text-primary">
-                <CalendarIcon className="w-8 h-8" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-primary/20 text-primary">
+                  <CalendarIcon className="w-8 h-8" />
+                </div>
+                <span className="text-sm font-medium text-primary uppercase tracking-wider">
+                  Team Calendar
+                </span>
               </div>
-              <span className="text-sm font-medium text-primary uppercase tracking-wider">
-                Team Calendar
-              </span>
+              
+              {isSuperAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/schedule/admin")}
+                  className="gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  Manage Schedule
+                </Button>
+              )}
             </div>
             
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-foreground mb-4 tracking-wide">
@@ -155,11 +202,11 @@ const Schedule = () => {
                                   key={i}
                                   className={cn(
                                     "w-1.5 h-1.5 rounded-full",
-                                    event.type === "game" && "bg-accent",
-                                    event.type === "practice" && "bg-primary",
-                                    event.type === "workout" && "bg-emerald-500",
-                                    event.type === "team-meeting" && "bg-blue-500",
-                                    event.type === "off-day" && "bg-muted-foreground"
+                                    event.event_type === "game" && "bg-accent",
+                                    event.event_type === "practice" && "bg-primary",
+                                    event.event_type === "workout" && "bg-emerald-500",
+                                    event.event_type === "team-meeting" && "bg-blue-500",
+                                    event.event_type === "off-day" && "bg-muted-foreground"
                                   )}
                                 />
                               ))}
@@ -219,8 +266,8 @@ const Schedule = () => {
                   {upcomingEvents.length > 0 ? (
                     <div className="space-y-3">
                       {upcomingEvents.map(event => {
-                        const config = eventTypeConfig[event.type];
-                        const eventDate = new Date(event.date);
+                        const config = eventTypeConfig[event.event_type as EventType];
+                        const eventDate = new Date(event.event_date + "T00:00:00");
                         const isEventToday = isToday(eventDate);
 
                         return (
@@ -231,11 +278,11 @@ const Schedule = () => {
                           >
                             <div className="flex items-center gap-2 mb-1">
                               <span className={cn("w-2 h-2 rounded-full", 
-                                event.type === "game" && "bg-accent",
-                                event.type === "practice" && "bg-primary",
-                                event.type === "workout" && "bg-emerald-500",
-                                event.type === "team-meeting" && "bg-blue-500",
-                                event.type === "off-day" && "bg-muted-foreground"
+                                event.event_type === "game" && "bg-accent",
+                                event.event_type === "practice" && "bg-primary",
+                                event.event_type === "workout" && "bg-emerald-500",
+                                event.event_type === "team-meeting" && "bg-blue-500",
+                                event.event_type === "off-day" && "bg-muted-foreground"
                               )} />
                               <span className="text-xs text-muted-foreground">
                                 {isEventToday ? "Today" : format(eventDate, "EEE, MMM d")}
@@ -245,7 +292,7 @@ const Schedule = () => {
                               {event.title}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {event.time}
+                              {event.event_time}
                             </p>
                           </button>
                         );

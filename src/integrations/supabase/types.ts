@@ -112,6 +112,54 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_events: {
+        Row: {
+          created_at: string
+          end_time: string | null
+          event_date: string
+          event_time: string
+          event_type: string
+          id: string
+          is_home: boolean | null
+          location: string | null
+          notes: string | null
+          opponent: string | null
+          published: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time?: string | null
+          event_date: string
+          event_time: string
+          event_type?: string
+          id?: string
+          is_home?: boolean | null
+          location?: string | null
+          notes?: string | null
+          opponent?: string | null
+          published?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string | null
+          event_date?: string
+          event_time?: string
+          event_type?: string
+          id?: string
+          is_home?: boolean | null
+          location?: string | null
+          notes?: string | null
+          opponent?: string | null
+          published?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wellness_videos: {
         Row: {
           category: string

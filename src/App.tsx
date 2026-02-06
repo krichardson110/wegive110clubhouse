@@ -14,6 +14,7 @@ import VideosAdmin from "./pages/VideosAdmin";
 import Playbook from "./pages/Playbook";
 import PlaybookAdmin from "./pages/PlaybookAdmin";
 import Schedule from "./pages/Schedule";
+import ScheduleAdmin from "./pages/ScheduleAdmin";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/playbook" element={<ProtectedRoute><Playbook /></ProtectedRoute>} />
             <Route path="/playbook/admin" element={<ProtectedRoute><PlaybookAdmin /></ProtectedRoute>} />
             <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
+            <Route path="/schedule/admin" element={<ProtectedRoute><ScheduleAdmin /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

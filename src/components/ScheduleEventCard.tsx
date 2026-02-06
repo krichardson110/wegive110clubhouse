@@ -1,12 +1,12 @@
 import { Clock, MapPin, Users, ChevronRight } from "lucide-react";
-import { ScheduleEvent, eventTypeConfig } from "@/data/schedule";
+import { ScheduleEvent, EventType, eventTypeConfig } from "@/types/schedule";
 
 interface ScheduleEventCardProps {
   event: ScheduleEvent;
 }
 
 const ScheduleEventCard = ({ event }: ScheduleEventCardProps) => {
-  const config = eventTypeConfig[event.type];
+  const config = eventTypeConfig[event.event_type as EventType];
 
   return (
     <div className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:shadow-lg cursor-pointer ${config.bgColor}`}>
@@ -14,9 +14,9 @@ const ScheduleEventCard = ({ event }: ScheduleEventCardProps) => {
       <div className="flex items-start justify-between mb-3">
         <span className={`text-xs font-medium px-2 py-1 rounded-full border ${config.bgColor} ${config.color}`}>
           {config.label}
-          {event.isHome !== undefined && (
+          {event.is_home !== undefined && event.is_home !== null && (
             <span className="ml-1">
-              {event.isHome ? "(Home)" : "(Away)"}
+              {event.is_home ? "(Home)" : "(Away)"}
             </span>
           )}
         </span>
@@ -40,8 +40,8 @@ const ScheduleEventCard = ({ event }: ScheduleEventCardProps) => {
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
         <Clock className="w-4 h-4" />
         <span>
-          {event.time}
-          {event.endTime && ` - ${event.endTime}`}
+          {event.event_time}
+          {event.end_time && ` - ${event.end_time}`}
         </span>
       </div>
 
