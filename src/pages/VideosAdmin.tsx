@@ -1,16 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WellnessVideoManager from "@/components/admin/WellnessVideoManager";
+import VideoManager from "@/components/admin/VideoManager";
 import { useAuth } from "@/hooks/useAuth";
 import { Video, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const VideosAdmin = () => {
   const { user, isSuperAdmin, loading } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("library");
 
   useEffect(() => {
     if (!loading && (!user || !isSuperAdmin)) {
@@ -63,7 +66,7 @@ const VideosAdmin = () => {
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl">
-              Add, edit, and organize videos for the Develop Your Whole Self section.
+              Manage all video content including training drills, wellness videos, and team meetings.
             </p>
           </div>
         </section>
@@ -71,7 +74,20 @@ const VideosAdmin = () => {
         {/* Content */}
         <section className="py-8">
           <div className="container mx-auto px-4">
-            <WellnessVideoManager />
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="library">Video Library</TabsTrigger>
+                <TabsTrigger value="wellness">Wellness Videos</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="library">
+                <VideoManager />
+              </TabsContent>
+
+              <TabsContent value="wellness">
+                <WellnessVideoManager />
+              </TabsContent>
+            </Tabs>
           </div>
         </section>
       </main>
