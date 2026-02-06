@@ -5,11 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import VideoLibraryCard from "@/components/VideoLibraryCard";
-import { Video, Search, Filter, Settings, Brain, Flame, Heart, Target, Dumbbell, Users, Trophy, Zap, Star, Award, Shield, Crosshair, Timer, Activity } from "lucide-react";
+import { Video, Search, Settings, Brain, Flame, Heart, Target, Dumbbell, Users, Trophy, Zap, Star, Award, Shield, Crosshair, Timer, Activity, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 
 interface VideoCategory {
@@ -29,6 +29,8 @@ interface VideoItem {
   youtube_id: string;
   duration: string | null;
   display_order: number;
+  type: "library";
+  categoryName?: string;
 }
 
 interface WellnessVideo {
@@ -39,19 +41,44 @@ interface WellnessVideo {
   duration: string | null;
   category: string;
   display_order: number;
+  type: "wellness";
 }
+
+type CombinedVideo = VideoItem | WellnessVideo;
 
 // Icon map for dynamic icons
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Target, Flame, Dumbbell, Brain, Heart, Users, Video, Trophy, Zap, Star, Award, Shield, Crosshair, Timer, Activity,
 };
 
+const wellnessPillars = [
+  { id: "mind", label: "Mind", icon: Brain, color: "bg-blue-500/20 border-blue-500/50 text-blue-400 hover:bg-blue-500/30", badgeColor: "bg-blue-500/80 border-blue-400 text-white" },
+  { id: "body", label: "Body", icon: Flame, color: "bg-accent/20 border-accent/50 text-accent hover:bg-accent/30", badgeColor: "bg-accent/80 border-accent text-white" },
+  { id: "spirit", label: "Spirit", icon: Heart, color: "bg-primary/20 border-primary/50 text-primary hover:bg-primary/30", badgeColor: "bg-primary/80 border-primary text-white" },
+];
+
 const Videos = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState(searchParams.get("category") || "all");
-  const [wellnessPillar, setWellnessPillar] = useState(searchParams.get("pillar") || "all");
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [selectedWellness, setSelectedWellness] = useState<Set<string>>(new Set());
   const { isSuperAdmin } = useAuth();
+
+  // Initialize filters from URL
+  useEffect(() => {
+    const cats = searchParams.get("categories");
+    const wellness = searchParams.get("wellness");
+    if (cats) setSelectedCategories(new Set(cats.split(",")));
+    if (wellness) setSelectedWellness(new Set(wellness.split(",")));
+  }, []);
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedCategories.size > 0) params.set("categories", Array.from(selectedCategories).join(","));
+    if (selectedWellness.size > 0) params.set("wellness", Array.from(selectedWellness).join(","));
+    setSearchParams(params, { replace: true });
+  }, [selectedCategories, selectedWellness, setSearchParams]);
 
   // Fetch video categories from database
   const { data: categories, isLoading: loadingCategories } = useQuery({
@@ -79,12 +106,12 @@ const Videos = () => {
         .order("display_order", { ascending: true });
       
       if (error) throw error;
-      return data as VideoItem[];
+      return data as Omit<VideoItem, "type" | "categoryName">[];
     },
   });
 
   // Fetch wellness videos from database
-  const { data: wellnessVideos } = useQuery({
+  const { data: wellnessVideos, isLoading: loadingWellness } = useQuery({
     queryKey: ["wellness-videos"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -94,52 +121,88 @@ const Videos = () => {
         .order("display_order", { ascending: true });
       
       if (error) throw error;
-      return data as WellnessVideo[];
+      return data as Omit<WellnessVideo, "type">[];
     },
   });
 
-  // Update URL when category changes
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (activeCategory !== "all") params.set("category", activeCategory);
-    if (activeCategory === "wellness" && wellnessPillar !== "all") params.set("pillar", wellnessPillar);
-    setSearchParams(params, { replace: true });
-  }, [activeCategory, wellnessPillar, setSearchParams]);
-
-  // Get videos for a specific category
-  const getVideosForCategory = (categoryId: string) => {
-    return (videos || []).filter(v => v.category_id === categoryId);
+  // Toggle category filter
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
   };
 
-  // Filter all videos based on search
-  const filterBySearch = <T extends { title: string; description: string | null }>(items: T[]) => {
-    if (!searchQuery) return items;
-    return items.filter(item =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
-    );
+  // Toggle wellness filter
+  const toggleWellness = (pillarId: string) => {
+    setSelectedWellness(prev => {
+      const next = new Set(prev);
+      if (next.has(pillarId)) {
+        next.delete(pillarId);
+      } else {
+        next.add(pillarId);
+      }
+      return next;
+    });
   };
 
-  // Get all videos for "All" tab
-  const allVideos = videos || [];
-  const filteredAllVideos = filterBySearch(allVideos);
+  // Clear all filters
+  const clearFilters = () => {
+    setSelectedCategories(new Set());
+    setSelectedWellness(new Set());
+    setSearchQuery("");
+  };
 
-  // Filter wellness videos
-  const filteredWellnessVideos = filterBySearch(wellnessVideos || []).filter(video => 
-    wellnessPillar === "all" || video.category === wellnessPillar
-  );
+  // Build category name lookup
+  const categoryNameMap = new Map(categories?.map(c => [c.id, c.name]) || []);
 
-  const totalVideos = (videos?.length || 0) + (wellnessVideos?.length || 0);
-  const isLoading = loadingCategories || loadingVideos;
-
-  const wellnessPillars = [
-    { id: "mind", label: "Mind", icon: Brain, color: "text-blue-500" },
-    { id: "body", label: "Body", icon: Flame, color: "text-accent" },
-    { id: "spirit", label: "Spirit", icon: Heart, color: "text-primary" },
+  // Combine all videos
+  const allVideos: CombinedVideo[] = [
+    ...(videos?.map(v => ({ 
+      ...v, 
+      type: "library" as const,
+      categoryName: categoryNameMap.get(v.category_id)
+    })) || []),
+    ...(wellnessVideos?.map(v => ({ ...v, type: "wellness" as const })) || []),
   ];
 
-  const getIcon = (iconName: string) => {
-    return iconMap[iconName] || Video;
+  // Filter videos
+  const filteredVideos = allVideos.filter(video => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        video.title.toLowerCase().includes(query) ||
+        (video.description?.toLowerCase().includes(query) ?? false);
+      if (!matchesSearch) return false;
+    }
+
+    // If no filters selected, show all
+    if (selectedCategories.size === 0 && selectedWellness.size === 0) {
+      return true;
+    }
+
+    // Category/Wellness filter
+    if (video.type === "library") {
+      return selectedCategories.size === 0 || selectedCategories.has(video.category_id);
+    } else {
+      return selectedWellness.size === 0 || selectedWellness.has(video.category);
+    }
+  });
+
+  const totalVideos = allVideos.length;
+  const isLoading = loadingCategories || loadingVideos || loadingWellness;
+  const hasActiveFilters = selectedCategories.size > 0 || selectedWellness.size > 0 || searchQuery.length > 0;
+
+  const getIcon = (iconName: string) => iconMap[iconName] || Video;
+
+  const getWellnessBadgeColor = (category: string) => {
+    return wellnessPillars.find(p => p.id === category)?.badgeColor || "bg-secondary";
   };
 
   return (
@@ -177,7 +240,7 @@ const Videos = () => {
               </h1>
               
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
-                {totalVideos} training videos covering drills, mechanics, mental game, and team recordings. Watch, learn, and improve.
+                {totalVideos} training videos covering drills, mechanics, mental game, and player development.
               </p>
               
               {/* Search */}
@@ -190,241 +253,136 @@ const Videos = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 bg-secondary/50 border-border focus:border-primary"
                 />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </section>
         
-        {/* Videos Section */}
+        {/* Filters Section */}
+        <section className="py-6 border-b border-border bg-card/50">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col gap-4">
+              {/* Category Filters */}
+              {!isLoading && categories && categories.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground mr-2">Categories:</span>
+                  {categories.map((category) => {
+                    const Icon = getIcon(category.icon_name);
+                    const isSelected = selectedCategories.has(category.id);
+                    return (
+                      <Button
+                        key={category.id}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleCategory(category.id)}
+                        className={`gap-2 ${isSelected ? "" : "hover:bg-secondary"}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {category.name}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Wellness Filters */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground mr-2">Wellness:</span>
+                {wellnessPillars.map((pillar) => {
+                  const PillarIcon = pillar.icon;
+                  const isSelected = selectedWellness.has(pillar.id);
+                  return (
+                    <Button
+                      key={pillar.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleWellness(pillar.id)}
+                      className={`gap-2 border ${isSelected ? pillar.color : "hover:bg-secondary"}`}
+                    >
+                      <PillarIcon className="w-4 h-4" />
+                      {pillar.label}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {/* Active filters & clear */}
+              {hasActiveFilters && (
+                <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                  <span className="text-sm text-muted-foreground">
+                    Showing {filteredVideos.length} of {totalVideos} videos
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-destructive hover:text-destructive">
+                    <X className="w-4 h-4 mr-1" />
+                    Clear filters
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Videos Grid */}
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-12 w-full max-w-2xl" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                    <Skeleton key={i} className="aspect-video rounded-xl" />
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                  <Skeleton key={i} className="aspect-video rounded-xl" />
+                ))}
               </div>
-            ) : (
-              <Tabs value={activeCategory} onValueChange={(val) => { setActiveCategory(val); setWellnessPillar("all"); }} className="w-full">
-                <div className="flex items-center gap-4 mb-8 overflow-x-auto pb-2">
-                  <Filter className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  <TabsList className="bg-secondary/30 p-1 flex-wrap h-auto gap-1">
-                    <TabsTrigger value="all" className="data-[state=active]:bg-primary">
-                      All Videos
-                    </TabsTrigger>
-                    {(categories || []).map((category) => (
-                      <TabsTrigger 
-                        key={category.id} 
-                        value={category.id}
-                        className="data-[state=active]:bg-primary"
-                      >
-                        {category.name}
-                      </TabsTrigger>
-                    ))}
-                    <TabsTrigger value="wellness" className="data-[state=active]:bg-primary">
-                      Develop Your Whole Self
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                {/* All Videos Tab */}
-                <TabsContent value="all" className="mt-0">
-                  {filteredAllVideos.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {filteredAllVideos.map((video, index) => (
-                        <div
-                          key={video.id}
-                          className="animate-fade-in"
-                          style={{ animationDelay: `${index * 0.05}s` }}
-                        >
-                          <VideoLibraryCard video={video} />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">
-                        {searchQuery ? `No videos found matching "${searchQuery}"` : "No videos available yet. Check back soon!"}
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-                
-                {/* Dynamic Category Tabs */}
-                {(categories || []).map((category) => {
-                  const categoryVideos = filterBySearch(getVideosForCategory(category.id));
-                  const Icon = getIcon(category.icon_name);
-                  
-                  return (
-                    <TabsContent key={category.id} value={category.id} className="mt-0">
-                      {/* Category Header */}
-                      <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-card border border-border">
-                        <div className={`p-3 rounded-lg bg-gradient-to-br ${category.color_gradient} border`}>
-                          <Icon className="w-6 h-6 text-foreground" />
-                        </div>
-                        <div>
-                          <h2 className="font-display text-2xl text-foreground tracking-wide">
-                            {category.name}
-                          </h2>
-                          {category.description && (
-                            <p className="text-sm text-muted-foreground">{category.description}</p>
-                          )}
-                        </div>
-                        <span className="ml-auto text-sm text-muted-foreground">
-                          {categoryVideos.length} video{categoryVideos.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                      
-                      {/* Videos Grid */}
-                      {categoryVideos.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                          {categoryVideos.map((video, index) => (
-                            <div
-                              key={video.id}
-                              className="animate-fade-in"
-                              style={{ animationDelay: `${index * 0.05}s` }}
-                            >
-                              <VideoLibraryCard video={video} />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-12">
-                          <p className="text-muted-foreground">
-                            {searchQuery ? `No videos found matching "${searchQuery}"` : "No videos in this category yet."}
-                          </p>
-                        </div>
-                      )}
-                    </TabsContent>
-                  );
-                })}
-
-                {/* Wellness Tab */}
-                <TabsContent value="wellness" className="mt-0">
-                  {/* Wellness Header */}
-                  <div className="flex flex-col gap-4 mb-6 p-4 rounded-xl bg-card border border-border">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/40">
-                        <Brain className="w-6 h-6 text-foreground" />
-                      </div>
-                      <div>
-                        <h2 className="font-display text-2xl text-foreground tracking-wide">
-                          Develop Your Whole Self
-                        </h2>
-                        <p className="text-sm text-muted-foreground">Mind, Body & Spirit videos for complete athlete development</p>
-                      </div>
-                      <span className="ml-auto text-sm text-muted-foreground">
-                        {filteredWellnessVideos.length} videos
-                      </span>
-                    </div>
-                    
-                    {/* Pillar Filter */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm text-muted-foreground mr-2">Filter:</span>
-                      <Button
-                        variant={wellnessPillar === "all" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setWellnessPillar("all")}
-                      >
-                        All
-                      </Button>
-                      {wellnessPillars.map(pillar => {
-                        const PillarIcon = pillar.icon;
-                        return (
-                          <Button
-                            key={pillar.id}
-                            variant={wellnessPillar === pillar.id ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setWellnessPillar(pillar.id)}
-                            className="gap-2"
+            ) : filteredVideos.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredVideos.map((video, index) => (
+                  <div
+                    key={video.id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${Math.min(index * 0.03, 0.5)}s` }}
+                  >
+                    <div className="relative">
+                      {/* Badge for video type */}
+                      <div className="absolute top-3 left-3 z-10">
+                        {video.type === "wellness" ? (
+                          <Badge 
+                            variant="outline" 
+                            className={`capitalize backdrop-blur-sm ${getWellnessBadgeColor(video.category)}`}
                           >
-                            <PillarIcon className={`w-4 h-4 ${wellnessPillar !== pillar.id ? pillar.color : ""}`} />
-                            {pillar.label}
-                          </Button>
-                        );
-                      })}
+                            {video.category}
+                          </Badge>
+                        ) : video.categoryName ? (
+                          <Badge variant="secondary" className="backdrop-blur-sm bg-secondary/80">
+                            {video.categoryName}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <VideoLibraryCard video={video} />
                     </div>
                   </div>
-                  
-                  {/* Wellness Videos Grid */}
-                  {filteredWellnessVideos.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {filteredWellnessVideos.map((video, index) => (
-                        <a
-                          key={video.id}
-                          href={`https://www.youtube.com/watch?v=${video.youtube_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group animate-fade-in"
-                          style={{ animationDelay: `${index * 0.05}s` }}
-                        >
-                          <div className="relative overflow-hidden rounded-xl bg-card border border-border transition-all duration-300 hover:border-primary/50 hover:shadow-lg cursor-pointer h-full flex flex-col">
-                            {/* Thumbnail */}
-                            <div className="relative aspect-video bg-secondary overflow-hidden">
-                              <img 
-                                src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
-                                alt={video.title}
-                                className="w-full h-full object-cover"
-                              />
-                              
-                              {/* Play button overlay */}
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform duration-300">
-                                  <svg className="w-6 h-6 text-accent-foreground fill-current ml-1" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z"/>
-                                  </svg>
-                                </div>
-                              </div>
-                              
-                              {/* Duration badge */}
-                              {video.duration && (
-                                <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-xs text-white flex items-center gap-1">
-                                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M12 6v6l4 2"/>
-                                  </svg>
-                                  {video.duration}
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Content */}
-                            <div className="p-4 flex-1 flex flex-col">
-                              <span className={`inline-block text-xs font-medium px-2 py-1 rounded-full border mb-2 w-fit capitalize ${
-                                video.category === "mind" 
-                                  ? "bg-blue-500/20 border-blue-500/40 text-blue-400"
-                                  : video.category === "body"
-                                  ? "bg-accent/20 border-accent/40 text-accent"
-                                  : "bg-primary/20 border-primary/40 text-primary"
-                              }`}>
-                                {video.category}
-                              </span>
-                              <h4 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-300 flex-1">
-                                {video.title}
-                              </h4>
-                              {video.description && (
-                                <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                                  {video.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <p className="text-muted-foreground">
-                        {searchQuery ? `No videos found matching "${searchQuery}"` : "No videos available in this category"}
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <Video className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">No videos found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchQuery 
+                    ? `No videos match "${searchQuery}"` 
+                    : "Try adjusting your filters to see more videos"}
+                </p>
+                {hasActiveFilters && (
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear all filters
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </section>
