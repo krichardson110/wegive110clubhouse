@@ -713,6 +713,66 @@ export type Database = {
         }
         Relationships: []
       }
+      training_logs: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          intensity: string | null
+          logged_at: string
+          notes: string | null
+          team_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          workout_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          intensity?: string | null
+          logged_at?: string
+          notes?: string | null
+          team_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          workout_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          intensity?: string | null
+          logged_at?: string
+          notes?: string | null
+          team_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          workout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_logs_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           awarded_at: string
