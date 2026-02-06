@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { Play, Clock, X } from "lucide-react";
-import { Video } from "@/data/videos";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
+export interface VideoCardData {
+  id: string;
+  title: string;
+  description: string | null;
+  youtube_id: string;
+  duration: string | null;
+}
+
 interface VideoLibraryCardProps {
-  video: Video;
-  categoryColor: string;
+  video: VideoCardData;
+  categoryColor?: string;
 }
 
 const VideoLibraryCard = ({ video, categoryColor }: VideoLibraryCardProps) => {
@@ -15,22 +22,22 @@ const VideoLibraryCard = ({ video, categoryColor }: VideoLibraryCardProps) => {
     <>
       <div 
         onClick={() => setIsOpen(true)}
-        className="group relative overflow-hidden rounded-xl bg-card border border-border transition-all duration-300 hover:border-primary/50 hover:shadow-lg cursor-pointer"
+        className="group relative overflow-hidden rounded-xl bg-card border border-border transition-all duration-300 hover:border-primary/50 hover:shadow-lg cursor-pointer h-full flex flex-col"
       >
         {/* Thumbnail */}
         <div className="relative aspect-video bg-secondary overflow-hidden">
           <img 
-            src={`https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg`}
+            src={`https://img.youtube.com/vi/${video.youtube_id}/maxresdefault.jpg`}
             alt={video.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               // Fallback to hqdefault if maxresdefault doesn't exist
-              e.currentTarget.src = `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`;
+              e.currentTarget.src = `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`;
             }}
           />
           
           {/* Gradient overlay */}
-          <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           {/* Play button */}
           <div className="absolute inset-0 flex items-center justify-center">
@@ -40,20 +47,24 @@ const VideoLibraryCard = ({ video, categoryColor }: VideoLibraryCardProps) => {
           </div>
           
           {/* Duration badge */}
-          <div className="absolute bottom-3 right-3 px-2 py-1 rounded bg-black/80 text-xs text-white flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {video.duration}
-          </div>
+          {video.duration && (
+            <div className="absolute bottom-3 right-3 px-2 py-1 rounded bg-black/80 text-xs text-white flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {video.duration}
+            </div>
+          )}
         </div>
         
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 flex-1 flex flex-col">
           <h4 className="font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors mb-1">
             {video.title}
           </h4>
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {video.description}
-          </p>
+          {video.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {video.description}
+            </p>
+          )}
         </div>
       </div>
 
@@ -72,7 +83,7 @@ const VideoLibraryCard = ({ video, categoryColor }: VideoLibraryCardProps) => {
             {/* Video embed */}
             <div className="aspect-video">
               <iframe
-                src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1`}
+                src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1`}
                 title={video.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -83,7 +94,9 @@ const VideoLibraryCard = ({ video, categoryColor }: VideoLibraryCardProps) => {
             {/* Video info */}
             <div className="p-6">
               <h3 className="font-display text-2xl text-foreground mb-2">{video.title}</h3>
-              <p className="text-muted-foreground">{video.description}</p>
+              {video.description && (
+                <p className="text-muted-foreground">{video.description}</p>
+              )}
             </div>
           </div>
         </DialogContent>
