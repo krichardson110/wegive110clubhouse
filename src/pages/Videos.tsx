@@ -52,9 +52,9 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 const wellnessPillars = [
-  { id: "mind", label: "Mind", icon: Brain, color: "bg-blue-500/20 border-blue-500/50 text-blue-400 hover:bg-blue-500/30", badgeColor: "bg-blue-500/80 border-blue-400 text-white" },
-  { id: "body", label: "Body", icon: Flame, color: "bg-accent/20 border-accent/50 text-accent hover:bg-accent/30", badgeColor: "bg-accent/80 border-accent text-white" },
-  { id: "spirit", label: "Spirit", icon: Heart, color: "bg-primary/20 border-primary/50 text-primary hover:bg-primary/30", badgeColor: "bg-primary/80 border-primary text-white" },
+  { id: "mind", label: "Mind", icon: Brain, activeColor: "bg-blue-500 text-white shadow-lg shadow-blue-500/30", inactiveColor: "bg-card hover:bg-blue-500/20 text-blue-400 border-blue-500/30", badgeColor: "bg-blue-500/80 border-blue-400 text-white" },
+  { id: "body", label: "Body", icon: Flame, activeColor: "bg-accent text-white shadow-lg shadow-accent/30", inactiveColor: "bg-card hover:bg-accent/20 text-accent border-accent/30", badgeColor: "bg-accent/80 border-accent text-white" },
+  { id: "spirit", label: "Spirit", icon: Heart, activeColor: "bg-primary text-white shadow-lg shadow-primary/30", inactiveColor: "bg-card hover:bg-primary/20 text-primary border-primary/30", badgeColor: "bg-primary/80 border-primary text-white" },
 ];
 
 const Videos = () => {
@@ -187,11 +187,21 @@ const Videos = () => {
       return true;
     }
 
-    // Category/Wellness filter
+    // Category/Wellness filter - use OR logic across both filter types
     if (video.type === "library") {
-      return selectedCategories.size === 0 || selectedCategories.has(video.category_id);
+      // Show library video if its category is selected, OR if no categories selected but wellness is
+      if (selectedCategories.size > 0) {
+        return selectedCategories.has(video.category_id);
+      }
+      // If only wellness filters are active, hide library videos
+      return false;
     } else {
-      return selectedWellness.size === 0 || selectedWellness.has(video.category);
+      // Show wellness video if its pillar is selected, OR if no wellness selected but categories are
+      if (selectedWellness.size > 0) {
+        return selectedWellness.has(video.category);
+      }
+      // If only category filters are active, hide wellness videos
+      return false;
     }
   });
 
@@ -267,63 +277,97 @@ const Videos = () => {
         </section>
         
         {/* Filters Section */}
-        <section className="py-6 border-b border-border bg-card/50">
+        <section className="py-8 border-b border-border/50 bg-gradient-to-b from-card/80 to-background">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
               {/* Category Filters */}
               {!isLoading && categories && categories.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground mr-2">Categories:</span>
-                  {categories.map((category) => {
-                    const Icon = getIcon(category.icon_name);
-                    const isSelected = selectedCategories.has(category.id);
-                    return (
-                      <Button
-                        key={category.id}
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => toggleCategory(category.id)}
-                        className={`gap-2 ${isSelected ? "" : "hover:bg-secondary"}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {category.name}
-                      </Button>
-                    );
-                  })}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Video className="w-4 h-4 text-accent" />
+                    <span className="text-sm font-semibold text-foreground uppercase tracking-wide">Training Categories</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category) => {
+                      const Icon = getIcon(category.icon_name);
+                      const isSelected = selectedCategories.has(category.id);
+                      return (
+                        <button
+                          key={category.id}
+                          onClick={() => toggleCategory(category.id)}
+                          className={`
+                            inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                            border transition-all duration-200 
+                            ${isSelected 
+                              ? "bg-accent text-white border-accent shadow-lg shadow-accent/25 scale-105" 
+                              : "bg-card text-muted-foreground border-border hover:border-accent/50 hover:text-foreground hover:bg-accent/10"
+                            }
+                          `}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {category.name}
+                          {isSelected && (
+                            <X className="w-3 h-3 ml-1 opacity-70" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
               {/* Wellness Filters */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground mr-2">Wellness:</span>
-                {wellnessPillars.map((pillar) => {
-                  const PillarIcon = pillar.icon;
-                  const isSelected = selectedWellness.has(pillar.id);
-                  return (
-                    <Button
-                      key={pillar.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleWellness(pillar.id)}
-                      className={`gap-2 border ${isSelected ? pillar.color : "hover:bg-secondary"}`}
-                    >
-                      <PillarIcon className="w-4 h-4" />
-                      {pillar.label}
-                    </Button>
-                  );
-                })}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground uppercase tracking-wide">Develop Your Whole Self</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {wellnessPillars.map((pillar) => {
+                    const PillarIcon = pillar.icon;
+                    const isSelected = selectedWellness.has(pillar.id);
+                    return (
+                      <button
+                        key={pillar.id}
+                        onClick={() => toggleWellness(pillar.id)}
+                        className={`
+                          inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                          border transition-all duration-200 
+                          ${isSelected 
+                            ? pillar.activeColor + " border-transparent scale-105" 
+                            : pillar.inactiveColor
+                          }
+                        `}
+                      >
+                        <PillarIcon className="w-4 h-4" />
+                        {pillar.label}
+                        {isSelected && (
+                          <X className="w-3 h-3 ml-1 opacity-70" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Active filters & clear */}
+              {/* Active filters summary */}
               {hasActiveFilters && (
-                <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-                  <span className="text-sm text-muted-foreground">
-                    Showing {filteredVideos.length} of {totalVideos} videos
-                  </span>
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="text-destructive hover:text-destructive">
-                    <X className="w-4 h-4 mr-1" />
-                    Clear filters
-                  </Button>
+                <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-foreground">
+                      {filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      matching your filters
+                    </span>
+                  </div>
+                  <button 
+                    onClick={clearFilters} 
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    Clear all
+                  </button>
                 </div>
               )}
             </div>
