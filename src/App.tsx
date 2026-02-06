@@ -20,6 +20,9 @@ import ReturnReportAdmin from "./pages/ReturnReportAdmin";
 import Community from "./pages/Community";
 import Profile from "./pages/Profile";
 import BadgesAdmin from "./pages/BadgesAdmin";
+import MyTeams from "./pages/MyTeams";
+import TeamPage from "./pages/TeamPage";
+import JoinTeam from "./pages/JoinTeam";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -63,6 +66,9 @@ const App = () => (
             <Route path="/return-report/admin" element={<ProtectedRoute><ReturnReportAdmin /></ProtectedRoute>} />
             <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
             <Route path="/community/badges" element={<ProtectedRoute><BadgesAdmin /></ProtectedRoute>} />
+            <Route path="/teams" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
+            <Route path="/teams/join" element={<JoinTeam />} />
+            <Route path="/teams/:teamId" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
