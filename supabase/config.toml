@@ -1,1 +1,4 @@
 project_id = "hojbmsyjwxofcitwtlxc"
+
+[functions.teams-api]
+verify_jwt = false
