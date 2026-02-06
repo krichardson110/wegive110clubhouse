@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, Award } from "lucide-react";
+import { ArrowLeft, Users, Award, Settings } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
 
 const Community = () => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -31,12 +31,22 @@ const Community = () => {
               <p className="text-muted-foreground">Share your journey with the team</p>
             </div>
           </div>
-          <Link to="/profile">
-            <Button variant="outline" size="sm">
-              <Award className="w-4 h-4 mr-2" />
-              My Profile
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Link to="/community/badges">
+                <Button variant="outline" size="sm">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Manage Badges
+                </Button>
+              </Link>
+            )}
+            <Link to="/profile">
+              <Button variant="outline" size="sm">
+                <Award className="w-4 h-4 mr-2" />
+                My Profile
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="max-w-2xl mx-auto space-y-6">
