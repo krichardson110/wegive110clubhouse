@@ -112,6 +112,75 @@ export type Database = {
         }
         Relationships: []
       }
+      return_report_recordings: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          duration: string | null
+          external_url: string | null
+          id: string
+          published: boolean
+          recording_date: string
+          title: string
+          updated_at: string
+          youtube_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration?: string | null
+          external_url?: string | null
+          id?: string
+          published?: boolean
+          recording_date?: string
+          title: string
+          updated_at?: string
+          youtube_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration?: string | null
+          external_url?: string | null
+          id?: string
+          published?: boolean
+          recording_date?: string
+          title?: string
+          updated_at?: string
+          youtube_id?: string | null
+        }
+        Relationships: []
+      }
+      return_report_settings: {
+        Row: {
+          google_meet_url: string | null
+          id: string
+          meet_description: string | null
+          meet_title: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          google_meet_url?: string | null
+          id?: string
+          meet_description?: string | null
+          meet_title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          google_meet_url?: string | null
+          id?: string
+          meet_description?: string | null
+          meet_title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       schedule_events: {
         Row: {
           created_at: string
