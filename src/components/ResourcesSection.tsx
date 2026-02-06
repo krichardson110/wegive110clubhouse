@@ -24,11 +24,11 @@ const resources = [
     href: "/videos",
   },
   {
-    title: "Zoom Calls",
-    description: "Recorded team meetings, coaching sessions, and guest speaker presentations.",
+    title: "Return & Report",
+    description: "Team meetings, coaching sessions, and recorded discussions.",
     icon: "zoom" as const,
     count: 16,
-    href: "/zoom",
+    href: "/return-report",
   },
 ];
 
