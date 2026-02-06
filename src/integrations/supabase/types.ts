@@ -436,6 +436,89 @@ export type Database = {
           },
         ]
       }
+      video_categories: {
+        Row: {
+          color_gradient: string
+          created_at: string
+          description: string | null
+          display_order: number
+          icon_name: string
+          id: string
+          name: string
+          published: boolean
+          updated_at: string
+        }
+        Insert: {
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon_name?: string
+          id?: string
+          name: string
+          published?: boolean
+          updated_at?: string
+        }
+        Update: {
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon_name?: string
+          id?: string
+          name?: string
+          published?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          display_order: number
+          duration: string | null
+          id: string
+          published: boolean
+          title: string
+          updated_at: string
+          youtube_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration?: string | null
+          id?: string
+          published?: boolean
+          title: string
+          updated_at?: string
+          youtube_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration?: string | null
+          id?: string
+          published?: boolean
+          title?: string
+          updated_at?: string
+          youtube_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "video_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wellness_videos: {
         Row: {
           category: string
