@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: Home },
+  { name: "Clubhouse", href: "/community", icon: Users },
   { name: "Workouts", href: "/workouts", icon: Dumbbell },
   { name: "Schedule", href: "/schedule", icon: Calendar },
   { name: "Videos", href: "/videos", icon: Video },

@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          auto_criteria: Json | null
+          badge_type: string
+          color_gradient: string
+          created_at: string
+          description: string | null
+          display_order: number
+          icon_name: string
+          id: string
+          name: string
+        }
+        Insert: {
+          auto_criteria?: Json | null
+          badge_type?: string
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon_name?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          auto_criteria?: Json | null
+          badge_type?: string
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon_name?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       chapters: {
         Row: {
           chapter_number: number
@@ -109,6 +145,145 @@ export type Database = {
           published?: boolean
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          comments_count: number
+          content: string
+          created_at: string
+          id: string
+          likes_count: number
+          media_urls: Json | null
+          published: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comments_count?: number
+          content: string
+          created_at?: string
+          id?: string
+          likes_count?: number
+          media_urls?: Json | null
+          published?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comments_count?: number
+          content?: string
+          created_at?: string
+          id?: string
+          likes_count?: number
+          media_urls?: Json | null
+          published?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          comments_count: number
+          created_at: string
+          display_name: string | null
+          id: string
+          likes_given_count: number
+          posts_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          comments_count?: number
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          likes_given_count?: number
+          posts_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          comments_count?: number
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          likes_given_count?: number
+          posts_count?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -228,6 +403,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_badges: {
+        Row: {
+          awarded_at: string
+          awarded_by: string | null
+          badge_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          awarded_by?: string | null
+          badge_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          awarded_by?: string | null
+          badge_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wellness_videos: {
         Row: {
