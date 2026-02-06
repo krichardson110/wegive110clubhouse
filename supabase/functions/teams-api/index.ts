@@ -322,6 +322,251 @@ Deno.serve(async (req) => {
       );
     }
 
+    // POST /training - Log a training session
+    if (path === '/training' && req.method === 'POST') {
+      console.log('[teams-api] Creating training log');
+      
+      const body = await req.json();
+      const { team_id, workout_id, title, description, duration_minutes, intensity, notes, logged_at } = body;
+
+      if (!title) {
+        return new Response(
+          JSON.stringify({ error: 'Title is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // If team_id provided, verify user is a member
+      if (team_id) {
+        const { data: membership } = await supabase
+          .from('team_members')
+          .select('id')
+          .eq('team_id', team_id)
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (!membership) {
+          return new Response(
+            JSON.stringify({ error: 'Forbidden', message: 'You are not a member of this team' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      const { data: log, error: logError } = await supabase
+        .from('training_logs')
+        .insert({
+          user_id: userId,
+          team_id: team_id || null,
+          workout_id: workout_id || null,
+          title,
+          description: description || null,
+          duration_minutes: duration_minutes || null,
+          intensity: intensity || null,
+          notes: notes || null,
+          logged_at: logged_at || new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (logError) {
+        console.error('[teams-api] Error creating training log:', logError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to create training log', details: logError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[teams-api] Training log created:', log.id);
+      return new Response(
+        JSON.stringify({ training_log: log }),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // GET /training - Get user's training logs
+    if (path === '/training' && req.method === 'GET') {
+      console.log('[teams-api] Fetching training logs for user');
+      
+      const teamId = url.searchParams.get('team_id');
+      const limit = parseInt(url.searchParams.get('limit') || '50');
+      const offset = parseInt(url.searchParams.get('offset') || '0');
+
+      let query = supabase
+        .from('training_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('logged_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (teamId) {
+        query = query.eq('team_id', teamId);
+      }
+
+      const { data: logs, error: logsError } = await query;
+
+      if (logsError) {
+        console.error('[teams-api] Error fetching training logs:', logsError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch training logs' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`[teams-api] Found ${logs?.length || 0} training logs`);
+      return new Response(
+        JSON.stringify({ training_logs: logs || [] }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // GET /training/team/:teamId - Get training logs for all team members (coaches only)
+    const teamTrainingMatch = path.match(/^\/training\/team\/([a-f0-9-]+)$/);
+    if (teamTrainingMatch && req.method === 'GET') {
+      const teamId = teamTrainingMatch[1];
+      console.log(`[teams-api] Fetching team training logs for: ${teamId}`);
+
+      // Verify user is a coach of this team
+      const { data: membership } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', teamId)
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (!membership || membership.role !== 'coach') {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden', message: 'Only coaches can view team training logs' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const limit = parseInt(url.searchParams.get('limit') || '100');
+      const offset = parseInt(url.searchParams.get('offset') || '0');
+      const playerId = url.searchParams.get('player_id');
+
+      let query = supabase
+        .from('training_logs')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('logged_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (playerId) {
+        query = query.eq('user_id', playerId);
+      }
+
+      const { data: logs, error: logsError } = await query;
+
+      if (logsError) {
+        console.error('[teams-api] Error fetching team training logs:', logsError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch team training logs' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get user profiles for the logs
+      const userIds = [...new Set(logs?.map(l => l.user_id) || [])];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const logsWithProfiles = (logs || []).map(log => ({
+        ...log,
+        profile: profileMap.get(log.user_id) || null
+      }));
+
+      console.log(`[teams-api] Found ${logs?.length || 0} team training logs`);
+      return new Response(
+        JSON.stringify({ training_logs: logsWithProfiles }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // GET /training/stats - Get training statistics for user
+    if (path === '/training/stats' && req.method === 'GET') {
+      console.log('[teams-api] Fetching training stats for user');
+      
+      const teamId = url.searchParams.get('team_id');
+      const days = parseInt(url.searchParams.get('days') || '30');
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      let query = supabase
+        .from('training_logs')
+        .select('id, duration_minutes, intensity, logged_at')
+        .eq('user_id', userId)
+        .gte('logged_at', startDate.toISOString());
+
+      if (teamId) {
+        query = query.eq('team_id', teamId);
+      }
+
+      const { data: logs, error: logsError } = await query;
+
+      if (logsError) {
+        console.error('[teams-api] Error fetching training stats:', logsError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch training stats' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const totalSessions = logs?.length || 0;
+      const totalMinutes = logs?.reduce((sum, l) => sum + (l.duration_minutes || 0), 0) || 0;
+      const intensityCounts = {
+        low: logs?.filter(l => l.intensity === 'low').length || 0,
+        medium: logs?.filter(l => l.intensity === 'medium').length || 0,
+        high: logs?.filter(l => l.intensity === 'high').length || 0
+      };
+
+      console.log('[teams-api] Training stats calculated');
+      return new Response(
+        JSON.stringify({
+          stats: {
+            period_days: days,
+            total_sessions: totalSessions,
+            total_minutes: totalMinutes,
+            average_duration: totalSessions > 0 ? Math.round(totalMinutes / totalSessions) : 0,
+            intensity_breakdown: intensityCounts
+          }
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // DELETE /training/:logId - Delete a training log
+    const deleteTrainingMatch = path.match(/^\/training\/([a-f0-9-]+)$/);
+    if (deleteTrainingMatch && req.method === 'DELETE') {
+      const logId = deleteTrainingMatch[1];
+      console.log(`[teams-api] Deleting training log: ${logId}`);
+
+      const { error: deleteError } = await supabase
+        .from('training_logs')
+        .delete()
+        .eq('id', logId)
+        .eq('user_id', userId);
+
+      if (deleteError) {
+        console.error('[teams-api] Error deleting training log:', deleteError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to delete training log' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[teams-api] Training log deleted');
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // 404 for unknown routes
     console.log(`[teams-api] Unknown route: ${path}`);
     return new Response(
@@ -333,7 +578,12 @@ Deno.serve(async (req) => {
           'GET /teams/:teamId - Get team details',
           'GET /teams/:teamId/roster - Get team roster',
           'GET /profile - Get your profile',
-          'GET /player/:userId - Get player info (coaches only)'
+          'GET /player/:userId - Get player info (coaches only)',
+          'POST /training - Log a training session',
+          'GET /training - Get your training logs',
+          'GET /training/stats - Get your training statistics',
+          'GET /training/team/:teamId - Get team training logs (coaches only)',
+          'DELETE /training/:logId - Delete a training log'
         ]
       }),
       { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
