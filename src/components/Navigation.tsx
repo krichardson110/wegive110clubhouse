@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Car, LogIn, LogOut } from "lucide-react";
+import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Car, LogIn, LogOut, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
@@ -10,7 +10,7 @@ const navItems = [
   { name: "Workouts", href: "/workouts", icon: Dumbbell },
   { name: "Schedule", href: "/schedule", icon: Calendar },
   { name: "Videos", href: "/videos", icon: Video },
-  { name: "Zoom Calls", href: "/zoom", icon: Users },
+  { name: "Return & Report", href: "/return-report", icon: MessageSquare },
   { name: "Playbook", href: "/playbook", icon: BookOpen },
   { name: "Drive 5", href: "https://wegive110.com", icon: Car, external: true },
 ];
