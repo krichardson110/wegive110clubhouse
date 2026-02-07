@@ -829,6 +829,39 @@ export type Database = {
           },
         ]
       }
+      user_activity_logs: {
+        Row: {
+          created_at: string
+          id: string
+          left_at: string | null
+          page_path: string
+          page_title: string | null
+          time_spent_seconds: number | null
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          left_at?: string | null
+          page_path: string
+          page_title?: string | null
+          time_spent_seconds?: number | null
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          left_at?: string | null
+          page_path?: string
+          page_title?: string | null
+          time_spent_seconds?: number | null
+          user_id?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           awarded_at: string

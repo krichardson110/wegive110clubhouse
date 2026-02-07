@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { useActivityTracker } from "./hooks/useActivityTracker";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
@@ -29,6 +30,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Activity tracker wrapper - must be inside BrowserRouter
+const ActivityTracker = ({ children }: { children: React.ReactNode }) => {
+  useActivityTracker();
+  return <>{children}</>;
+};
+
 // Root route handler - redirects based on auth state
 const RootRedirect = () => {
   const { user, loading } = useAuth();
@@ -51,30 +58,32 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="/landing" element={<Landing />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/workouts" element={<ProtectedRoute><Workouts /></ProtectedRoute>} />
-            <Route path="/workouts/admin" element={<ProtectedRoute><WorkoutsAdmin /></ProtectedRoute>} />
-            <Route path="/videos" element={<ProtectedRoute><Videos /></ProtectedRoute>} />
-            <Route path="/videos/admin" element={<ProtectedRoute><VideosAdmin /></ProtectedRoute>} />
-            <Route path="/playbook" element={<ProtectedRoute><Playbook /></ProtectedRoute>} />
-            <Route path="/playbook/admin" element={<ProtectedRoute><PlaybookAdmin /></ProtectedRoute>} />
-            <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
-            <Route path="/schedule/admin" element={<ProtectedRoute><ScheduleAdmin /></ProtectedRoute>} />
-            <Route path="/return-report" element={<ProtectedRoute><ReturnReport /></ProtectedRoute>} />
-            <Route path="/return-report/admin" element={<ProtectedRoute><ReturnReportAdmin /></ProtectedRoute>} />
-            <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
-            <Route path="/community/badges" element={<ProtectedRoute><BadgesAdmin /></ProtectedRoute>} />
-            <Route path="/teams" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
-            <Route path="/teams/join" element={<JoinTeam />} />
-            <Route path="/teams/:teamId" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/admin" element={<Admin />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <ActivityTracker>
+            <Routes>
+              <Route path="/" element={<RootRedirect />} />
+              <Route path="/landing" element={<Landing />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/workouts" element={<ProtectedRoute><Workouts /></ProtectedRoute>} />
+              <Route path="/workouts/admin" element={<ProtectedRoute><WorkoutsAdmin /></ProtectedRoute>} />
+              <Route path="/videos" element={<ProtectedRoute><Videos /></ProtectedRoute>} />
+              <Route path="/videos/admin" element={<ProtectedRoute><VideosAdmin /></ProtectedRoute>} />
+              <Route path="/playbook" element={<ProtectedRoute><Playbook /></ProtectedRoute>} />
+              <Route path="/playbook/admin" element={<ProtectedRoute><PlaybookAdmin /></ProtectedRoute>} />
+              <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
+              <Route path="/schedule/admin" element={<ProtectedRoute><ScheduleAdmin /></ProtectedRoute>} />
+              <Route path="/return-report" element={<ProtectedRoute><ReturnReport /></ProtectedRoute>} />
+              <Route path="/return-report/admin" element={<ProtectedRoute><ReturnReportAdmin /></ProtectedRoute>} />
+              <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+              <Route path="/community/badges" element={<ProtectedRoute><BadgesAdmin /></ProtectedRoute>} />
+              <Route path="/teams" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
+              <Route path="/teams/join" element={<JoinTeam />} />
+              <Route path="/teams/:teamId" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/admin" element={<Admin />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ActivityTracker>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
