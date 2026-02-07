@@ -20,8 +20,13 @@ const TeamPage = () => {
   const { teamId } = useParams<{ teamId: string }>();
   const { user } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
-  const { members, isLoading: membersLoading, removeMember } = useTeamMembers(teamId);
-  const { invitations, createInvitation, deleteInvitation, isCreating } = useTeamInvitations(teamId, team?.name);
+  const { members, isLoading: membersLoading, removeMember, refetch: refetchMembers } = useTeamMembers(teamId);
+  const { invitations, createInvitation, deleteInvitation, isCreating, refetch: refetchInvitations } = useTeamInvitations(teamId, team?.name);
+
+  const handleInvitationApproved = () => {
+    refetchInvitations();
+    refetchMembers();
+  };
   
   const [inviteFormOpen, setInviteFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("feed");
@@ -148,6 +153,7 @@ const TeamPage = () => {
                   <PendingInvitations
                     invitations={invitations}
                     onCancel={deleteInvitation}
+                    onApproved={handleInvitationApproved}
                   />
                 )}
                 <TeamRoster
