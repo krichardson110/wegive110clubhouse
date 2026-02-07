@@ -58,7 +58,18 @@ export interface PostComment {
   post_id: string;
   user_id: string;
   content: string;
+  parent_comment_id: string | null;
+  likes_count: number;
   created_at: string;
   updated_at: string;
   profile?: Profile;
+  user_has_liked?: boolean;
+  replies?: PostComment[];
+}
+
+export interface CommentLike {
+  id: string;
+  comment_id: string;
+  user_id: string;
+  created_at: string;
 }
