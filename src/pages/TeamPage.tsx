@@ -159,7 +159,7 @@ const TeamPage = () => {
               </TabsContent>
 
               <TabsContent value="schedule">
-                <TeamSchedule isCoach={isCoach} />
+                <TeamSchedule isCoach={isCoach} teamId={teamId} />
               </TabsContent>
             </Tabs>
           </div>

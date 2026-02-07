@@ -369,6 +369,7 @@ export type Database = {
           notes: string | null
           opponent: string | null
           published: boolean
+          team_id: string | null
           title: string
           updated_at: string
         }
@@ -384,6 +385,7 @@ export type Database = {
           notes?: string | null
           opponent?: string | null
           published?: boolean
+          team_id?: string | null
           title: string
           updated_at?: string
         }
@@ -399,10 +401,19 @@ export type Database = {
           notes?: string | null
           opponent?: string | null
           published?: boolean
+          team_id?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "schedule_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_events: {
         Row: {

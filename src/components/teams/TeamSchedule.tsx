@@ -13,11 +13,17 @@ import { cn } from "@/lib/utils";
 
 interface TeamScheduleProps {
   isCoach: boolean;
+  teamId?: string;
 }
 
-const TeamSchedule = ({ isCoach }: TeamScheduleProps) => {
+const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
   const { upcomingEvents, isLoading, createEvent, isCreating } = useTeamEvents();
   const [showEventForm, setShowEventForm] = useState(false);
+
+  // Filter events to show only team-specific or organization-wide events
+  const teamEvents = upcomingEvents.filter(
+    event => !event.team_id || event.team_id === teamId
+  );
 
   const handleCreateEvent = (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
     createEvent(data, {
@@ -55,9 +61,9 @@ const TeamSchedule = ({ isCoach }: TeamScheduleProps) => {
           )}
         </CardHeader>
         <CardContent>
-          {upcomingEvents.length > 0 ? (
+          {teamEvents.length > 0 ? (
             <div className="space-y-4">
-              {upcomingEvents.map((event) => {
+              {teamEvents.map((event) => {
                 const eventDate = new Date(event.event_date + "T00:00:00");
                 const isEventToday = isToday(eventDate);
                 
@@ -121,6 +127,8 @@ const TeamSchedule = ({ isCoach }: TeamScheduleProps) => {
             onSubmit={handleCreateEvent}
             onCancel={() => setShowEventForm(false)}
             isLoading={isCreating}
+            defaultTeamId={teamId}
+            showTeamSelector={true}
           />
         </DialogContent>
       </Dialog>
