@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const resend = new Resend(resendApiKey);
+    const resend = new Resend(resendApiKey.trim());
 
     // Build the invite URL
     const appUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://wegive110clubhouse.lovable.app';
