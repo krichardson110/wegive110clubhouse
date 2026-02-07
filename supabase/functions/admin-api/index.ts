@@ -92,6 +92,8 @@ Deno.serve(async (req) => {
 
       const users = authData.users || [];
       const userIds = users.map(u => u.id);
+      
+      console.log(`[admin-api] Found ${users.length} auth users:`, users.map(u => ({ id: u.id, email: u.email })));
 
       // Get profiles for all users
       const { data: profiles } = await supabaseAdmin
@@ -104,7 +106,7 @@ Deno.serve(async (req) => {
       // Get team memberships for all users
       const { data: memberships } = await supabaseAdmin
         .from('team_members')
-        .select('user_id, team_id, role, status, teams(name)')
+        .select('user_id, team_id, role, status, player_name, teams(name)')
         .in('user_id', userIds);
 
       const membershipMap = new Map<string, any[]>();
@@ -115,20 +117,30 @@ Deno.serve(async (req) => {
         membershipMap.get(m.user_id)?.push(m);
       });
 
-      // Combine data
-      let enrichedUsers = users.map(user => ({
-        id: user.id,
-        email: user.email,
-        email_confirmed_at: user.email_confirmed_at,
-        created_at: user.created_at,
-        last_sign_in_at: user.last_sign_in_at,
-        is_super_admin: user.email === SUPER_ADMIN_EMAIL,
-        profile: profileMap.get(user.id) || null,
-        team_memberships: membershipMap.get(user.id) || [],
-        user_type: user.email === SUPER_ADMIN_EMAIL 
-          ? 'Super Admin' 
-          : (membershipMap.get(user.id)?.some(m => m.role === 'coach') ? 'Coach' : 'Player')
-      }));
+      // Combine data - use email username as fallback display name
+      let enrichedUsers = users.map(user => {
+        const profile = profileMap.get(user.id);
+        const userMemberships = membershipMap.get(user.id) || [];
+        // Try to get display name from: profile, team_member.player_name, or email prefix
+        const displayName = profile?.display_name 
+          || userMemberships.find(m => m.player_name)?.player_name
+          || user.email?.split('@')[0] 
+          || null;
+        
+        return {
+          id: user.id,
+          email: user.email,
+          email_confirmed_at: user.email_confirmed_at,
+          created_at: user.created_at,
+          last_sign_in_at: user.last_sign_in_at,
+          is_super_admin: user.email === SUPER_ADMIN_EMAIL,
+          profile: profile ? { ...profile, display_name: displayName } : { display_name: displayName },
+          team_memberships: userMemberships,
+          user_type: user.email === SUPER_ADMIN_EMAIL 
+            ? 'Super Admin' 
+            : (userMemberships.some(m => m.role === 'coach') ? 'Coach' : 'Player')
+        };
+      });
 
       // Filter by search if provided
       if (search) {
@@ -139,11 +151,19 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log(`[admin-api] Found ${enrichedUsers.length} users`);
+      // Get pending invitations count for context
+      const { count: pendingInvites } = await supabaseAdmin
+        .from('team_invitations')
+        .select('id', { count: 'exact', head: true })
+        .is('accepted_at', null)
+        .gt('expires_at', new Date().toISOString());
+
+      console.log(`[admin-api] Returning ${enrichedUsers.length} users, ${pendingInvites || 0} pending invites`);
       return new Response(
         JSON.stringify({ 
           users: enrichedUsers,
           total: authData.total || users.length,
+          pending_invitations: pendingInvites || 0,
           page,
           per_page: perPage
         }),
