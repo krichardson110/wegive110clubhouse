@@ -355,6 +355,173 @@ Deno.serve(async (req) => {
       );
     }
 
+    // GET /teams - List all teams with member counts
+    if (path === '/teams' && req.method === 'GET') {
+      console.log('[admin-api] Fetching all teams');
+
+      const { data: teams, error: teamsError } = await supabaseAdmin
+        .from('teams')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (teamsError) {
+        console.error('[admin-api] Error fetching teams:', teamsError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch teams' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get member counts and coach info for each team
+      const teamsWithDetails = await Promise.all((teams || []).map(async (team) => {
+        const { data: members } = await supabaseAdmin
+          .from('team_members')
+          .select('id, role, status')
+          .eq('team_id', team.id)
+          .eq('status', 'active');
+
+        const coaches = members?.filter(m => m.role === 'coach').length || 0;
+        const players = members?.filter(m => m.role === 'player').length || 0;
+        const parents = members?.filter(m => m.role === 'parent').length || 0;
+
+        return {
+          ...team,
+          member_counts: {
+            total: members?.length || 0,
+            coaches,
+            players,
+            parents
+          }
+        };
+      }));
+
+      console.log(`[admin-api] Found ${teamsWithDetails.length} teams`);
+      return new Response(
+        JSON.stringify({ teams: teamsWithDetails }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // GET /teams/:teamId - Get team details with full roster
+    const teamDetailMatch = path.match(/^\/teams\/([a-f0-9-]+)$/);
+    if (teamDetailMatch && req.method === 'GET') {
+      const teamId = teamDetailMatch[1];
+      console.log(`[admin-api] Fetching team details: ${teamId}`);
+
+      // Get team
+      const { data: team, error: teamError } = await supabaseAdmin
+        .from('teams')
+        .select('*')
+        .eq('id', teamId)
+        .single();
+
+      if (teamError || !team) {
+        return new Response(
+          JSON.stringify({ error: 'Team not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get all team members
+      const { data: members } = await supabaseAdmin
+        .from('team_members')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('role')
+        .order('player_name');
+
+      // Get user profiles and emails for all members
+      const userIds = members?.map(m => m.user_id) || [];
+      
+      const [profilesResult, usersResult] = await Promise.all([
+        supabaseAdmin.from('profiles').select('*').in('user_id', userIds),
+        Promise.all(userIds.map(uid => 
+          supabaseAdmin.auth.admin.getUserById(uid).then(r => r.data?.user)
+        ))
+      ]);
+
+      const profileMap = new Map(profilesResult.data?.map(p => [p.user_id, p]) || []);
+      const userMap = new Map(usersResult.filter(Boolean).map(u => [u!.id, u]));
+
+      const enrichedMembers = (members || []).map(member => ({
+        ...member,
+        profile: profileMap.get(member.user_id) || null,
+        email: userMap.get(member.user_id)?.email || null,
+        last_sign_in_at: userMap.get(member.user_id)?.last_sign_in_at || null
+      }));
+
+      // Get pending invitations
+      const { data: invitations } = await supabaseAdmin
+        .from('team_invitations')
+        .select('*')
+        .eq('team_id', teamId)
+        .is('accepted_at', null)
+        .gt('expires_at', new Date().toISOString());
+
+      return new Response(
+        JSON.stringify({
+          team,
+          members: enrichedMembers,
+          pending_invitations: invitations || []
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // DELETE /teams/:teamId - Delete a team
+    const deleteTeamMatch = path.match(/^\/teams\/([a-f0-9-]+)$/);
+    if (deleteTeamMatch && req.method === 'DELETE') {
+      const teamId = deleteTeamMatch[1];
+      console.log(`[admin-api] Deleting team: ${teamId}`);
+
+      const { error: deleteError } = await supabaseAdmin
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
+
+      if (deleteError) {
+        console.error('[admin-api] Error deleting team:', deleteError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to delete team', details: deleteError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[admin-api] Team deleted successfully');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Team deleted successfully' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // DELETE /teams/:teamId/members/:memberId - Remove a team member
+    const removeMemberMatch = path.match(/^\/teams\/([a-f0-9-]+)\/members\/([a-f0-9-]+)$/);
+    if (removeMemberMatch && req.method === 'DELETE') {
+      const teamId = removeMemberMatch[1];
+      const memberId = removeMemberMatch[2];
+      console.log(`[admin-api] Removing member ${memberId} from team ${teamId}`);
+
+      const { error: deleteError } = await supabaseAdmin
+        .from('team_members')
+        .delete()
+        .eq('id', memberId)
+        .eq('team_id', teamId);
+
+      if (deleteError) {
+        console.error('[admin-api] Error removing member:', deleteError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to remove member', details: deleteError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[admin-api] Member removed successfully');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Member removed successfully' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Route not found
     console.log(`[admin-api] Route not found: ${req.method} ${path}`);
     return new Response(
