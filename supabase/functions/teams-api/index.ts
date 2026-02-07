@@ -567,6 +567,176 @@ Deno.serve(async (req) => {
       );
     }
 
+    // POST /invitations/:invitationId/approve - Coach approves/overrides an invitation
+    const approveInviteMatch = path.match(/^\/invitations\/([a-f0-9-]+)\/approve$/);
+    if (approveInviteMatch && req.method === 'POST') {
+      const invitationId = approveInviteMatch[1];
+      console.log(`[teams-api] Approving invitation: ${invitationId}`);
+
+      const body = await req.json();
+      const { temporary_password } = body;
+
+      if (!temporary_password || temporary_password.length < 6) {
+        return new Response(
+          JSON.stringify({ error: 'Temporary password must be at least 6 characters' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get the invitation
+      const { data: invitation, error: inviteError } = await supabase
+        .from('team_invitations')
+        .select('*')
+        .eq('id', invitationId)
+        .is('accepted_at', null)
+        .maybeSingle();
+
+      if (inviteError || !invitation) {
+        console.error('[teams-api] Invitation not found:', inviteError);
+        return new Response(
+          JSON.stringify({ error: 'Invitation not found or already accepted' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verify user is a coach of this team
+      const { data: membership } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', invitation.team_id)
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (!membership || membership.role !== 'coach') {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden', message: 'Only coaches can approve invitations' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Create admin client for user creation
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      // Check if user already exists
+      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+      const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === invitation.email.toLowerCase());
+
+      let targetUserId: string;
+
+      if (existingUser) {
+        console.log(`[teams-api] User already exists: ${existingUser.id}`);
+        targetUserId = existingUser.id;
+
+        // Update their password
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+          password: temporary_password,
+          email_confirm: true
+        });
+
+        if (updateError) {
+          console.error('[teams-api] Error updating user password:', updateError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to set temporary password', details: updateError.message }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else {
+        // Create new user
+        console.log(`[teams-api] Creating new user: ${invitation.email}`);
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: invitation.email,
+          password: temporary_password,
+          email_confirm: true,
+          user_metadata: {
+            invited_by_coach: true,
+            player_name: invitation.player_name
+          }
+        });
+
+        if (createError) {
+          console.error('[teams-api] Error creating user:', createError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create user account', details: createError.message }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        targetUserId = newUser.user.id;
+      }
+
+      // Create or update profile with force_password_change flag
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .upsert({
+          user_id: targetUserId,
+          display_name: invitation.player_name || invitation.email.split('@')[0],
+          force_password_change: true,
+          temp_password_set_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (profileError) {
+        console.error('[teams-api] Error creating/updating profile:', profileError);
+        // Continue anyway - profile can be created later
+      }
+
+      // Check if already a team member
+      const { data: existingMember } = await supabaseAdmin
+        .from('team_members')
+        .select('id')
+        .eq('team_id', invitation.team_id)
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+
+      if (!existingMember) {
+        // Add to team
+        const { error: memberError } = await supabaseAdmin
+          .from('team_members')
+          .insert({
+            team_id: invitation.team_id,
+            user_id: targetUserId,
+            role: invitation.invite_type === 'coach' ? 'coach' : invitation.invite_type === 'parent' ? 'parent' : 'player',
+            player_name: invitation.player_name,
+            status: 'active',
+            joined_at: new Date().toISOString()
+          });
+
+        if (memberError) {
+          console.error('[teams-api] Error adding team member:', memberError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to add user to team', details: memberError.message }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      // Mark invitation as accepted
+      const { error: acceptError } = await supabaseAdmin
+        .from('team_invitations')
+        .update({ accepted_at: new Date().toISOString() })
+        .eq('id', invitationId);
+
+      if (acceptError) {
+        console.error('[teams-api] Error marking invitation as accepted:', acceptError);
+        // Continue anyway - the important parts are done
+      }
+
+      console.log(`[teams-api] Invitation approved, user ${targetUserId} added to team`);
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Invitation approved and user added to team',
+          user_id: targetUserId,
+          requires_password_change: true
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // 404 for unknown routes
     console.log(`[teams-api] Unknown route: ${path}`);
     return new Response(
@@ -583,7 +753,8 @@ Deno.serve(async (req) => {
           'GET /training - Get your training logs',
           'GET /training/stats - Get your training statistics',
           'GET /training/team/:teamId - Get team training logs (coaches only)',
-          'DELETE /training/:logId - Delete a training log'
+          'DELETE /training/:logId - Delete a training log',
+          'POST /invitations/:invitationId/approve - Approve invitation with temp password (coaches only)'
         ]
       }),
       { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

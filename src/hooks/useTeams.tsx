@@ -278,5 +278,6 @@ export function useTeamMembers(teamId: string | undefined) {
     coaches: membersQuery.data?.filter(m => m.role === "coach") || [],
     players: membersQuery.data?.filter(m => m.role === "player") || [],
     parents: membersQuery.data?.filter(m => m.role === "parent") || [],
+    refetch: () => queryClient.invalidateQueries({ queryKey: ["team-members", teamId] }),
   };
 }

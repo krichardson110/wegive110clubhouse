@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useActivityTracker } from "./hooks/useActivityTracker";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ForcePasswordChange from "./components/auth/ForcePasswordChange";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Workouts from "./pages/Workouts";
@@ -36,6 +37,26 @@ const ActivityTracker = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Force password change wrapper
+const ForcePasswordWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { user, forcePasswordChange, clearForcePasswordChange, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  
+  // If user is logged in and needs to change password, show the password change screen
+  if (user && forcePasswordChange) {
+    return <ForcePasswordChange onComplete={clearForcePasswordChange} />;
+  }
+  
+  return <>{children}</>;
+};
+
 // Root route handler - redirects based on auth state
 const RootRedirect = () => {
   const { user, loading } = useAuth();
@@ -58,32 +79,34 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <ActivityTracker>
-            <Routes>
-              <Route path="/" element={<RootRedirect />} />
-              <Route path="/landing" element={<Landing />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/workouts" element={<ProtectedRoute><Workouts /></ProtectedRoute>} />
-              <Route path="/workouts/admin" element={<ProtectedRoute><WorkoutsAdmin /></ProtectedRoute>} />
-              <Route path="/videos" element={<ProtectedRoute><Videos /></ProtectedRoute>} />
-              <Route path="/videos/admin" element={<ProtectedRoute><VideosAdmin /></ProtectedRoute>} />
-              <Route path="/playbook" element={<ProtectedRoute><Playbook /></ProtectedRoute>} />
-              <Route path="/playbook/admin" element={<ProtectedRoute><PlaybookAdmin /></ProtectedRoute>} />
-              <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
-              <Route path="/schedule/admin" element={<ProtectedRoute><ScheduleAdmin /></ProtectedRoute>} />
-              <Route path="/return-report" element={<ProtectedRoute><ReturnReport /></ProtectedRoute>} />
-              <Route path="/return-report/admin" element={<ProtectedRoute><ReturnReportAdmin /></ProtectedRoute>} />
-              <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
-              <Route path="/community/badges" element={<ProtectedRoute><BadgesAdmin /></ProtectedRoute>} />
-              <Route path="/teams" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
-              <Route path="/teams/join" element={<JoinTeam />} />
-              <Route path="/teams/:teamId" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/admin" element={<Admin />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ActivityTracker>
+          <ForcePasswordWrapper>
+            <ActivityTracker>
+              <Routes>
+                <Route path="/" element={<RootRedirect />} />
+                <Route path="/landing" element={<Landing />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/workouts" element={<ProtectedRoute><Workouts /></ProtectedRoute>} />
+                <Route path="/workouts/admin" element={<ProtectedRoute><WorkoutsAdmin /></ProtectedRoute>} />
+                <Route path="/videos" element={<ProtectedRoute><Videos /></ProtectedRoute>} />
+                <Route path="/videos/admin" element={<ProtectedRoute><VideosAdmin /></ProtectedRoute>} />
+                <Route path="/playbook" element={<ProtectedRoute><Playbook /></ProtectedRoute>} />
+                <Route path="/playbook/admin" element={<ProtectedRoute><PlaybookAdmin /></ProtectedRoute>} />
+                <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
+                <Route path="/schedule/admin" element={<ProtectedRoute><ScheduleAdmin /></ProtectedRoute>} />
+                <Route path="/return-report" element={<ProtectedRoute><ReturnReport /></ProtectedRoute>} />
+                <Route path="/return-report/admin" element={<ProtectedRoute><ReturnReportAdmin /></ProtectedRoute>} />
+                <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+                <Route path="/community/badges" element={<ProtectedRoute><BadgesAdmin /></ProtectedRoute>} />
+                <Route path="/teams" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
+                <Route path="/teams/join" element={<JoinTeam />} />
+                <Route path="/teams/:teamId" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/admin" element={<Admin />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ActivityTracker>
+          </ForcePasswordWrapper>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

@@ -125,6 +125,7 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
     createInvitation: createInvitationMutation.mutate,
     deleteInvitation: deleteInvitationMutation.mutate,
     isCreating: createInvitationMutation.isPending,
+    refetch: () => queryClient.invalidateQueries({ queryKey: ["team-invitations", teamId] }),
   };
 }
 

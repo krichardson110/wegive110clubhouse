@@ -297,9 +297,11 @@ export type Database = {
           comments_count: number
           created_at: string
           display_name: string | null
+          force_password_change: boolean | null
           id: string
           likes_given_count: number
           posts_count: number
+          temp_password_set_at: string | null
           updated_at: string
           user_id: string
         }
@@ -309,9 +311,11 @@ export type Database = {
           comments_count?: number
           created_at?: string
           display_name?: string | null
+          force_password_change?: boolean | null
           id?: string
           likes_given_count?: number
           posts_count?: number
+          temp_password_set_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -321,9 +325,11 @@ export type Database = {
           comments_count?: number
           created_at?: string
           display_name?: string | null
+          force_password_change?: boolean | null
           id?: string
           likes_given_count?: number
           posts_count?: number
+          temp_password_set_at?: string | null
           updated_at?: string
           user_id?: string
         }

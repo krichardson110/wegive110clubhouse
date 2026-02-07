@@ -7,6 +7,8 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isSuperAdmin: boolean;
+  forcePasswordChange: boolean;
+  clearForcePasswordChange: () => void;
   signOut: () => Promise<void>;
 }
 
@@ -17,6 +19,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [forcePasswordChange, setForcePasswordChange] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -25,13 +28,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check super admin status
+        // Check super admin status and force password change
         if (session?.user) {
           setTimeout(() => {
             checkSuperAdmin();
+            checkForcePasswordChange(session.user.id);
           }, 0);
         } else {
           setIsSuperAdmin(false);
+          setForcePasswordChange(false);
         }
         
         setLoading(false);
@@ -45,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (session?.user) {
         checkSuperAdmin();
+        checkForcePasswordChange(session.user.id);
       }
       
       setLoading(false);
@@ -65,15 +71,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const checkForcePasswordChange = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('force_password_change')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (!error && data) {
+        setForcePasswordChange(data.force_password_change === true);
+      } else {
+        setForcePasswordChange(false);
+      }
+    } catch (e) {
+      console.error('Error checking force password change:', e);
+      setForcePasswordChange(false);
+    }
+  };
+
+  const clearForcePasswordChange = () => {
+    setForcePasswordChange(false);
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setIsSuperAdmin(false);
+    setForcePasswordChange(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isSuperAdmin, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      isSuperAdmin, 
+      forcePasswordChange,
+      clearForcePasswordChange,
+      signOut 
+    }}>
       {children}
     </AuthContext.Provider>
   );
