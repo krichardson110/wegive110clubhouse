@@ -3,13 +3,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Trash2, Pencil, Send, X, Check, CornerDownRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import MentionInput from "./MentionInput";
+import MentionText from "./MentionText";
 import type { PostComment } from "@/types/community";
 
 interface CommentItemProps {
@@ -224,7 +225,7 @@ const CommentItem = ({
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-foreground break-words">{comment.content}</p>
+              <MentionText text={comment.content} className="text-sm text-foreground" />
             )}
           </div>
           
@@ -266,11 +267,12 @@ const CommentItem = ({
           {/* Reply form */}
           {isShowingReplyForm && user && (
             <form onSubmit={handleReplySubmit} className="flex gap-2 mt-2">
-              <Input
-                placeholder={`Reply to ${displayName}...`}
+              <MentionInput
                 value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                className="flex-1 bg-secondary/30 text-sm h-8"
+                onChange={setReplyContent}
+                onSubmit={() => replyContent.trim() && addReply.mutate()}
+                placeholder={`Reply to ${displayName}... Use @ to mention`}
+                className="h-8 text-sm"
                 autoFocus
               />
               <Button 
