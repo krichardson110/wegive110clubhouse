@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CommentItem from "./CommentItem";
+import MentionInput from "./MentionInput";
 import type { PostComment, Profile } from "@/types/community";
 
 interface CommentsSectionProps {
@@ -144,11 +144,11 @@ const CommentsSection = ({ postId }: CommentsSectionProps) => {
       {/* Add comment form */}
       {user && (
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
-            placeholder="Write a comment..."
+          <MentionInput
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="flex-1 bg-secondary/30"
+            onChange={setNewComment}
+            onSubmit={() => newComment.trim() && addComment.mutate()}
+            placeholder="Write a comment... Use @ to mention"
           />
           <Button type="submit" size="icon" disabled={!newComment.trim() || addComment.isPending}>
             <Send className="w-4 h-4" />
