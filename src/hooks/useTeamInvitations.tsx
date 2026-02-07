@@ -4,7 +4,7 @@ import { useAuth } from "./useAuth";
 import { useToast } from "./use-toast";
 import type { TeamInvitation } from "@/types/team";
 
-export function useTeamInvitations(teamId: string | undefined) {
+export function useTeamInvitations(teamId: string | undefined, teamName?: string) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -35,6 +35,7 @@ export function useTeamInvitations(teamId: string | undefined) {
     }) => {
       if (!teamId || !user) throw new Error("Missing required data");
       
+      // First create the invitation in the database
       const { data, error } = await supabase
         .from("team_invitations")
         .insert({
@@ -48,10 +49,40 @@ export function useTeamInvitations(teamId: string | undefined) {
         .single();
       
       if (error) throw error;
+
+      // Get the user's profile for the inviter name
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const inviterName = profile?.display_name || user.email?.split('@')[0] || 'Your coach';
+
+      // Now send the invitation email
+      const { data: session } = await supabase.auth.getSession();
+      const response = await supabase.functions.invoke('send-team-invite', {
+        body: {
+          invitation_id: data.id,
+          team_name: teamName || 'the team',
+          inviter_name: inviterName,
+        },
+      });
+
+      if (response.error) {
+        console.error("Failed to send invitation email:", response.error);
+        // Don't throw - the invitation was created, just the email failed
+        toast({ 
+          title: "Invitation created but email failed to send", 
+          description: "You can share the invite link manually.",
+          variant: "destructive" 
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
-      toast({ title: "Invitation created! Share the invite link with them." });
+      toast({ title: "Invitation sent successfully!" });
       queryClient.invalidateQueries({ queryKey: ["team-invitations", teamId] });
     },
     onError: (error: Error) => {
