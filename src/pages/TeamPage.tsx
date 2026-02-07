@@ -10,9 +10,9 @@ import PendingInvitations from "@/components/teams/PendingInvitations";
 import InvitePlayerForm from "@/components/teams/InvitePlayerForm";
 import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
+import TeamSchedule from "@/components/teams/TeamSchedule";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings } from "lucide-react";
 
@@ -159,22 +159,7 @@ const TeamPage = () => {
               </TabsContent>
 
               <TabsContent value="schedule">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Team Schedule</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No upcoming events scheduled.</p>
-                      {isCoach && (
-                        <Button variant="outline" className="mt-4">
-                          Add Event
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                <TeamSchedule isCoach={isCoach} />
               </TabsContent>
             </Tabs>
           </div>
