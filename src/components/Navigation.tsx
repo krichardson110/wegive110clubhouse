@@ -1,9 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Car, LogIn, LogOut, MessageSquare, ChevronDown, Trophy } from "lucide-react";
+import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Car, LogIn, LogOut, MessageSquare, ChevronDown, Trophy, Shield } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
 import { useAuth } from "@/hooks/useAuth";
+
+const SUPER_ADMIN_EMAIL = 'krichardson@wegive110.com';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -147,6 +149,17 @@ const Navigation = () => {
             {/* External links */}
             {externalItems.map((item) => renderNavLink(item))}
             
+            {/* Admin Portal Link - Super Admin Only */}
+            {!loading && user && user.email === SUPER_ADMIN_EMAIL && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 bg-primary/10 text-primary hover:bg-primary/20"
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            )}
+            
             {/* Auth Button */}
             {!loading && (
               user ? (
@@ -210,6 +223,18 @@ const Navigation = () => {
               <span className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">External</span>
             </div>
             {externalItems.map((item) => renderNavLink(item, () => setMobileMenuOpen(false)))}
+            
+            {/* Admin Portal Link - Mobile */}
+            {!loading && user && user.email === SUPER_ADMIN_EMAIL && (
+              <Link
+                to="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-300 bg-primary/10 text-primary hover:bg-primary/20"
+              >
+                <Shield className="w-5 h-5" />
+                Admin Portal
+              </Link>
+            )}
             
             {/* Mobile Auth Button */}
             {!loading && (
