@@ -14,10 +14,12 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Loader2, Shield, Users, Activity, MessageSquare, 
   Search, RefreshCw, Key, Mail, Trash2, Eye,
-  LogOut, Home, ChevronLeft, ChevronRight, UsersRound
+  LogOut, Home, ChevronLeft, ChevronRight, UsersRound, Award, BarChart3
 } from 'lucide-react';
 import clubhouseLogo from '@/assets/clubhouse-logo.png';
 import TeamManagement from './TeamManagement';
+import ActivityLogsManager from './ActivityLogsManager';
+import UserBadgeManager from './UserBadgeManager';
 
 interface UserData {
   id: string;
@@ -366,7 +368,7 @@ const AdminDashboard = () => {
 
         {/* Management Tabs */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Users
@@ -374,6 +376,14 @@ const AdminDashboard = () => {
             <TabsTrigger value="teams" className="flex items-center gap-2">
               <UsersRound className="w-4 h-4" />
               Teams
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Activity
+            </TabsTrigger>
+            <TabsTrigger value="badges" className="flex items-center gap-2">
+              <Award className="w-4 h-4" />
+              Badges
             </TabsTrigger>
           </TabsList>
 
@@ -562,6 +572,30 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <TeamManagement />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="activity">
+            <Card>
+              <CardHeader>
+                <CardTitle>Activity Tracking</CardTitle>
+                <CardDescription>Monitor user engagement across the platform</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ActivityLogsManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="badges">
+            <Card>
+              <CardHeader>
+                <CardTitle>Badge Management</CardTitle>
+                <CardDescription>Award and manage user badges</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserBadgeManager />
               </CardContent>
             </Card>
           </TabsContent>
