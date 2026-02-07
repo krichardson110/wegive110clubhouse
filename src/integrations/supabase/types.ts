@@ -358,6 +358,7 @@ export type Database = {
       }
       schedule_events: {
         Row: {
+          attachments: Json | null
           created_at: string
           end_time: string | null
           event_date: string
@@ -374,6 +375,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attachments?: Json | null
           created_at?: string
           end_time?: string | null
           event_date: string
@@ -390,6 +392,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attachments?: Json | null
           created_at?: string
           end_time?: string | null
           event_date?: string

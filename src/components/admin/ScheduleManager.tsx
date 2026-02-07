@@ -10,7 +10,7 @@ import { Plus, Pencil, Trash2, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ScheduleEventForm from "./ScheduleEventForm";
-import { ScheduleEvent, EventType, eventTypeConfig } from "@/types/schedule";
+import { ScheduleEvent, EventType, eventTypeConfig, mapDbToScheduleEvent } from "@/types/schedule";
 
 const ScheduleManager = () => {
   const queryClient = useQueryClient();
@@ -28,13 +28,14 @@ const ScheduleManager = () => {
         .order("event_time", { ascending: true });
 
       if (error) throw error;
-      return data as ScheduleEvent[];
+      return (data || []).map(mapDbToScheduleEvent);
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (eventData: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
-      const { error } = await supabase.from("schedule_events").insert(eventData);
+      const { attachments, ...rest } = eventData;
+      const { error } = await supabase.from("schedule_events").insert({ ...rest, attachments: attachments as any });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -49,8 +50,8 @@ const ScheduleManager = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...data }: ScheduleEvent) => {
-      const { error } = await supabase.from("schedule_events").update(data).eq("id", id);
+    mutationFn: async ({ id, attachments, ...data }: ScheduleEvent) => {
+      const { error } = await supabase.from("schedule_events").update({ ...data, attachments: attachments as any }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

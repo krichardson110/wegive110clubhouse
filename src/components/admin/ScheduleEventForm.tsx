@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ScheduleEvent, EventType, eventTypes, eventTypeConfig } from "@/types/schedule";
+import { ScheduleEvent, EventType, eventTypes, eventTypeConfig, EventAttachment } from "@/types/schedule";
 import { useTeams } from "@/hooks/useTeams";
+import EventAttachmentUpload from "@/components/teams/EventAttachmentUpload";
 
 interface ScheduleEventFormProps {
   event?: ScheduleEvent | null;
@@ -15,6 +16,7 @@ interface ScheduleEventFormProps {
   isLoading?: boolean;
   defaultTeamId?: string;
   showTeamSelector?: boolean;
+  showAttachments?: boolean;
 }
 
 const ScheduleEventForm = ({ 
@@ -24,6 +26,7 @@ const ScheduleEventForm = ({
   isLoading,
   defaultTeamId,
   showTeamSelector = true,
+  showAttachments = false,
 }: ScheduleEventFormProps) => {
   const { teams, isLoading: teamsLoading } = useTeams();
   
@@ -42,6 +45,7 @@ const ScheduleEventForm = ({
     is_home: event?.is_home ?? true,
     published: event?.published ?? true,
     team_id: event?.team_id || defaultTeamId || "",
+    attachments: event?.attachments || [] as EventAttachment[],
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,6 +58,7 @@ const ScheduleEventForm = ({
       notes: formData.notes || null,
       is_home: formData.event_type === "game" ? formData.is_home : null,
       team_id: formData.team_id || null,
+      attachments: formData.attachments.length > 0 ? formData.attachments : null,
     });
   };
 
@@ -194,6 +199,21 @@ const ScheduleEventForm = ({
           rows={3}
         />
       </div>
+
+      {/* Attachments Section */}
+      {showAttachments && (
+        <div className="space-y-2">
+          <Label>Attachments</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Add practice plans, game documents, or other files for your team.
+          </p>
+          <EventAttachmentUpload
+            attachments={formData.attachments}
+            onChange={(attachments) => setFormData({ ...formData, attachments })}
+            disabled={isLoading}
+          />
+        </div>
+      )}
 
       <div className="flex items-center space-x-2">
         <Switch

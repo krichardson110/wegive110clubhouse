@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./useAuth";
 import { useToast } from "./use-toast";
-import { ScheduleEvent } from "@/types/schedule";
+import { ScheduleEvent, mapDbToScheduleEvent } from "@/types/schedule";
 
 export function useTeamEvents() {
   const { toast } = useToast();
@@ -18,15 +17,16 @@ export function useTeamEvents() {
         .order("event_date", { ascending: true });
 
       if (error) throw error;
-      return data as ScheduleEvent[];
+      return (data || []).map(mapDbToScheduleEvent);
     },
   });
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
+      const { attachments, ...rest } = eventData;
       const { data, error } = await supabase
         .from("schedule_events")
-        .insert(eventData)
+        .insert({ ...rest, attachments: attachments as any })
         .select()
         .single();
 
@@ -44,10 +44,10 @@ export function useTeamEvents() {
   });
 
   const updateEventMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<ScheduleEvent> & { id: string }) => {
+    mutationFn: async ({ id, attachments, ...updates }: Partial<ScheduleEvent> & { id: string }) => {
       const { data, error } = await supabase
         .from("schedule_events")
-        .update(updates)
+        .update({ ...updates, attachments: attachments as any })
         .eq("id", id)
         .select()
         .single();

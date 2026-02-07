@@ -1,5 +1,5 @@
-import { Clock, MapPin, Users, ChevronRight } from "lucide-react";
-import { ScheduleEvent, EventType, eventTypeConfig } from "@/types/schedule";
+import { Clock, MapPin, Users, ChevronRight, Paperclip, FileText, Image, File } from "lucide-react";
+import { ScheduleEvent, EventType, eventTypeConfig, EventAttachment } from "@/types/schedule";
 
 interface ScheduleEventCardProps {
   event: ScheduleEvent;
@@ -7,6 +7,13 @@ interface ScheduleEventCardProps {
 
 const ScheduleEventCard = ({ event }: ScheduleEventCardProps) => {
   const config = eventTypeConfig[event.event_type as EventType];
+  const attachments = event.attachments || [];
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <Image className="w-3 h-3" />;
+    if (type.includes("pdf")) return <FileText className="w-3 h-3" />;
+    return <File className="w-3 h-3" />;
+  };
 
   return (
     <div className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:shadow-lg cursor-pointer ${config.bgColor}`}>
@@ -58,6 +65,31 @@ const ScheduleEventCard = ({ event }: ScheduleEventCardProps) => {
         <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/50">
           {event.notes}
         </p>
+      )}
+
+      {/* Attachments */}
+      {attachments.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border/50">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+            <Paperclip className="w-3 h-3" />
+            <span>{attachments.length} attachment{attachments.length > 1 ? "s" : ""}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {attachments.map((attachment: EventAttachment, index: number) => (
+              <a
+                key={index}
+                href={attachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-background/50 hover:bg-background text-xs text-foreground hover:text-primary transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {getFileIcon(attachment.type)}
+                <span className="truncate max-w-[120px]">{attachment.name}</span>
+              </a>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
