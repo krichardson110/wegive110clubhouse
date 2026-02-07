@@ -1,14 +1,24 @@
 import { useState } from "react";
 import { format, isToday } from "date-fns";
-import { Calendar, Plus } from "lucide-react";
+import { Calendar, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ScheduleEventCard from "@/components/ScheduleEventCard";
 import ScheduleEventForm from "@/components/admin/ScheduleEventForm";
 import { useTeamEvents } from "@/hooks/useTeamEvents";
-import { ScheduleEvent, EventType, eventTypeConfig } from "@/types/schedule";
+import { ScheduleEvent, eventTypeConfig } from "@/types/schedule";
 import { cn } from "@/lib/utils";
 
 interface TeamScheduleProps {
@@ -17,8 +27,10 @@ interface TeamScheduleProps {
 }
 
 const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
-  const { upcomingEvents, isLoading, createEvent, isCreating } = useTeamEvents();
+  const { upcomingEvents, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useTeamEvents();
   const [showEventForm, setShowEventForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
 
   // Filter events to show only team-specific or organization-wide events
   const teamEvents = upcomingEvents.filter(
@@ -31,6 +43,40 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
         setShowEventForm(false);
       },
     });
+  };
+
+  const handleUpdateEvent = (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
+    if (!editingEvent) return;
+    updateEvent(
+      { id: editingEvent.id, ...data },
+      {
+        onSuccess: () => {
+          setEditingEvent(null);
+        },
+      }
+    );
+  };
+
+  const handleDeleteEvent = () => {
+    if (!deletingEventId) return;
+    deleteEvent(deletingEventId, {
+      onSuccess: () => {
+        setDeletingEventId(null);
+      },
+    });
+  };
+
+  const handleEditClick = (event: ScheduleEvent) => {
+    setEditingEvent(event);
+  };
+
+  const handleDeleteClick = (eventId: string) => {
+    setDeletingEventId(eventId);
+  };
+
+  // Check if user can edit/delete this event (must be team-specific event, not org-wide)
+  const canModifyEvent = (event: ScheduleEvent) => {
+    return isCoach && event.team_id === teamId;
   };
 
   if (isLoading) {
@@ -66,11 +112,34 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
               {teamEvents.map((event) => {
                 const eventDate = new Date(event.event_date + "T00:00:00");
                 const isEventToday = isToday(eventDate);
+                const canModify = canModifyEvent(event);
                 
                 return (
                   <div key={event.id} className="space-y-2">
-                    <div className="text-sm font-medium text-muted-foreground">
-                      {isEventToday ? "Today" : format(eventDate, "EEEE, MMMM d")}
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-muted-foreground">
+                        {isEventToday ? "Today" : format(eventDate, "EEEE, MMMM d")}
+                      </div>
+                      {canModify && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleEditClick(event)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteClick(event.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <ScheduleEventCard event={event} />
                   </div>
@@ -129,9 +198,50 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
             isLoading={isCreating}
             defaultTeamId={teamId}
             showTeamSelector={true}
+            showAttachments={true}
           />
         </DialogContent>
       </Dialog>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={!!editingEvent} onOpenChange={(open) => !open && setEditingEvent(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Event</DialogTitle>
+          </DialogHeader>
+          <ScheduleEventForm
+            event={editingEvent}
+            onSubmit={handleUpdateEvent}
+            onCancel={() => setEditingEvent(null)}
+            isLoading={isUpdating}
+            defaultTeamId={teamId}
+            showTeamSelector={true}
+            showAttachments={true}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingEventId} onOpenChange={(open) => !open && setDeletingEventId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEvent}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

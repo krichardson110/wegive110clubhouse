@@ -7,7 +7,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ScheduleEventCard from "@/components/ScheduleEventCard";
 import { supabase } from "@/integrations/supabase/client";
-import { ScheduleEvent, EventType, eventTypeConfig } from "@/types/schedule";
+import { ScheduleEvent, EventType, eventTypeConfig, mapDbToScheduleEvent } from "@/types/schedule";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ const Schedule = () => {
         .order("event_date", { ascending: true });
 
       if (error) throw error;
-      return data as ScheduleEvent[];
+      return (data || []).map(mapDbToScheduleEvent);
     },
   });
 

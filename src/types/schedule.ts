@@ -1,4 +1,13 @@
+import { Json } from "@/integrations/supabase/types";
+
 export type EventType = "game" | "practice" | "team-meeting" | "workout" | "off-day";
+
+export interface EventAttachment {
+  name: string;
+  url: string;
+  type: string;
+  size?: number;
+}
 
 export interface ScheduleEvent {
   id: string;
@@ -13,8 +22,23 @@ export interface ScheduleEvent {
   is_home?: boolean | null;
   published: boolean;
   team_id?: string | null;
+  attachments?: EventAttachment[] | null;
   created_at?: string;
   updated_at?: string;
+}
+
+// Helper to parse attachments from database Json type
+export function parseAttachments(json: Json | null | undefined): EventAttachment[] {
+  if (!json || !Array.isArray(json)) return [];
+  return json as unknown as EventAttachment[];
+}
+
+// Helper to map database row to ScheduleEvent
+export function mapDbToScheduleEvent(row: any): ScheduleEvent {
+  return {
+    ...row,
+    attachments: parseAttachments(row.attachments),
+  };
 }
 
 export const eventTypeConfig: Record<EventType, { label: string; color: string; bgColor: string }> = {
