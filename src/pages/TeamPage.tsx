@@ -19,7 +19,7 @@ const TeamPage = () => {
   const { user } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
   const { members, isLoading: membersLoading, removeMember } = useTeamMembers(teamId);
-  const { invitations, createInvitation, deleteInvitation, isCreating } = useTeamInvitations(teamId);
+  const { invitations, createInvitation, deleteInvitation, isCreating } = useTeamInvitations(teamId, team?.name);
   
   const [inviteFormOpen, setInviteFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("feed");
