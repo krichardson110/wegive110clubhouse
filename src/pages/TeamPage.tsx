@@ -8,6 +8,8 @@ import { useTeamInvitations } from "@/hooks/useTeamInvitations";
 import TeamRoster from "@/components/teams/TeamRoster";
 import PendingInvitations from "@/components/teams/PendingInvitations";
 import InvitePlayerForm from "@/components/teams/InvitePlayerForm";
+import CreatePostForm from "@/components/community/CreatePostForm";
+import PostsFeed from "@/components/community/PostsFeed";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,18 +137,10 @@ const TeamPage = () => {
               </TabsList>
 
               <TabsContent value="feed">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Team Feed</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Team posts will appear here.</p>
-                      <p className="text-sm">Share updates, celebrate wins, and stay connected!</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="space-y-6">
+                  {user && <CreatePostForm />}
+                  <PostsFeed />
+                </div>
               </TabsContent>
 
               <TabsContent value="roster" className="space-y-4">
