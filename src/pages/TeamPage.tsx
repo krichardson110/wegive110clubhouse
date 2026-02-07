@@ -11,10 +11,13 @@ import InvitePlayerForm from "@/components/teams/InvitePlayerForm";
 import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
 import TeamSchedule from "@/components/teams/TeamSchedule";
+import TeamWorkoutsContent from "@/components/teams/TeamWorkoutsContent";
+import TeamVideosContent from "@/components/teams/TeamVideosContent";
+import TeamPlaybookContent from "@/components/teams/TeamPlaybookContent";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings } from "lucide-react";
+import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings, Dumbbell, Video, BookOpen } from "lucide-react";
 
 const TeamPage = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -126,18 +129,30 @@ const TeamPage = () => {
         <section className="py-6">
           <div className="container mx-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full max-w-md grid-cols-3 mb-6">
-                <TabsTrigger value="feed" className="gap-2">
+              <TabsList className="grid w-full max-w-2xl grid-cols-6 mb-6">
+                <TabsTrigger value="feed" className="gap-1.5">
                   <MessageSquare className="w-4 h-4" />
                   <span className="hidden sm:inline">Feed</span>
                 </TabsTrigger>
-                <TabsTrigger value="roster" className="gap-2">
+                <TabsTrigger value="roster" className="gap-1.5">
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">Roster</span>
                 </TabsTrigger>
-                <TabsTrigger value="schedule" className="gap-2">
+                <TabsTrigger value="schedule" className="gap-1.5">
                   <Calendar className="w-4 h-4" />
                   <span className="hidden sm:inline">Schedule</span>
+                </TabsTrigger>
+                <TabsTrigger value="workouts" className="gap-1.5">
+                  <Dumbbell className="w-4 h-4" />
+                  <span className="hidden sm:inline">Workouts</span>
+                </TabsTrigger>
+                <TabsTrigger value="videos" className="gap-1.5">
+                  <Video className="w-4 h-4" />
+                  <span className="hidden sm:inline">Videos</span>
+                </TabsTrigger>
+                <TabsTrigger value="playbook" className="gap-1.5">
+                  <BookOpen className="w-4 h-4" />
+                  <span className="hidden sm:inline">Playbook</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -166,6 +181,18 @@ const TeamPage = () => {
 
               <TabsContent value="schedule">
                 <TeamSchedule isCoach={isCoach} teamId={teamId} />
+              </TabsContent>
+
+              <TabsContent value="workouts">
+                <TeamWorkoutsContent />
+              </TabsContent>
+
+              <TabsContent value="videos">
+                <TeamVideosContent />
+              </TabsContent>
+
+              <TabsContent value="playbook">
+                <TeamPlaybookContent />
               </TabsContent>
             </Tabs>
           </div>
