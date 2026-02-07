@@ -6,15 +6,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ScheduleEvent, EventType, eventTypes, eventTypeConfig } from "@/types/schedule";
+import { useTeams } from "@/hooks/useTeams";
 
 interface ScheduleEventFormProps {
   event?: ScheduleEvent | null;
   onSubmit: (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  defaultTeamId?: string;
+  showTeamSelector?: boolean;
 }
 
-const ScheduleEventForm = ({ event, onSubmit, onCancel, isLoading }: ScheduleEventFormProps) => {
+const ScheduleEventForm = ({ 
+  event, 
+  onSubmit, 
+  onCancel, 
+  isLoading,
+  defaultTeamId,
+  showTeamSelector = true,
+}: ScheduleEventFormProps) => {
+  const { teams, isLoading: teamsLoading } = useTeams();
+  
+  // Filter to only show teams where user is a coach
+  const coachTeams = teams.filter((team: any) => team.userRole === "coach");
+
   const [formData, setFormData] = useState({
     title: event?.title || "",
     event_date: event?.event_date || new Date().toISOString().split("T")[0],
@@ -26,6 +41,7 @@ const ScheduleEventForm = ({ event, onSubmit, onCancel, isLoading }: ScheduleEve
     notes: event?.notes || "",
     is_home: event?.is_home ?? true,
     published: event?.published ?? true,
+    team_id: event?.team_id || defaultTeamId || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -37,6 +53,7 @@ const ScheduleEventForm = ({ event, onSubmit, onCancel, isLoading }: ScheduleEve
       opponent: formData.opponent || null,
       notes: formData.notes || null,
       is_home: formData.event_type === "game" ? formData.is_home : null,
+      team_id: formData.team_id || null,
     });
   };
 
@@ -45,6 +62,32 @@ const ScheduleEventForm = ({ event, onSubmit, onCancel, isLoading }: ScheduleEve
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Team Selector - only show if user coaches multiple teams */}
+        {showTeamSelector && coachTeams.length > 0 && (
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="team_id">Team</Label>
+            <Select
+              value={formData.team_id}
+              onValueChange={(value) => setFormData({ ...formData, team_id: value === "all" ? "" : value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a team (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams (Organization-wide)</SelectItem>
+                {coachTeams.map((team: any) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Leave as "All Teams" for organization-wide events, or select a specific team.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="title">Event Title *</Label>
           <Input
