@@ -23,6 +23,7 @@ interface CommentItemProps {
 }
 
 const SUPER_ADMIN_EMAIL = "krichardson@wegive110.com";
+const INITIAL_REPLIES_SHOWN = 2;
 
 const CommentItem = ({ 
   comment, 
@@ -39,6 +40,7 @@ const CommentItem = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [replyContent, setReplyContent] = useState("");
+  const [showAllReplies, setShowAllReplies] = useState(false);
 
   const displayName = comment.profile?.display_name || "Team Member";
   const initials = displayName.slice(0, 2).toUpperCase();
@@ -300,16 +302,48 @@ const CommentItem = ({
       {/* Render replies */}
       {comment.replies && comment.replies.length > 0 && (
         <div className="space-y-2">
-          {comment.replies.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              postId={postId}
-              isReply={true}
-              activeReplyId={activeReplyId}
-              setActiveReplyId={setActiveReplyId}
-            />
-          ))}
+          {(() => {
+            const replies = comment.replies;
+            const totalReplies = replies.length;
+            const visibleReplies = showAllReplies 
+              ? replies 
+              : replies.slice(0, INITIAL_REPLIES_SHOWN);
+            const hiddenCount = totalReplies - INITIAL_REPLIES_SHOWN;
+
+            return (
+              <>
+                {visibleReplies.map((reply) => (
+                  <CommentItem
+                    key={reply.id}
+                    comment={reply}
+                    postId={postId}
+                    isReply={true}
+                    activeReplyId={activeReplyId}
+                    setActiveReplyId={setActiveReplyId}
+                  />
+                ))}
+                
+                {!showAllReplies && hiddenCount > 0 && (
+                  <button
+                    onClick={() => setShowAllReplies(true)}
+                    className="ml-8 flex items-center gap-2 text-xs text-primary hover:text-primary/80 transition-colors py-1"
+                  >
+                    <CornerDownRight className="w-3 h-3" />
+                    View {hiddenCount} more {hiddenCount === 1 ? "reply" : "replies"}
+                  </button>
+                )}
+                
+                {showAllReplies && totalReplies > INITIAL_REPLIES_SHOWN && (
+                  <button
+                    onClick={() => setShowAllReplies(false)}
+                    className="ml-8 flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                  >
+                    Show less
+                  </button>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>
