@@ -1448,7 +1448,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          comments_count: number | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          likes_given_count: number | null
+          posts_count: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          comments_count?: number | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          likes_given_count?: number | null
+          posts_count?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          comments_count?: number | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          likes_given_count?: number | null
+          posts_count?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_team_id_from_member: { Args: { member_id: string }; Returns: string }
