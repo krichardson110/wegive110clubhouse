@@ -14,6 +14,7 @@ import { ArrowLeft, Award, MessageSquare, Heart, MessageCircle, Save, Loader2 } 
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import BadgeDisplay from "@/components/community/BadgeDisplay";
+import NotificationSettings from "@/components/notifications/NotificationSettings";
 import { useToast } from "@/hooks/use-toast";
 import type { Badge, UserBadge } from "@/types/community";
 
@@ -206,6 +207,9 @@ const Profile = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Notification Settings */}
+          <NotificationSettings />
 
           {/* Earned Badges */}
           <Card className="bg-card border-border">
