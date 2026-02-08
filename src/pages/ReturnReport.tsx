@@ -48,7 +48,7 @@ const ReturnReport = () => {
       
       <main className="flex-1 container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <Link to="/">
               <Button variant="ghost" size="icon">
@@ -63,7 +63,7 @@ const ReturnReport = () => {
             </div>
           </div>
           {isSuperAdmin && (
-            <Link to="/return-report/admin">
+            <Link to="/return-report/admin" className="ml-auto sm:ml-0">
               <Button variant="outline" size="sm">
                 <Settings className="w-4 h-4 mr-2" />
                 Manage
