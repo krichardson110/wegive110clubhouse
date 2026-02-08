@@ -24,7 +24,7 @@ const TeamPage = () => {
   const { user } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
   const { members, isLoading: membersLoading, removeMember, refetch: refetchMembers } = useTeamMembers(teamId);
-  const { invitations, createInvitation, deleteInvitation, isCreating, refetch: refetchInvitations } = useTeamInvitations(teamId, team?.name);
+  const { invitations, createInvitation, deleteInvitation, resendInvitation, isCreating, isResending, refetch: refetchInvitations } = useTeamInvitations(teamId, team?.name);
 
   const handleInvitationApproved = () => {
     refetchInvitations();
@@ -168,6 +168,8 @@ const TeamPage = () => {
                   <PendingInvitations
                     invitations={invitations}
                     onCancel={deleteInvitation}
+                    onResend={resendInvitation}
+                    isResending={isResending}
                     onApproved={handleInvitationApproved}
                   />
                 )}

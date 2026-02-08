@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Clock, X, Mail, UserCheck, Loader2, Copy, Check } from "lucide-react";
+import { Clock, X, Mail, UserCheck, Loader2, Copy, Check, Send } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,6 +21,8 @@ import type { TeamInvitation } from "@/types/team";
 interface PendingInvitationsProps {
   invitations: TeamInvitation[];
   onCancel: (id: string) => void;
+  onResend?: (invitation: TeamInvitation) => void;
+  isResending?: boolean;
   onApproved?: () => void;
 }
 
@@ -33,12 +35,13 @@ const generateTempPassword = () => {
   return password;
 };
 
-const PendingInvitations = ({ invitations, onCancel, onApproved }: PendingInvitationsProps) => {
+const PendingInvitations = ({ invitations, onCancel, onResend, isResending, onApproved }: PendingInvitationsProps) => {
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [selectedInvitation, setSelectedInvitation] = useState<TeamInvitation | null>(null);
   const [tempPassword, setTempPassword] = useState('');
   const [isApproving, setIsApproving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   if (invitations.length === 0) return null;
 
@@ -58,6 +61,13 @@ const PendingInvitations = ({ invitations, onCancel, onApproved }: PendingInvita
     setTempPassword(generateTempPassword());
     setCopied(false);
     setApproveDialogOpen(true);
+  };
+
+  const handleResend = (invitation: TeamInvitation) => {
+    setResendingId(invitation.id);
+    onResend?.(invitation);
+    // Reset resending state after a delay
+    setTimeout(() => setResendingId(null), 2000);
   };
 
   const handleCopyCredentials = () => {
@@ -143,6 +153,21 @@ const PendingInvitations = ({ invitations, onCancel, onApproved }: PendingInvita
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleResend(invitation)}
+                    disabled={isResending || resendingId === invitation.id}
+                    title="Resend invitation email"
+                    className="gap-1"
+                  >
+                    {resendingId === invitation.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    <span className="hidden sm:inline">Resend</span>
+                  </Button>
+                  <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleOpenApprove(invitation)}
@@ -150,7 +175,7 @@ const PendingInvitations = ({ invitations, onCancel, onApproved }: PendingInvita
                     className="gap-1"
                   >
                     <UserCheck className="w-4 h-4" />
-                    Approve
+                    <span className="hidden sm:inline">Approve</span>
                   </Button>
                   <Button
                     variant="ghost"
