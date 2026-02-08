@@ -78,15 +78,10 @@ export const useVideoWatchTime = () => {
 export const useVideoWatchSession = (workoutId: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const sessionRef = useRef<{
-    id: string | null;
-    startTime: number;
-    intervalId: NodeJS.Timeout | null;
-  }>({
-    id: null,
-    startTime: 0,
-    intervalId: null,
-  });
+  const sessionIdRef = useRef<string | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+  const isTrackingRef = useRef<boolean>(false);
 
   const startSession = useMutation({
     mutationFn: async () => {
@@ -125,51 +120,78 @@ export const useVideoWatchSession = (workoutId: string) => {
   });
 
   const startTracking = useCallback(async () => {
-    if (!user?.id || sessionRef.current.id) return;
+    // Prevent duplicate sessions
+    if (!user?.id || isTrackingRef.current || sessionIdRef.current) return;
+    
+    isTrackingRef.current = true;
     
     try {
       const sessionId = await startSession.mutateAsync();
-      sessionRef.current.id = sessionId;
-      sessionRef.current.startTime = Date.now();
+      sessionIdRef.current = sessionId;
+      startTimeRef.current = Date.now();
       
       // Update every 10 seconds while watching
-      sessionRef.current.intervalId = setInterval(() => {
-        if (sessionRef.current.id) {
-          const durationSeconds = Math.floor((Date.now() - sessionRef.current.startTime) / 1000);
+      intervalIdRef.current = setInterval(() => {
+        if (sessionIdRef.current && startTimeRef.current) {
+          const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
           updateSession.mutate({
-            sessionId: sessionRef.current.id,
+            sessionId: sessionIdRef.current,
             durationSeconds,
           });
         }
       }, 10000);
     } catch (error) {
       console.error("Failed to start watch session:", error);
+      isTrackingRef.current = false;
     }
-  }, [user?.id, startSession, updateSession]);
+  }, [user?.id, workoutId]);
 
   const stopTracking = useCallback(() => {
-    if (sessionRef.current.intervalId) {
-      clearInterval(sessionRef.current.intervalId);
-      sessionRef.current.intervalId = null;
+    if (intervalIdRef.current) {
+      clearInterval(intervalIdRef.current);
+      intervalIdRef.current = null;
     }
     
-    if (sessionRef.current.id) {
-      const durationSeconds = Math.floor((Date.now() - sessionRef.current.startTime) / 1000);
-      updateSession.mutate({
-        sessionId: sessionRef.current.id,
-        durationSeconds,
-      });
-      sessionRef.current.id = null;
-      sessionRef.current.startTime = 0;
+    if (sessionIdRef.current && startTimeRef.current) {
+      const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      if (durationSeconds > 0) {
+        updateSession.mutate({
+          sessionId: sessionIdRef.current,
+          durationSeconds,
+        });
+      }
+      sessionIdRef.current = null;
+      startTimeRef.current = 0;
     }
-  }, [updateSession]);
+    
+    isTrackingRef.current = false;
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopTracking();
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current);
+      }
+      // Final save on unmount
+      if (sessionIdRef.current && startTimeRef.current) {
+        const durationSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        if (durationSeconds > 0) {
+          // Fire and forget - component is unmounting
+          supabase
+            .from("video_watch_sessions")
+            .update({
+              duration_seconds: durationSeconds,
+              ended_at: new Date().toISOString(),
+            })
+            .eq("id", sessionIdRef.current)
+            .then(() => {
+              queryClient.invalidateQueries({ queryKey: ["video-watch-metrics"] });
+            });
+        }
+      }
     };
-  }, [stopTracking]);
+  }, [queryClient]);
 
   return {
     startTracking,

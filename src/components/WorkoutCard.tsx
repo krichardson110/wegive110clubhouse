@@ -29,10 +29,14 @@ const WorkoutCard = ({ workout, categoryColor }: WorkoutCardProps) => {
   useEffect(() => {
     if (isOpen && workout.youtube_id && user) {
       startTracking();
-    } else {
-      stopTracking();
     }
-  }, [isOpen, workout.youtube_id, user, startTracking, stopTracking]);
+    
+    return () => {
+      if (isOpen) {
+        stopTracking();
+      }
+    };
+  }, [isOpen, workout.youtube_id, user]);
 
   const handleStarClick = (e: React.MouseEvent) => {
     e.stopPropagation();
