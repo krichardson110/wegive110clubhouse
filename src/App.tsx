@@ -24,6 +24,7 @@ import Profile from "./pages/Profile";
 import BadgesAdmin from "./pages/BadgesAdmin";
 import MyTeams from "./pages/MyTeams";
 import TeamPage from "./pages/TeamPage";
+import TeamSettings from "./pages/TeamSettings";
 import JoinTeam from "./pages/JoinTeam";
 import Practices from "./pages/Practices";
 import PracticesAdmin from "./pages/PracticesAdmin";
@@ -104,6 +105,7 @@ const App = () => (
                 <Route path="/teams" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
                 <Route path="/teams/join" element={<JoinTeam />} />
                 <Route path="/teams/:teamId" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+                <Route path="/teams/:teamId/settings" element={<ProtectedRoute><TeamSettings /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<Admin />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
