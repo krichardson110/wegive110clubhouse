@@ -36,7 +36,15 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
     }) => {
       if (!teamId || !user) throw new Error("Missing required data");
       
-      // First create the invitation in the database
+      // Delete any existing pending invitations for this email on this team
+      await supabase
+        .from("team_invitations")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("email", invitation.email)
+        .is("accepted_at", null);
+      
+      // Create the new invitation
       const { data, error } = await supabase
         .from("team_invitations")
         .insert({
