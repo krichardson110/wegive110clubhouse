@@ -120,8 +120,9 @@ Deno.serve(async (req) => {
 
     const resend = new Resend(resendApiKey.trim());
 
-    // Build the invite URL
-    const inviteUrl = `https://wegive110clubhouse.lovable.app/teams/join?token=${invitation.token}`;
+    // Build the invite URL (use the request origin so preview links go to preview, published links go to published)
+    const baseUrl = (req.headers.get('origin') || 'https://wegive110clubhouse.lovable.app').replace(/\/$/, '');
+    const inviteUrl = `${baseUrl}/teams/join?token=${invitation.token}`;
 
     // Determine the role description
     const roleDescriptions: Record<string, string> = {
