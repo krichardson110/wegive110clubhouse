@@ -10,6 +10,17 @@ interface InviteRequest {
   invitation_id: string;
   team_name: string;
   inviter_name: string;
+  create_account?: boolean;
+}
+
+// Generate a secure temporary password
+function generateTempPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
 }
 
 Deno.serve(async (req) => {
@@ -38,6 +49,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    // Create admin client for creating users
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
     // Verify the JWT
     const token = authHeader.replace('Bearer ', '');
     const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
@@ -54,7 +71,7 @@ Deno.serve(async (req) => {
     console.log(`[send-team-invite] Authenticated user: ${userId}`);
 
     // Parse request body
-    const { invitation_id, team_name, inviter_name }: InviteRequest = await req.json();
+    const { invitation_id, team_name, inviter_name, create_account }: InviteRequest = await req.json();
 
     if (!invitation_id || !team_name) {
       return new Response(
@@ -100,7 +117,6 @@ Deno.serve(async (req) => {
     const resend = new Resend(resendApiKey.trim());
 
     // Build the invite URL
-    const appUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://wegive110clubhouse.lovable.app';
     const inviteUrl = `https://wegive110clubhouse.lovable.app/teams/join?token=${invitation.token}`;
 
     // Determine the role description
@@ -111,10 +127,79 @@ Deno.serve(async (req) => {
     };
     const roleDesc = roleDescriptions[invitation.invite_type] || 'a member';
 
+    let tempPassword: string | null = null;
+    let accountCreated = false;
+
+    // If create_account is true, create a Supabase auth account
+    if (create_account) {
+      console.log(`[send-team-invite] Creating Drive 5 account for: ${invitation.email}`);
+      
+      // Check if user already exists
+      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+      const existingUser = existingUsers?.users?.find(u => u.email === invitation.email);
+      
+      if (existingUser) {
+        console.log(`[send-team-invite] User already exists: ${invitation.email}`);
+        // User already exists, don't create new account but still send invite
+      } else {
+        // Generate temporary password
+        tempPassword = generateTempPassword();
+        
+        // Create the auth user
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: invitation.email,
+          password: tempPassword,
+          email_confirm: true, // Auto-confirm email since coach is inviting
+        });
+
+        if (createError) {
+          console.error('[send-team-invite] Failed to create user:', createError);
+          // Continue with invite even if account creation failed
+        } else {
+          console.log(`[send-team-invite] Created user: ${newUser.user?.id}`);
+          accountCreated = true;
+
+          // Create profile with force_password_change flag
+          const displayName = invitation.player_name || invitation.email.split('@')[0];
+          const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .insert({
+              user_id: newUser.user!.id,
+              display_name: displayName,
+              force_password_change: true,
+              temp_password_set_at: new Date().toISOString(),
+            });
+
+          if (profileError) {
+            console.error('[send-team-invite] Failed to create profile:', profileError);
+          }
+        }
+      }
+    }
+
     // Build email content
     const playerNameSection = invitation.player_name 
       ? `<p style="color: #374151; font-size: 16px;">Player: <strong>${invitation.player_name}</strong></p>` 
       : '';
+
+    // Credentials section for newly created accounts
+    const credentialsSection = accountCreated && tempPassword ? `
+      <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 20px; border-radius: 8px; margin: 24px 0;">
+        <h3 style="color: white; margin: 0 0 12px 0; font-size: 16px;">🎉 Your Drive 5 Account Has Been Created!</h3>
+        <p style="color: white; margin: 0 0 8px 0; font-size: 14px;">
+          You can now log in to both Drive 5 and the Clubhouse using these credentials:
+        </p>
+        <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 6px; margin-top: 12px;">
+          <p style="color: white; margin: 0; font-size: 14px;">
+            <strong>Email:</strong> ${invitation.email}<br>
+            <strong>Temporary Password:</strong> ${tempPassword}
+          </p>
+        </div>
+        <p style="color: rgba(255,255,255,0.8); margin: 12px 0 0 0; font-size: 12px;">
+          ⚠️ You'll be asked to change your password on first login.
+        </p>
+      </div>
+    ` : '';
 
     const emailHtml = `
 <!DOCTYPE html>
@@ -138,6 +223,8 @@ Deno.serve(async (req) => {
       
       ${playerNameSection}
       
+      ${credentialsSection}
+      
       <div style="text-align: center; margin: 32px 0;">
         <a href="${inviteUrl}" 
            style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
@@ -146,7 +233,10 @@ Deno.serve(async (req) => {
       </div>
       
       <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
-        This invitation will expire in 7 days. If you don't have an account yet, you'll be able to create one when you accept the invitation.
+        ${accountCreated 
+          ? 'Click the button above to accept the invitation and access your new account. You can also log in at <a href="https://wegive110.com" style="color: #7c3aed;">wegive110.com</a> (Drive 5) with the same credentials.'
+          : "This invitation will expire in 7 days. If you don't have an account yet, you'll be able to create one when you accept the invitation."
+        }
       </p>
       
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
@@ -171,7 +261,9 @@ Deno.serve(async (req) => {
     const { data: emailResult, error: emailError } = await resend.emails.send({
       from: 'We Give 110% Clubhouse <noreply@resend.dev>',
       to: [invitation.email],
-      subject: `You're invited to join ${team_name}!`,
+      subject: accountCreated 
+        ? `Your Drive 5 Account is Ready - Join ${team_name}!`
+        : `You're invited to join ${team_name}!`,
       html: emailHtml,
     });
 
@@ -186,7 +278,13 @@ Deno.serve(async (req) => {
     console.log('[send-team-invite] Email sent successfully:', emailResult);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Invitation email sent' }),
+      JSON.stringify({ 
+        success: true, 
+        message: accountCreated 
+          ? 'Invitation email sent with Drive 5 account credentials' 
+          : 'Invitation email sent',
+        accountCreated,
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
