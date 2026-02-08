@@ -2,6 +2,8 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+const SUPER_ADMIN_EMAIL = 'krichardson@wegive110.com';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -28,15 +30,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Check super admin status and force password change
-        if (session?.user) {
-          setTimeout(() => {
-            checkSuperAdmin();
-            checkForcePasswordChange(session.user.id);
-          }, 0);
-        } else {
+        // IMPORTANT: Always reset admin state immediately when auth changes
+        // This prevents stale admin state from being shown to wrong users
+        if (!session?.user) {
           setIsSuperAdmin(false);
           setForcePasswordChange(false);
+        } else {
+          // Reset first, then check - prevents brief flash of admin access
+          setIsSuperAdmin(false);
+          setForcePasswordChange(false);
+          
+          // Check super admin status using email match (fast, synchronous-feeling)
+          // Also verify server-side with RPC for extra security
+          const emailMatch = session.user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+          
+          if (emailMatch) {
+            // Double-check with server-side RPC
+            setTimeout(() => {
+              checkSuperAdminRPC();
+            }, 0);
+          }
+          
+          // Check force password change
+          setTimeout(() => {
+            checkForcePasswordChange(session.user.id);
+          }, 0);
         }
         
         setLoading(false);
@@ -49,8 +67,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        checkSuperAdmin();
+        // Quick client-side check first
+        const emailMatch = session.user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+        
+        if (emailMatch) {
+          checkSuperAdminRPC();
+        } else {
+          setIsSuperAdmin(false);
+        }
+        
         checkForcePasswordChange(session.user.id);
+      } else {
+        setIsSuperAdmin(false);
+        setForcePasswordChange(false);
       }
       
       setLoading(false);
@@ -59,11 +88,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkSuperAdmin = async () => {
+  const checkSuperAdminRPC = async () => {
     try {
       const { data, error } = await supabase.rpc('is_super_admin');
       if (!error) {
         setIsSuperAdmin(data === true);
+      } else {
+        console.error('Error checking super admin status:', error);
+        setIsSuperAdmin(false);
       }
     } catch (e) {
       console.error('Error checking super admin status:', e);
@@ -95,11 +127,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Reset state immediately before signout
+    setIsSuperAdmin(false);
+    setForcePasswordChange(false);
+    
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
-    setIsSuperAdmin(false);
-    setForcePasswordChange(false);
   };
 
   return (
