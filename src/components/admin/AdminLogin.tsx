@@ -21,7 +21,9 @@ const AdminLogin = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    if (trimmedEmail !== SUPER_ADMIN_EMAIL.toLowerCase()) {
       toast({
         title: 'Access Denied',
         description: 'This login is restricted to super administrators only.',
@@ -32,24 +34,31 @@ const AdminLogin = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      // Sign out any existing session first to avoid conflicts
+      await supabase.auth.signOut();
+      
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email: trimmedEmail, 
+        password 
+      });
       
       if (error) {
+        console.error('Admin login error:', error);
         toast({
           title: 'Sign In Failed',
           description: error.message.includes('Invalid login credentials') 
-            ? 'Invalid email or password. Please try again.'
+            ? 'Invalid password. Please check your credentials and try again.'
             : error.message,
           variant: 'destructive',
         });
       } else if (data.user) {
-        if (data.user.email === SUPER_ADMIN_EMAIL) {
+        if (data.user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
           toast({
             title: 'Welcome Back',
             description: 'Super Admin access granted.',
           });
-          // Force a re-render to show the dashboard
-          window.location.reload();
+          // Navigate instead of reload for better UX
+          navigate('/admin');
         } else {
           await supabase.auth.signOut();
           toast({
@@ -60,6 +69,7 @@ const AdminLogin = () => {
         }
       }
     } catch (error) {
+      console.error('Admin login exception:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred. Please try again.',
