@@ -802,6 +802,44 @@ export type Database = {
           },
         ]
       }
+      team_member_players: {
+        Row: {
+          created_at: string
+          id: string
+          player_name: string
+          player_number: string | null
+          position: string | null
+          team_member_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          player_name: string
+          player_number?: string | null
+          position?: string | null
+          team_member_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          player_name?: string
+          player_number?: string | null
+          position?: string | null
+          team_member_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_players_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string
@@ -1413,6 +1451,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_team_id_from_member: { Args: { member_id: string }; Returns: string }
       is_super_admin: { Args: never; Returns: boolean }
       is_team_coach: { Args: { team_uuid: string }; Returns: boolean }
       is_team_member: { Args: { team_uuid: string }; Returns: boolean }

@@ -69,11 +69,18 @@ const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="player">Player (athlete signs up)</SelectItem>
-                <SelectItem value="parent">Parent (manages player)</SelectItem>
+                <SelectItem value="player">Player (athlete manages own account)</SelectItem>
+                <SelectItem value="parent">Parent/Guardian (manages player)</SelectItem>
                 <SelectItem value="coach">Assistant Coach</SelectItem>
               </SelectContent>
             </Select>
+            {(formData.invite_type === "player" || formData.invite_type === "parent") && (
+              <p className="text-xs text-muted-foreground">
+                {formData.invite_type === "parent" 
+                  ? "Parent/Guardian will manage this player's account and can add additional players later."
+                  : "The athlete will manage their own account."}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -83,19 +90,20 @@ const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink 
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="player@example.com"
+              placeholder={formData.invite_type === "parent" ? "parent@example.com" : "player@example.com"}
               required
             />
           </div>
 
           {(formData.invite_type === "player" || formData.invite_type === "parent") && (
             <div className="space-y-2">
-              <Label htmlFor="player_name">Player Name</Label>
+              <Label htmlFor="player_name">Player Name *</Label>
               <Input
                 id="player_name"
                 value={formData.player_name}
                 onChange={(e) => setFormData({ ...formData, player_name: e.target.value })}
                 placeholder="e.g., John Smith"
+                required
               />
             </div>
           )}
