@@ -15,6 +15,9 @@ const MyTeams = () => {
   const { teams, isLoading, createTeam, isCreating } = useTeams();
   const [createFormOpen, setCreateFormOpen] = useState(false);
 
+  // User can create teams if they have no teams yet (new user) or if they're a coach on at least one team
+  const canCreateTeam = teams.length === 0 || teams.some(team => team.userRole === "coach");
+
   const handleCreateTeam = (data: Parameters<typeof createTeam>[0]) => {
     createTeam(data, {
       onSuccess: () => setCreateFormOpen(false),
@@ -76,10 +79,12 @@ const MyTeams = () => {
                 </p>
               </div>
               
-              <Button onClick={() => setCreateFormOpen(true)} size="lg" className="hidden sm:flex">
-                <Plus className="w-5 h-5 mr-2" />
-                Create Team
-              </Button>
+              {canCreateTeam && (
+                <Button onClick={() => setCreateFormOpen(true)} size="lg" className="hidden sm:flex">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Create Team
+                </Button>
+              )}
             </div>
           </div>
         </section>
@@ -87,14 +92,16 @@ const MyTeams = () => {
         {/* Teams Grid */}
         <section className="py-8">
           <div className="container mx-auto px-4">
-            {/* Mobile create button */}
-            <Button 
-              onClick={() => setCreateFormOpen(true)} 
-              className="w-full mb-6 sm:hidden"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Create Team
-            </Button>
+            {/* Mobile create button - only show for coaches */}
+            {canCreateTeam && (
+              <Button 
+                onClick={() => setCreateFormOpen(true)} 
+                className="w-full mb-6 sm:hidden"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Create Team
+              </Button>
+            )}
 
             {isLoading ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -110,12 +117,14 @@ const MyTeams = () => {
                   Create your first team or join one using an invite link.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button onClick={() => setCreateFormOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create a Team
-                  </Button>
+                  {canCreateTeam && (
+                    <Button onClick={() => setCreateFormOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create a Team
+                    </Button>
+                  )}
                   <Link to="/teams/join">
-                    <Button variant="outline">
+                    <Button variant={canCreateTeam ? "outline" : "default"}>
                       Join with Invite Code
                     </Button>
                   </Link>
