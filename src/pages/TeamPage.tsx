@@ -116,9 +116,11 @@ const TeamPage = () => {
                     <UserPlus className="w-4 h-4 mr-2" />
                     Invite
                   </Button>
-                  <Button variant="outline" size="icon">
-                    <Settings className="w-4 h-4" />
-                  </Button>
+                  <Link to={`/teams/${teamId}/settings`}>
+                    <Button variant="outline" size="icon">
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
