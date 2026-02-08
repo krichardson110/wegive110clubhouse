@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Clock, Dumbbell, ChevronRight, Play, X } from "lucide-react";
+import { Clock, Dumbbell, ChevronRight, Play, X, Star } from "lucide-react";
 import { Workout } from "@/types/workout";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useWorkoutFavorites } from "@/hooks/useWorkoutFavorites";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WorkoutCardProps {
   workout: Workout;
@@ -16,6 +18,16 @@ const difficultyColors = {
 
 const WorkoutCard = ({ workout, categoryColor }: WorkoutCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const { isFavorite, toggleFavorite, isToggling } = useWorkoutFavorites();
+  
+  const starred = isFavorite(workout.id);
+
+  const handleStarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    toggleFavorite(workout.id);
+  };
 
   return (
     <>
@@ -26,10 +38,26 @@ const WorkoutCard = ({ workout, categoryColor }: WorkoutCardProps) => {
         {/* Hover glow */}
         <div className={`absolute inset-0 bg-gradient-to-br ${categoryColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
         
+        {/* Star button - only show for logged in users */}
+        {user && (
+          <button
+            onClick={handleStarClick}
+            disabled={isToggling}
+            className={`absolute top-3 right-3 z-20 p-1.5 rounded-full transition-all duration-200 ${
+              starred 
+                ? "text-yellow-400 bg-yellow-400/20" 
+                : "text-muted-foreground hover:text-yellow-400 hover:bg-yellow-400/10 opacity-0 group-hover:opacity-100"
+            }`}
+            title={starred ? "Remove from starred" : "Star this workout"}
+          >
+            <Star className={`w-4 h-4 ${starred ? "fill-current" : ""}`} />
+          </button>
+        )}
+        
         <div className="relative z-10">
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
-            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+            <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors pr-8">
               {workout.title}
             </h4>
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100">
