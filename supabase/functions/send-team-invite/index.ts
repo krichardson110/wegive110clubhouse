@@ -146,6 +146,7 @@ Deno.serve(async (req) => {
       if (existingUser) {
         console.log(`[send-team-invite] User already exists: ${invitation.email}`);
         // User already exists, don't create new account but still send invite
+        // Set a flag so we can tell the caller
       } else {
         // Generate temporary password
         tempPassword = generateTempPassword();
@@ -282,13 +283,19 @@ Deno.serve(async (req) => {
 
     console.log('[send-team-invite] Email sent successfully:', emailResult);
 
+    // Check if we tried to create an account but user already existed
+    const userAlreadyExisted = create_account && !accountCreated;
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: accountCreated 
           ? 'Invitation email sent with Drive 5 account credentials' 
-          : 'Invitation email sent',
+          : userAlreadyExisted
+            ? 'Invitation sent - user already has a Drive 5 account'
+            : 'Invitation email sent',
         accountCreated,
+        userAlreadyExisted,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
