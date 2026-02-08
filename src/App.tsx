@@ -28,6 +28,7 @@ import TeamSettings from "./pages/TeamSettings";
 import JoinTeam from "./pages/JoinTeam";
 import Practices from "./pages/Practices";
 import PracticesAdmin from "./pages/PracticesAdmin";
+import Progress from "./pages/Progress";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -107,6 +108,7 @@ const App = () => (
                 <Route path="/teams/:teamId" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
                 <Route path="/teams/:teamId/settings" element={<ProtectedRoute><TeamSettings /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
                 <Route path="/admin" element={<Admin />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
