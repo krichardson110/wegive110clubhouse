@@ -11,6 +11,16 @@ export interface Team {
   updated_at: string;
 }
 
+export interface TeamMemberPlayer {
+  id: string;
+  team_member_id: string;
+  player_name: string;
+  player_number: string | null;
+  position: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface TeamMember {
   id: string;
   team_id: string;
@@ -28,6 +38,7 @@ export interface TeamMember {
     display_name: string | null;
     avatar_url: string | null;
   };
+  players?: TeamMemberPlayer[];
 }
 
 export interface TeamInvitation {

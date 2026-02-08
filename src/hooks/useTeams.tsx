@@ -223,12 +223,20 @@ export function useTeamMembers(teamId: string | undefined) {
         .select("user_id, display_name, avatar_url")
         .in("user_id", userIds);
       
-      // Merge profiles with members
+      // Get players for all members
+      const memberIds = members?.map(m => m.id) || [];
+      const { data: players } = await supabase
+        .from("team_member_players")
+        .select("*")
+        .in("team_member_id", memberIds);
+      
+      // Merge profiles and players with members
       return members?.map(member => ({
         ...member,
         role: member.role as 'coach' | 'player' | 'parent',
         status: member.status as 'pending' | 'active' | 'inactive',
         profile: profiles?.find(p => p.user_id === member.user_id) || null,
+        players: players?.filter(p => p.team_member_id === member.id) || [],
       })) as TeamMember[];
     },
     enabled: !!teamId,

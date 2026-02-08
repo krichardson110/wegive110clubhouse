@@ -212,22 +212,60 @@ export function useAcceptInvitation() {
         .maybeSingle();
       
       if (existingMember) {
+        // User is already a member - if they're a parent/player and have a player_name, add another player
+        if (invitation.player_name && (invitation.invite_type === 'player' || invitation.invite_type === 'parent')) {
+          // Add a new player to their existing membership
+          const { error: playerError } = await supabase
+            .from("team_member_players")
+            .insert({
+              team_member_id: existingMember.id,
+              player_name: invitation.player_name,
+            });
+          
+          if (playerError) throw playerError;
+          
+          // Mark invitation as accepted
+          await supabase
+            .from("team_invitations")
+            .update({ accepted_at: new Date().toISOString() })
+            .eq("id", invitation.id);
+          
+          return { ...invitation, added_player: true };
+        }
+        
         throw new Error("You're already a member of this team");
       }
       
       // Add as team member
-      const { error: memberError } = await supabase
+      const { data: newMember, error: memberError } = await supabase
         .from("team_members")
         .insert({
           team_id: invitation.team_id,
           user_id: user.id,
           role: invitation.invite_type,
-          player_name: invitation.player_name,
+          player_name: invitation.player_name, // Keep for backwards compatibility
           status: "active",
           joined_at: new Date().toISOString(),
-        });
+        })
+        .select()
+        .single();
       
       if (memberError) throw memberError;
+      
+      // If there's a player name, also create the player record in the new table
+      if (invitation.player_name && (invitation.invite_type === 'player' || invitation.invite_type === 'parent')) {
+        const { error: playerError } = await supabase
+          .from("team_member_players")
+          .insert({
+            team_member_id: newMember.id,
+            player_name: invitation.player_name,
+          });
+        
+        if (playerError) {
+          console.error("Failed to create player record:", playerError);
+          // Don't throw - member was created successfully
+        }
+      }
       
       // Mark invitation as accepted
       const { error: updateError } = await supabase
@@ -239,9 +277,15 @@ export function useAcceptInvitation() {
       
       return invitation;
     },
-    onSuccess: () => {
-      toast({ title: "Successfully joined the team!" });
+    onSuccess: (data) => {
+      const result = data as { added_player?: boolean };
+      if (result?.added_player) {
+        toast({ title: "Player added to your account!" });
+      } else {
+        toast({ title: "Successfully joined the team!" });
+      }
       queryClient.invalidateQueries({ queryKey: ["my-teams"] });
+      queryClient.invalidateQueries({ queryKey: ["team-members"] });
     },
     onError: (error: Error) => {
       toast({ 
