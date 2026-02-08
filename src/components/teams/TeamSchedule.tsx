@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { format, isToday } from "date-fns";
-import { Calendar, Plus, Pencil, Trash2 } from "lucide-react";
+import { format, isToday, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, isWithinInterval } from "date-fns";
+import { Calendar, Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,8 @@ import { useTeamEvents } from "@/hooks/useTeamEvents";
 import { ScheduleEvent, eventTypeConfig } from "@/types/schedule";
 import { cn } from "@/lib/utils";
 
+type ViewMode = "day" | "week" | "month";
+
 interface TeamScheduleProps {
   isCoach: boolean;
   teamId?: string;
@@ -31,17 +34,76 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Filter events to show only team-specific or organization-wide events
-  const teamEvents = upcomingEvents.filter(
-    event => !event.team_id || event.team_id === teamId
-  );
+  // Get date range based on view mode
+  const getDateRange = () => {
+    switch (viewMode) {
+      case "day":
+        return { start: startOfDay(currentDate), end: endOfDay(currentDate) };
+      case "week":
+        return { start: startOfWeek(currentDate, { weekStartsOn: 0 }), end: endOfWeek(currentDate, { weekStartsOn: 0 }) };
+      case "month":
+        return { start: startOfMonth(currentDate), end: endOfMonth(currentDate) };
+    }
+  };
+
+  const dateRange = getDateRange();
+
+  // Filter events to show only team-specific or organization-wide events within date range
+  const teamEvents = upcomingEvents.filter(event => {
+    if (event.team_id && event.team_id !== teamId) return false;
+    const eventDate = new Date(event.event_date + "T00:00:00");
+    return isWithinInterval(eventDate, { start: dateRange.start, end: dateRange.end });
+  });
+
+  // Navigation handlers
+  const goToPrevious = () => {
+    switch (viewMode) {
+      case "day":
+        setCurrentDate(prev => new Date(prev.getTime() - 24 * 60 * 60 * 1000));
+        break;
+      case "week":
+        setCurrentDate(prev => new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000));
+        break;
+      case "month":
+        setCurrentDate(prev => subMonths(prev, 1));
+        break;
+    }
+  };
+
+  const goToNext = () => {
+    switch (viewMode) {
+      case "day":
+        setCurrentDate(prev => new Date(prev.getTime() + 24 * 60 * 60 * 1000));
+        break;
+      case "week":
+        setCurrentDate(prev => new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000));
+        break;
+      case "month":
+        setCurrentDate(prev => addMonths(prev, 1));
+        break;
+    }
+  };
+
+  const goToToday = () => setCurrentDate(new Date());
+
+  // Format the date range label
+  const getDateRangeLabel = () => {
+    switch (viewMode) {
+      case "day":
+        return format(currentDate, "EEEE, MMMM d, yyyy");
+      case "week":
+        return `${format(dateRange.start, "MMM d")} - ${format(dateRange.end, "MMM d, yyyy")}`;
+      case "month":
+        return format(currentDate, "MMMM yyyy");
+    }
+  };
 
   const handleCreateEvent = (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
     createEvent(data, {
-      onSuccess: () => {
-        setShowEventForm(false);
-      },
+      onSuccess: () => setShowEventForm(false),
     });
   };
 
@@ -49,35 +111,18 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
     if (!editingEvent) return;
     updateEvent(
       { id: editingEvent.id, ...data },
-      {
-        onSuccess: () => {
-          setEditingEvent(null);
-        },
-      }
+      { onSuccess: () => setEditingEvent(null) }
     );
   };
 
   const handleDeleteEvent = () => {
     if (!deletingEventId) return;
     deleteEvent(deletingEventId, {
-      onSuccess: () => {
-        setDeletingEventId(null);
-      },
+      onSuccess: () => setDeletingEventId(null),
     });
   };
 
-  const handleEditClick = (event: ScheduleEvent) => {
-    setEditingEvent(event);
-  };
-
-  const handleDeleteClick = (eventId: string) => {
-    setDeletingEventId(eventId);
-  };
-
-  // Check if user can edit/delete this event (must be team-specific event, not org-wide)
-  const canModifyEvent = (event: ScheduleEvent) => {
-    return isCoach && event.team_id === teamId;
-  };
+  const canModifyEvent = (event: ScheduleEvent) => isCoach && event.team_id === teamId;
 
   if (isLoading) {
     return (
@@ -97,15 +142,54 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Upcoming Events</CardTitle>
-          {isCoach && (
-            <Button onClick={() => setShowEventForm(true)} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Event
-            </Button>
-          )}
+        <CardHeader className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardTitle>Schedule</CardTitle>
+            {isCoach && (
+              <Button onClick={() => setShowEventForm(true)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Event
+              </Button>
+            )}
+          </div>
+          
+          {/* View Mode Toggle & Navigation */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <ToggleGroup 
+              type="single" 
+              value={viewMode} 
+              onValueChange={(v) => v && setViewMode(v as ViewMode)}
+              className="justify-start"
+            >
+              <ToggleGroupItem value="day" aria-label="Day view" className="text-xs px-3">
+                Day
+              </ToggleGroupItem>
+              <ToggleGroupItem value="week" aria-label="Week view" className="text-xs px-3">
+                Week
+              </ToggleGroupItem>
+              <ToggleGroupItem value="month" aria-label="Month view" className="text-xs px-3">
+                Month
+              </ToggleGroupItem>
+            </ToggleGroup>
+
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToPrevious}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={goToToday}>
+                Today
+              </Button>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToNext}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="text-sm font-medium text-muted-foreground">
+            {getDateRangeLabel()}
+          </div>
         </CardHeader>
+
         <CardContent>
           {teamEvents.length > 0 ? (
             <div className="space-y-4">
@@ -126,7 +210,7 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => handleEditClick(event)}
+                            onClick={() => setEditingEvent(event)}
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
@@ -134,7 +218,7 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteClick(event.id)}
+                            onClick={() => setDeletingEventId(event.id)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -149,7 +233,7 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No upcoming events scheduled.</p>
+              <p>No events for this {viewMode}.</p>
               {isCoach && (
                 <Button 
                   variant="outline" 
