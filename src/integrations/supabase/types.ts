@@ -141,6 +141,50 @@ export type Database = {
           },
         ]
       }
+      exercise_responses: {
+        Row: {
+          chapter_id: string
+          completed_at: string
+          created_at: string
+          exercise_id: string
+          id: string
+          response_text: string | null
+          time_spent_seconds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          completed_at?: string
+          created_at?: string
+          exercise_id: string
+          id?: string
+          response_text?: string | null
+          time_spent_seconds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          completed_at?: string
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          response_text?: string | null
+          time_spent_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_responses_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journeys: {
         Row: {
           color_gradient: string | null
