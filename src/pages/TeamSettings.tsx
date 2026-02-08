@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Trophy, Upload, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Trophy, Upload, Loader2, Trash2, Copy, Check } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +42,7 @@ const TeamSettings = () => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -270,6 +271,45 @@ const TeamSettings = () => {
                     Recommended: Square image, max 2MB
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Invite Code Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Team Invite Code</CardTitle>
+                <CardDescription>
+                  Share this code with players and parents so they can join your team
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 bg-muted rounded-lg px-4 py-3 font-mono text-lg tracking-wider">
+                    {team.invite_code || "No code generated"}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      if (team.invite_code) {
+                        navigator.clipboard.writeText(team.invite_code);
+                        setCopied(true);
+                        toast({ title: "Invite code copied!" });
+                        setTimeout(() => setCopied(false), 2000);
+                      }
+                    }}
+                    disabled={!team.invite_code}
+                  >
+                  {copied ? (
+                      <Check className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Players and parents can use this code to request to join your team
+                </p>
               </CardContent>
             </Card>
 
