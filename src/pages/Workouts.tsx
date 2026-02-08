@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import WorkoutCategoryCard from "@/components/WorkoutCategoryCard";
+import WorkoutMetricsCard from "@/components/WorkoutMetricsCard";
 import { Dumbbell, Search, Settings } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,8 @@ import { WorkoutCategory, Workout, getIconComponent } from "@/types/workout";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Workouts = () => {
+  const { user, isSuperAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const { isSuperAdmin } = useAuth();
 
   // Fetch categories with workouts
   const { data: categories, isLoading } = useQuery({
@@ -110,6 +111,13 @@ const Workouts = () => {
                 />
               </div>
             </div>
+            
+            {/* Metrics Card - only show for logged in users */}
+            {user && (
+              <div className="mt-8">
+                <WorkoutMetricsCard />
+              </div>
+            )}
           </div>
         </section>
         

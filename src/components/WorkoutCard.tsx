@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock, Dumbbell, ChevronRight, Play, X, Star } from "lucide-react";
 import { Workout } from "@/types/workout";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useWorkoutFavorites } from "@/hooks/useWorkoutFavorites";
 import { useAuth } from "@/hooks/useAuth";
+import { useVideoWatchSession } from "@/hooks/useVideoWatchTime";
 
 interface WorkoutCardProps {
   workout: Workout;
@@ -20,8 +21,18 @@ const WorkoutCard = ({ workout, categoryColor }: WorkoutCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { isFavorite, toggleFavorite, isToggling } = useWorkoutFavorites();
+  const { startTracking, stopTracking } = useVideoWatchSession(workout.id);
   
   const starred = isFavorite(workout.id);
+
+  // Track video watch time when dialog opens/closes
+  useEffect(() => {
+    if (isOpen && workout.youtube_id && user) {
+      startTracking();
+    } else {
+      stopTracking();
+    }
+  }, [isOpen, workout.youtube_id, user, startTracking, stopTracking]);
 
   const handleStarClick = (e: React.MouseEvent) => {
     e.stopPropagation();
