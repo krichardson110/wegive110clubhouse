@@ -1,23 +1,29 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { format, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addMonths, subMonths, isToday } from "date-fns";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Plus } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ScheduleEventCard from "@/components/ScheduleEventCard";
+import ScheduleEventForm from "@/components/admin/ScheduleEventForm";
 import { supabase } from "@/integrations/supabase/client";
 import { ScheduleEvent, EventType, eventTypeConfig, mapDbToScheduleEvent } from "@/types/schedule";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const Schedule = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const isSuperAdmin = user?.email === "krichardson@wegive110.com";
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showAddEventDialog, setShowAddEventDialog] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Fetch events from database
   const { data: scheduleEvents = [], isLoading } = useQuery({
@@ -33,6 +39,38 @@ const Schedule = () => {
       return (data || []).map(mapDbToScheduleEvent);
     },
   });
+
+  const handleCreateEvent = async (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
+    setIsCreating(true);
+    try {
+      const { error } = await supabase
+        .from("schedule_events")
+        .insert([{
+          title: data.title,
+          event_date: data.event_date,
+          event_time: data.event_time,
+          end_time: data.end_time || null,
+          event_type: data.event_type,
+          location: data.location || null,
+          opponent: data.opponent || null,
+          is_home: data.is_home ?? null,
+          notes: data.notes || null,
+          published: true,
+          team_id: data.team_id || null,
+          attachments: (data.attachments || []) as unknown as null,
+        }]);
+
+      if (error) throw error;
+      
+      toast.success("Event created successfully");
+      queryClient.invalidateQueries({ queryKey: ["schedule-events"] });
+      setShowAddEventDialog(false);
+    } catch (error: any) {
+      toast.error("Failed to create event: " + error.message);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   // Get all days to display in the calendar grid
   const monthStart = startOfMonth(currentMonth);
@@ -111,14 +149,23 @@ const Schedule = () => {
               </div>
               
               {isSuperAdmin && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/schedule/admin")}
-                  className="gap-2"
-                >
-                  <Settings className="w-4 h-4" />
-                  Manage Schedule
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowAddEventDialog(true)}
+                    className="gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Event
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/schedule/admin")}
+                    className="gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Manage Schedule
+                  </Button>
+                </div>
               )}
             </div>
             
@@ -308,6 +355,22 @@ const Schedule = () => {
         </section>
       </main>
       <Footer />
+
+      {/* Add Event Dialog */}
+      <Dialog open={showAddEventDialog} onOpenChange={setShowAddEventDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Event</DialogTitle>
+          </DialogHeader>
+          <ScheduleEventForm
+            onSubmit={handleCreateEvent}
+            onCancel={() => setShowAddEventDialog(false)}
+            isLoading={isCreating}
+            showTeamSelector={false}
+            showAttachments={true}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
