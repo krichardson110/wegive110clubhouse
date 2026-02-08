@@ -1489,6 +1489,21 @@ export type Database = {
       }
     }
     Functions: {
+      accept_team_invitation: {
+        Args: { invite_token: string }
+        Returns: string
+      }
+      get_invitation_by_token: {
+        Args: { invite_token: string }
+        Returns: {
+          accepted_at: string
+          expires_at: string
+          id: string
+          invite_type: string
+          player_name: string
+          team_id: string
+        }[]
+      }
       get_team_id_from_member: { Args: { member_id: string }; Returns: string }
       is_super_admin: { Args: never; Returns: boolean }
       is_team_coach: { Args: { team_uuid: string }; Returns: boolean }

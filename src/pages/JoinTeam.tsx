@@ -33,8 +33,8 @@ const JoinTeam = () => {
     
     setIsJoining(true);
     acceptInvitation.mutate(tokenToUse, {
-      onSuccess: (invitation) => {
-        navigate(`/teams/${invitation.team_id}`);
+      onSuccess: (result) => {
+        navigate(`/teams/${result.team_id}`);
       },
       onSettled: () => {
         setIsJoining(false);

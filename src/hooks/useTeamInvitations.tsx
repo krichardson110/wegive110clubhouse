@@ -191,99 +191,26 @@ export function useAcceptInvitation() {
     mutationFn: async (token: string) => {
       if (!user) throw new Error("Must be logged in to accept invitation");
       
-      // Find the invitation
-      const { data: invitation, error: findError } = await supabase
-        .from("team_invitations")
-        .select("*")
-        .eq("token", token)
-        .is("accepted_at", null)
-        .single();
+      // Use the secure RPC function to accept the invitation
+      // This avoids exposing the team_invitations table directly
+      const { data: teamId, error } = await supabase.rpc('accept_team_invitation', {
+        invite_token: token
+      });
       
-      if (findError || !invitation) {
-        throw new Error("Invalid or expired invitation");
-      }
-      
-      // Check if already a member
-      const { data: existingMember } = await supabase
-        .from("team_members")
-        .select("id")
-        .eq("team_id", invitation.team_id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (existingMember) {
-        // User is already a member - if they're a parent/player and have a player_name, add another player
-        if (invitation.player_name && (invitation.invite_type === 'player' || invitation.invite_type === 'parent')) {
-          // Add a new player to their existing membership
-          const { error: playerError } = await supabase
-            .from("team_member_players")
-            .insert({
-              team_member_id: existingMember.id,
-              player_name: invitation.player_name,
-            });
-          
-          if (playerError) throw playerError;
-          
-          // Mark invitation as accepted
-          await supabase
-            .from("team_invitations")
-            .update({ accepted_at: new Date().toISOString() })
-            .eq("id", invitation.id);
-          
-          return { ...invitation, added_player: true };
+      if (error) {
+        if (error.message.includes('Invalid or expired')) {
+          throw new Error("Invalid or expired invitation");
         }
-        
-        throw new Error("You're already a member of this team");
-      }
-      
-      // Add as team member
-      const { data: newMember, error: memberError } = await supabase
-        .from("team_members")
-        .insert({
-          team_id: invitation.team_id,
-          user_id: user.id,
-          role: invitation.invite_type,
-          player_name: invitation.player_name, // Keep for backwards compatibility
-          status: "active",
-          joined_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-      
-      if (memberError) throw memberError;
-      
-      // If there's a player name, also create the player record in the new table
-      if (invitation.player_name && (invitation.invite_type === 'player' || invitation.invite_type === 'parent')) {
-        const { error: playerError } = await supabase
-          .from("team_member_players")
-          .insert({
-            team_member_id: newMember.id,
-            player_name: invitation.player_name,
-          });
-        
-        if (playerError) {
-          console.error("Failed to create player record:", playerError);
-          // Don't throw - member was created successfully
+        if (error.message.includes('Already a member')) {
+          throw new Error("You're already a member of this team");
         }
+        throw error;
       }
       
-      // Mark invitation as accepted
-      const { error: updateError } = await supabase
-        .from("team_invitations")
-        .update({ accepted_at: new Date().toISOString() })
-        .eq("id", invitation.id);
-      
-      if (updateError) throw updateError;
-      
-      return invitation;
+      return { team_id: teamId };
     },
-    onSuccess: (data) => {
-      const result = data as { added_player?: boolean };
-      if (result?.added_player) {
-        toast({ title: "Player added to your account!" });
-      } else {
-        toast({ title: "Successfully joined the team!" });
-      }
+    onSuccess: () => {
+      toast({ title: "Successfully joined the team!" });
       queryClient.invalidateQueries({ queryKey: ["my-teams"] });
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
     },
