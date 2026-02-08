@@ -22,7 +22,6 @@ interface CommentItemProps {
   setActiveReplyId: (id: string | null) => void;
 }
 
-const SUPER_ADMIN_EMAIL = "krichardson@wegive110.com";
 const INITIAL_REPLIES_SHOWN = 2;
 
 const CommentItem = ({ 
@@ -33,7 +32,7 @@ const CommentItem = ({
   activeReplyId,
   setActiveReplyId,
 }: CommentItemProps) => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -44,7 +43,7 @@ const CommentItem = ({
 
   const displayName = comment.profile?.display_name || "Team Member";
   const initials = displayName.slice(0, 2).toUpperCase();
-  const canDelete = user?.id === comment.user_id || user?.email === SUPER_ADMIN_EMAIL;
+  const canDelete = user?.id === comment.user_id || isSuperAdmin;
   const canEdit = user?.id === comment.user_id;
   const isShowingReplyForm = activeReplyId === comment.id;
 

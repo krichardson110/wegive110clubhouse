@@ -18,8 +18,7 @@ import { toast } from "sonner";
 const Schedule = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const isSuperAdmin = user?.email === "krichardson@wegive110.com";
+  const { user, isSuperAdmin } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);

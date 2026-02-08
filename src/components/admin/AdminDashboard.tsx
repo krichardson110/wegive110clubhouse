@@ -20,6 +20,7 @@ import clubhouseLogo from '@/assets/clubhouse-logo.png';
 import TeamManagement from './TeamManagement';
 import ActivityLogsManager from './ActivityLogsManager';
 import UserBadgeManager from './UserBadgeManager';
+import RoleManager from './RoleManager';
 
 interface UserData {
   id: string;
@@ -368,10 +369,14 @@ const AdminDashboard = () => {
 
         {/* Management Tabs */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-3xl grid-cols-5">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Users
+            </TabsTrigger>
+            <TabsTrigger value="roles" className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Roles
             </TabsTrigger>
             <TabsTrigger value="teams" className="flex items-center gap-2">
               <UsersRound className="w-4 h-4" />
@@ -562,6 +567,10 @@ const AdminDashboard = () => {
             )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="roles">
+            <RoleManager />
           </TabsContent>
 
           <TabsContent value="teams">

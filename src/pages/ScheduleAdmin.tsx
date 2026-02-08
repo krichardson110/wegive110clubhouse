@@ -8,17 +8,24 @@ import { Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ScheduleAdmin = () => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin, loading } = useAuth();
   const navigate = useNavigate();
-  const isSuperAdmin = user?.email === "krichardson@wegive110.com";
 
   useEffect(() => {
-    if (user && !isSuperAdmin) {
+    if (!loading && user && !isSuperAdmin) {
       navigate("/schedule");
     }
-  }, [user, isSuperAdmin, navigate]);
+  }, [user, isSuperAdmin, loading, navigate]);
 
-  if (!isSuperAdmin) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user || !isSuperAdmin) {
     return null;
   }
 

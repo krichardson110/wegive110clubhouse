@@ -9,14 +9,10 @@ import ReturnReportSettingsForm from "@/components/admin/ReturnReportSettingsFor
 import RecordingsManager from "@/components/admin/RecordingsManager";
 import type { ReturnReportSettings } from "@/types/returnReport";
 
-const SUPER_ADMIN_EMAIL = "krichardson@wegive110.com";
-
 const ReturnReportAdmin = () => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["return-report-settings"],

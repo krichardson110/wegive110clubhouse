@@ -1168,6 +1168,30 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_categories: {
         Row: {
           color_gradient: string
@@ -1505,11 +1529,20 @@ export type Database = {
         }[]
       }
       get_team_id_from_member: { Args: { member_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       is_team_coach: { Args: { team_uuid: string }; Returns: boolean }
       is_team_member: { Args: { team_uuid: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "super_admin" | "admin" | "coach" | "player" | "parent" | "user"
       practice_phase:
         | "off-season"
         | "pre-season"
@@ -1646,6 +1679,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["super_admin", "admin", "coach", "player", "parent", "user"],
       practice_phase: [
         "off-season",
         "pre-season",

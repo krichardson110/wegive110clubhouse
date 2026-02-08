@@ -10,11 +10,8 @@ import Footer from "@/components/Footer";
 import RecordingCard from "@/components/RecordingCard";
 import type { ReturnReportSettings, ReturnReportRecording } from "@/types/returnReport";
 
-const SUPER_ADMIN_EMAIL = "krichardson@wegive110.com";
-
 const ReturnReport = () => {
-  const { user } = useAuth();
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
+  const { user, isSuperAdmin } = useAuth();
 
   // Check if user is a coach of any team
   const { data: isCoach } = useQuery({

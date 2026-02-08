@@ -31,17 +31,14 @@ interface PostCardProps {
   post: Post;
 }
 
-const SUPER_ADMIN_EMAIL = "krichardson@wegive110.com";
-
 const PostCard = ({ post }: PostCardProps) => {
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showComments, setShowComments] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const isOwner = user?.id === post.user_id;
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
   const canDelete = isOwner || isSuperAdmin;
 
   const likeMutation = useMutation({

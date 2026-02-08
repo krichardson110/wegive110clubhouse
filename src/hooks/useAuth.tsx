@@ -2,16 +2,20 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-const SUPER_ADMIN_EMAIL = 'krichardson@wegive110.com';
+// Role types matching the database enum
+export type AppRole = 'super_admin' | 'admin' | 'coach' | 'player' | 'parent' | 'user';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
+  userRoles: AppRole[];
   forcePasswordChange: boolean;
   clearForcePasswordChange: () => void;
   signOut: () => Promise<void>;
+  hasRole: (role: AppRole) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,6 +25,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRoles, setUserRoles] = useState<AppRole[]>([]);
   const [forcePasswordChange, setForcePasswordChange] = useState(false);
 
   useEffect(() => {
@@ -30,29 +36,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // IMPORTANT: Always reset admin state immediately when auth changes
+        // IMPORTANT: Always reset state immediately when auth changes
         // This prevents stale admin state from being shown to wrong users
         if (!session?.user) {
           setIsSuperAdmin(false);
+          setIsAdmin(false);
+          setUserRoles([]);
           setForcePasswordChange(false);
         } else {
           // Reset first, then check - prevents brief flash of admin access
           setIsSuperAdmin(false);
+          setIsAdmin(false);
+          setUserRoles([]);
           setForcePasswordChange(false);
           
-          // Check super admin status using email match (fast, synchronous-feeling)
-          // Also verify server-side with RPC for extra security
-          const emailMatch = session.user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-          
-          if (emailMatch) {
-            // Double-check with server-side RPC
-            setTimeout(() => {
-              checkSuperAdminRPC();
-            }, 0);
-          }
-          
-          // Check force password change
+          // Check roles from database using RPC
           setTimeout(() => {
+            fetchUserRoles(session.user.id);
             checkForcePasswordChange(session.user.id);
           }, 0);
         }
@@ -67,18 +67,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Quick client-side check first
-        const emailMatch = session.user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-        
-        if (emailMatch) {
-          checkSuperAdminRPC();
-        } else {
-          setIsSuperAdmin(false);
-        }
-        
+        fetchUserRoles(session.user.id);
         checkForcePasswordChange(session.user.id);
       } else {
         setIsSuperAdmin(false);
+        setIsAdmin(false);
+        setUserRoles([]);
         setForcePasswordChange(false);
       }
       
@@ -88,18 +82,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkSuperAdminRPC = async () => {
+  const fetchUserRoles = async (userId: string) => {
     try {
-      const { data, error } = await supabase.rpc('is_super_admin');
-      if (!error) {
-        setIsSuperAdmin(data === true);
+      // Fetch user roles from the user_roles table
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (!error && data) {
+        const roles = data.map(r => r.role as AppRole);
+        setUserRoles(roles);
+        setIsSuperAdmin(roles.includes('super_admin'));
+        setIsAdmin(roles.includes('super_admin') || roles.includes('admin'));
       } else {
-        console.error('Error checking super admin status:', error);
+        console.error('Error fetching user roles:', error);
+        setUserRoles([]);
         setIsSuperAdmin(false);
+        setIsAdmin(false);
       }
     } catch (e) {
-      console.error('Error checking super admin status:', e);
+      console.error('Error fetching user roles:', e);
+      setUserRoles([]);
       setIsSuperAdmin(false);
+      setIsAdmin(false);
     }
   };
 
@@ -126,9 +132,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setForcePasswordChange(false);
   };
 
+  const hasRole = (role: AppRole): boolean => {
+    return userRoles.includes(role);
+  };
+
   const signOut = async () => {
     // Reset state immediately before signout
     setIsSuperAdmin(false);
+    setIsAdmin(false);
+    setUserRoles([]);
     setForcePasswordChange(false);
     
     await supabase.auth.signOut();
@@ -141,10 +153,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user, 
       session, 
       loading, 
-      isSuperAdmin, 
+      isSuperAdmin,
+      isAdmin,
+      userRoles,
       forcePasswordChange,
       clearForcePasswordChange,
-      signOut 
+      signOut,
+      hasRole
     }}>
       {children}
     </AuthContext.Provider>

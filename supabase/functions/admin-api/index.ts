@@ -5,8 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SUPER_ADMIN_EMAIL = 'krichardson@wegive110.com';
-
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -49,17 +47,32 @@ Deno.serve(async (req) => {
     }
 
     const userId = claims.claims.sub;
-    const userEmail = claims.claims.email;
-    console.log(`[admin-api] Authenticated user: ${userId}, email: ${userEmail}`);
+    console.log(`[admin-api] Authenticated user: ${userId}`);
 
-    // Verify super admin status
-    if (userEmail !== SUPER_ADMIN_EMAIL) {
-      console.log('[admin-api] User is not super admin');
+    // Create admin client with service role for admin operations
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // Verify admin status using user_roles table
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .in('role', ['super_admin', 'admin']);
+
+    if (roleError || !roleData || roleData.length === 0) {
+      console.log('[admin-api] User does not have admin role:', roleError?.message);
       return new Response(
-        JSON.stringify({ error: 'Forbidden', message: 'Super admin access required' }),
+        JSON.stringify({ error: 'Forbidden', message: 'Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const isSuperAdmin = roleData.some(r => r.role === 'super_admin');
+    console.log(`[admin-api] User is admin, super_admin: ${isSuperAdmin}`);
 
     // Create admin client with service role for admin operations
     const supabaseAdmin = createClient(
@@ -117,15 +130,32 @@ Deno.serve(async (req) => {
         membershipMap.get(m.user_id)?.push(m);
       });
 
+      // Get user roles
+      const { data: userRolesData } = await supabaseAdmin
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+
+      const userRolesMap = new Map<string, string[]>();
+      userRolesData?.forEach(r => {
+        if (!userRolesMap.has(r.user_id)) {
+          userRolesMap.set(r.user_id, []);
+        }
+        userRolesMap.get(r.user_id)?.push(r.role);
+      });
+
       // Combine data - use email username as fallback display name
       let enrichedUsers = users.map(user => {
         const profile = profileMap.get(user.id);
         const userMemberships = membershipMap.get(user.id) || [];
+        const roles = userRolesMap.get(user.id) || [];
         // Try to get display name from: profile, team_member.player_name, or email prefix
         const displayName = profile?.display_name 
           || userMemberships.find(m => m.player_name)?.player_name
           || user.email?.split('@')[0] 
           || null;
+        
+        const isSuperAdminUser = roles.includes('super_admin');
         
         return {
           id: user.id,
@@ -133,12 +163,13 @@ Deno.serve(async (req) => {
           email_confirmed_at: user.email_confirmed_at,
           created_at: user.created_at,
           last_sign_in_at: user.last_sign_in_at,
-          is_super_admin: user.email === SUPER_ADMIN_EMAIL,
+          is_super_admin: isSuperAdminUser,
+          roles: roles,
           profile: profile ? { ...profile, display_name: displayName } : { display_name: displayName },
           team_memberships: userMemberships,
-          user_type: user.email === SUPER_ADMIN_EMAIL 
+          user_type: isSuperAdminUser
             ? 'Super Admin' 
-            : (userMemberships.some(m => m.role === 'coach') ? 'Coach' : 'Player')
+            : (roles.includes('admin') ? 'Admin' : (userMemberships.some(m => m.role === 'coach') ? 'Coach' : 'Player'))
         };
       });
 
@@ -538,6 +569,148 @@ Deno.serve(async (req) => {
       console.log('[admin-api] Member removed successfully');
       return new Response(
         JSON.stringify({ success: true, message: 'Member removed successfully' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // GET /roles - List all user roles
+    if (path === '/roles' && req.method === 'GET') {
+      console.log('[admin-api] Fetching all user roles');
+      
+      const { data: rolesData, error: rolesError } = await supabaseAdmin
+        .from('user_roles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (rolesError) {
+        console.error('[admin-api] Error fetching roles:', rolesError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch roles', details: rolesError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get user info for each role
+      const userIds = [...new Set(rolesData?.map(r => r.user_id) || [])];
+      
+      const { data: authData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+      const usersMap = new Map(authData?.users?.map(u => [u.id, u]) || []);
+
+      const { data: profiles } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds);
+      const profilesMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
+      const enrichedRoles = rolesData?.map(role => {
+        const authUser = usersMap.get(role.user_id);
+        const profile = profilesMap.get(role.user_id);
+        return {
+          ...role,
+          user_email: authUser?.email,
+          user_display_name: profile?.display_name || authUser?.email?.split('@')[0],
+        };
+      }) || [];
+
+      return new Response(
+        JSON.stringify({ roles: enrichedRoles }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // POST /roles - Assign a role to a user
+    if (path === '/roles' && req.method === 'POST') {
+      const body = await req.json();
+      const { email, role } = body;
+      
+      if (!email || !role) {
+        return new Response(
+          JSON.stringify({ error: 'Email and role are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`[admin-api] Assigning role ${role} to ${email}`);
+
+      // Find user by email
+      const { data: authData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+      const targetUser = authData?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+      if (!targetUser) {
+        return new Response(
+          JSON.stringify({ error: 'User not found', message: `No user found with email: ${email}` }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Insert the role
+      const { data: insertedRole, error: insertError } = await supabaseAdmin
+        .from('user_roles')
+        .insert({
+          user_id: targetUser.id,
+          role: role,
+          granted_by: userId,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        if (insertError.code === '23505') {
+          return new Response(
+            JSON.stringify({ error: 'Role already assigned', message: 'This user already has this role' }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        console.error('[admin-api] Error inserting role:', insertError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to assign role', details: insertError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[admin-api] Role assigned successfully');
+      return new Response(
+        JSON.stringify({ success: true, role: insertedRole }),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // DELETE /roles/:roleId - Remove a role
+    const roleDeleteMatch = path.match(/^\/roles\/([a-f0-9-]+)$/);
+    if (roleDeleteMatch && req.method === 'DELETE') {
+      const roleId = roleDeleteMatch[1];
+      console.log(`[admin-api] Removing role: ${roleId}`);
+
+      // Don't allow removing own super_admin role
+      const { data: roleToDelete } = await supabaseAdmin
+        .from('user_roles')
+        .select('user_id, role')
+        .eq('id', roleId)
+        .single();
+
+      if (roleToDelete?.user_id === userId && roleToDelete?.role === 'super_admin') {
+        return new Response(
+          JSON.stringify({ error: 'Cannot remove own super_admin role' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { error: deleteError } = await supabaseAdmin
+        .from('user_roles')
+        .delete()
+        .eq('id', roleId);
+
+      if (deleteError) {
+        console.error('[admin-api] Error deleting role:', deleteError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to remove role', details: deleteError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[admin-api] Role removed successfully');
+      return new Response(
+        JSON.stringify({ success: true }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
