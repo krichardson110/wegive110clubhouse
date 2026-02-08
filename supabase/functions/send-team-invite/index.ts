@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
     console.log(`[send-team-invite] Sending invite email to: ${invitation.email}`);
     
     const { data: emailResult, error: emailError } = await resend.emails.send({
-      from: 'We Give 110% Clubhouse <noreply@resend.dev>',
+      from: 'We Give 110% Clubhouse <noreply@wegive110.com>',
       to: [invitation.email],
       subject: accountCreated 
         ? `Your Drive 5 Account is Ready - Join ${team_name}!`
