@@ -1,11 +1,17 @@
+import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import PlayerProgressDashboard from "@/components/progress/PlayerProgressDashboard";
 import TeamProgressView from "@/components/progress/TeamProgressView";
 import { useIsCoach } from "@/hooks/useTeamProgress";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp, User, Users } from "lucide-react";
 
 const Progress = () => {
   const { data: isCoach } = useIsCoach();
+  const [myProgressOpen, setMyProgressOpen] = useState(true);
+  const [teamProgressOpen, setTeamProgressOpen] = useState(true);
 
   return (
     <div className="min-h-screen bg-background">
@@ -30,18 +36,57 @@ const Progress = () => {
         </section>
 
         {/* My Progress */}
-        <section className="py-8">
+        <section className="py-6">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-semibold text-foreground mb-6">My Progress</h2>
-            <PlayerProgressDashboard />
+            <Collapsible open={myProgressOpen} onOpenChange={setMyProgressOpen}>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="w-full flex items-center justify-between p-4 h-auto bg-card/50 hover:bg-card/80 rounded-lg mb-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <User className="w-5 h-5 text-primary" />
+                    <span className="text-xl font-semibold text-foreground">My Progress</span>
+                  </div>
+                  {myProgressOpen ? (
+                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                <PlayerProgressDashboard />
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </section>
 
         {/* Team Progress (Coaches Only) */}
         {isCoach && (
-          <section className="py-8 border-t border-border">
+          <section className="py-6 border-t border-border">
             <div className="container mx-auto px-4">
-              <TeamProgressView />
+              <Collapsible open={teamProgressOpen} onOpenChange={setTeamProgressOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full flex items-center justify-between p-4 h-auto bg-card/50 hover:bg-card/80 rounded-lg mb-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Users className="w-5 h-5 text-primary" />
+                      <span className="text-xl font-semibold text-foreground">Team Progress</span>
+                    </div>
+                    {teamProgressOpen ? (
+                      <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                  <TeamProgressView />
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </section>
         )}
