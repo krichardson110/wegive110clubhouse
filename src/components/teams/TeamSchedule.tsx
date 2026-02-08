@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, isToday, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths, isSameDay, isWithinInterval } from "date-fns";
+import { format, isToday, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addMonths, subMonths, isWithinInterval } from "date-fns";
 import { Calendar, Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import ScheduleEventCard from "@/components/ScheduleEventCard";
 import ScheduleEventForm from "@/components/admin/ScheduleEventForm";
+import TeamScheduleCalendar from "./TeamScheduleCalendar";
 import { useTeamEvents } from "@/hooks/useTeamEvents";
 import { ScheduleEvent, eventTypeConfig } from "@/types/schedule";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
 
   // Get date range based on view mode
   const getDateRange = () => {
@@ -191,7 +193,13 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
         </CardHeader>
 
         <CardContent>
-          {teamEvents.length > 0 ? (
+          {viewMode === "month" ? (
+            <TeamScheduleCalendar
+              events={teamEvents}
+              currentDate={currentDate}
+              onEventClick={(event) => setSelectedEvent(event)}
+            />
+          ) : teamEvents.length > 0 ? (
             <div className="space-y-4">
               {teamEvents.map((event) => {
                 const eventDate = new Date(event.event_date + "T00:00:00");
@@ -269,6 +277,46 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Event Detail Dialog (from calendar click) */}
+      <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Event Details</DialogTitle>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className="space-y-4">
+              <ScheduleEventCard event={selectedEvent} />
+              {canModifyEvent(selectedEvent) && (
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setEditingEvent(selectedEvent);
+                      setSelectedEvent(null);
+                    }}
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      setDeletingEventId(selectedEvent.id);
+                      setSelectedEvent(null);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Create Event Dialog */}
       <Dialog open={showEventForm} onOpenChange={setShowEventForm}>
