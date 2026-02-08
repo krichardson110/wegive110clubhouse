@@ -9,8 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Shield, Lock, ArrowLeft, Mail } from 'lucide-react';
 import clubhouseLogo from '@/assets/clubhouse-logo.png';
 
-const SUPER_ADMIN_EMAIL = 'krichardson@wegive110.com';
-
 type ViewMode = 'login' | 'forgot-password' | 'reset-password';
 
 const AdminLogin = () => {
@@ -34,19 +32,30 @@ const AdminLogin = () => {
     }
   }, []);
 
+  const checkUserHasAdminRole = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .in('role', ['super_admin', 'admin']);
+      
+      if (error) {
+        console.error('Error checking admin role:', error);
+        return false;
+      }
+      
+      return data && data.length > 0;
+    } catch (e) {
+      console.error('Error checking admin role:', e);
+      return false;
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const trimmedEmail = email.trim().toLowerCase();
-    
-    if (trimmedEmail !== SUPER_ADMIN_EMAIL.toLowerCase()) {
-      toast({
-        title: 'Access Denied',
-        description: 'This login is restricted to super administrators only.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     setLoading(true);
     try {
@@ -62,22 +71,25 @@ const AdminLogin = () => {
         toast({
           title: 'Sign In Failed',
           description: error.message.includes('Invalid login credentials') 
-            ? 'Invalid password. Please check your credentials and try again.'
+            ? 'Invalid email or password. Please check your credentials and try again.'
             : error.message,
           variant: 'destructive',
         });
       } else if (data.user) {
-        if (data.user.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+        // Check if user has admin role in the database
+        const hasAdminRole = await checkUserHasAdminRole(data.user.id);
+        
+        if (hasAdminRole) {
           toast({
             title: 'Welcome Back',
-            description: 'Super Admin access granted.',
+            description: 'Admin access granted.',
           });
           navigate('/admin');
         } else {
           await supabase.auth.signOut();
           toast({
             title: 'Access Denied',
-            description: 'You do not have super admin privileges.',
+            description: 'You do not have admin privileges.',
             variant: 'destructive',
           });
         }
@@ -99,10 +111,10 @@ const AdminLogin = () => {
     
     const trimmedEmail = email.trim().toLowerCase();
     
-    if (trimmedEmail !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+    if (!trimmedEmail) {
       toast({
-        title: 'Access Denied',
-        description: 'Password reset is only available for the super admin account.',
+        title: 'Email Required',
+        description: 'Please enter your admin email address.',
         variant: 'destructive',
       });
       return;
