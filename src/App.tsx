@@ -25,6 +25,8 @@ import BadgesAdmin from "./pages/BadgesAdmin";
 import MyTeams from "./pages/MyTeams";
 import TeamPage from "./pages/TeamPage";
 import JoinTeam from "./pages/JoinTeam";
+import Practices from "./pages/Practices";
+import PracticesAdmin from "./pages/PracticesAdmin";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -93,6 +95,8 @@ const App = () => (
                 <Route path="/playbook/admin" element={<ProtectedRoute><PlaybookAdmin /></ProtectedRoute>} />
                 <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
                 <Route path="/schedule/admin" element={<ProtectedRoute><ScheduleAdmin /></ProtectedRoute>} />
+                <Route path="/practices" element={<ProtectedRoute><Practices /></ProtectedRoute>} />
+                <Route path="/practices/admin" element={<ProtectedRoute><PracticesAdmin /></ProtectedRoute>} />
                 <Route path="/return-report" element={<ProtectedRoute><ReturnReport /></ProtectedRoute>} />
                 <Route path="/return-report/admin" element={<ProtectedRoute><ReturnReportAdmin /></ProtectedRoute>} />
                 <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />

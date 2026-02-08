@@ -21,6 +21,7 @@ const mainNavItems = [
 
 const trainingItems = [
   { name: "Workouts", href: "/workouts", icon: Dumbbell },
+  { name: "Practices", href: "/practices", icon: Calendar },
   { name: "Schedule", href: "/schedule", icon: Calendar },
 ];
 
