@@ -120,18 +120,23 @@ const PendingInvitations = ({ invitations, onCancel, onResend, isResending, onAp
     }
   };
 
+  // Separate pending and accepted invitations
+  const pendingInvitations = invitations.filter(inv => !inv.accepted_at);
+  const acceptedInvitations = invitations.filter(inv => inv.accepted_at);
+
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Mail className="w-4 h-4" />
-            Pending Invitations
+            Invitations
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {invitations.map((invitation) => (
+            {/* Pending invitations */}
+            {pendingInvitations.map((invitation) => (
               <div
                 key={invitation.id}
                 className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
@@ -140,6 +145,9 @@ const PendingInvitations = ({ invitations, onCancel, onResend, isResending, onAp
                   <div className="flex items-center gap-2">
                     <span className="font-medium truncate">{invitation.email}</span>
                     {getTypeBadge(invitation.invite_type)}
+                    <Badge variant="secondary">
+                      Pending
+                    </Badge>
                   </div>
                   {invitation.player_name && (
                     <p className="text-sm text-muted-foreground">
@@ -186,6 +194,42 @@ const PendingInvitations = ({ invitations, onCancel, onResend, isResending, onAp
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
+              </div>
+            ))}
+
+            {/* Accepted invitations */}
+            {acceptedInvitations.map((invitation) => (
+              <div
+                key={invitation.id}
+                className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/20"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium truncate">{invitation.email}</span>
+                    {getTypeBadge(invitation.invite_type)}
+                    <Badge className="bg-primary hover:bg-primary text-primary-foreground">
+                      <Check className="w-3 h-3 mr-1" />
+                      Accepted
+                    </Badge>
+                  </div>
+                  {invitation.player_name && (
+                    <p className="text-sm text-muted-foreground">
+                      Player: {invitation.player_name}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                    <UserCheck className="w-3 h-3" />
+                    Joined {format(new Date(invitation.accepted_at!), "MMM d, yyyy")}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onCancel(invitation.id)}
+                  title="Remove from list"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
             ))}
           </div>

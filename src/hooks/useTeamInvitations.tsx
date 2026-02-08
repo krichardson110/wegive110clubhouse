@@ -14,15 +14,32 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
     queryFn: async () => {
       if (!teamId) return [];
       
-      const { data, error } = await supabase
+      // Get pending invitations (not accepted)
+      const { data: pending, error: pendingError } = await supabase
         .from("team_invitations")
         .select("*")
         .eq("team_id", teamId)
         .is("accepted_at", null)
         .order("created_at", { ascending: false });
       
-      if (error) throw error;
-      return data as TeamInvitation[];
+      if (pendingError) throw pendingError;
+
+      // Get recently accepted invitations (within last 7 days) to show "Accepted" status
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const { data: accepted, error: acceptedError } = await supabase
+        .from("team_invitations")
+        .select("*")
+        .eq("team_id", teamId)
+        .not("accepted_at", "is", null)
+        .gte("accepted_at", sevenDaysAgo.toISOString())
+        .order("accepted_at", { ascending: false });
+      
+      if (acceptedError) throw acceptedError;
+
+      // Combine both lists - pending first, then accepted
+      return [...(pending || []), ...(accepted || [])] as TeamInvitation[];
     },
     enabled: !!teamId,
   });
