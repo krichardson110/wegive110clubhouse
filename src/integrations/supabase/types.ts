@@ -334,6 +334,192 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_drills: {
+        Row: {
+          coaching_points: string[] | null
+          created_at: string
+          description: string | null
+          diagram_url: string | null
+          drill_name: string
+          drill_number: number | null
+          drill_order: number
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          phase_name: string
+          practice_id: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          coaching_points?: string[] | null
+          created_at?: string
+          description?: string | null
+          diagram_url?: string | null
+          drill_name: string
+          drill_number?: number | null
+          drill_order?: number
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          phase_name: string
+          practice_id: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          coaching_points?: string[] | null
+          created_at?: string
+          description?: string | null
+          diagram_url?: string | null
+          drill_name?: string
+          drill_number?: number | null
+          drill_order?: number
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          phase_name?: string
+          practice_id?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_drills_practice_id_fkey"
+            columns: ["practice_id"]
+            isOneToOne: false
+            referencedRelation: "practices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_minutes: number | null
+          focus_areas: string[] | null
+          id: string
+          is_public: boolean
+          phase: Database["public"]["Enums"]["practice_phase"] | null
+          season: Database["public"]["Enums"]["practice_season"] | null
+          team_id: string | null
+          template_drills: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_minutes?: number | null
+          focus_areas?: string[] | null
+          id?: string
+          is_public?: boolean
+          phase?: Database["public"]["Enums"]["practice_phase"] | null
+          season?: Database["public"]["Enums"]["practice_season"] | null
+          team_id?: string | null
+          template_drills?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_minutes?: number | null
+          focus_areas?: string[] | null
+          id?: string
+          is_public?: boolean
+          phase?: Database["public"]["Enums"]["practice_phase"] | null
+          season?: Database["public"]["Enums"]["practice_season"] | null
+          team_id?: string | null
+          template_drills?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_templates_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practices: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_minutes: number | null
+          end_time: string | null
+          equipment_needed: string[] | null
+          focus_areas: string[] | null
+          id: string
+          location: string | null
+          notes: string | null
+          phase: Database["public"]["Enums"]["practice_phase"]
+          practice_date: string
+          published: boolean
+          season: Database["public"]["Enums"]["practice_season"]
+          start_time: string
+          team_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          equipment_needed?: string[] | null
+          focus_areas?: string[] | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          phase?: Database["public"]["Enums"]["practice_phase"]
+          practice_date: string
+          published?: boolean
+          season?: Database["public"]["Enums"]["practice_season"]
+          start_time: string
+          team_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          equipment_needed?: string[] | null
+          focus_areas?: string[] | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          phase?: Database["public"]["Enums"]["practice_phase"]
+          practice_date?: string
+          published?: boolean
+          season?: Database["public"]["Enums"]["practice_season"]
+          start_time?: string
+          team_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practices_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1232,7 +1418,15 @@ export type Database = {
       is_team_member: { Args: { team_uuid: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      practice_phase:
+        | "off-season"
+        | "pre-season"
+        | "in-season"
+        | "post-season"
+        | "strength"
+        | "speed"
+        | "skills"
+      practice_season: "fall" | "spring" | "summer" | "winter"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1359,6 +1553,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      practice_phase: [
+        "off-season",
+        "pre-season",
+        "in-season",
+        "post-season",
+        "strength",
+        "speed",
+        "skills",
+      ],
+      practice_season: ["fall", "spring", "summer", "winter"],
+    },
   },
 } as const
