@@ -16,6 +16,26 @@ const ReturnReport = () => {
   const { user } = useAuth();
   const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
 
+  // Check if user is a coach of any team
+  const { data: isCoach } = useQuery({
+    queryKey: ["is-coach", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("role", "coach")
+        .eq("status", "active")
+        .limit(1);
+      if (error) return false;
+      return data && data.length > 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  const canViewRecordings = isSuperAdmin || isCoach;
+
   const { data: settings } = useQuery({
     queryKey: ["return-report-settings"],
     queryFn: async () => {
@@ -109,33 +129,35 @@ const ReturnReport = () => {
           </Card>
         )}
 
-        {/* Past Recordings */}
-        <section>
-          <h2 className="font-display text-2xl text-foreground mb-6">
-            Past Recordings
-          </h2>
-          
-          {recordingsLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : recordings.length === 0 ? (
-            <Card className="bg-card border-border">
-              <CardContent className="p-12 text-center">
-                <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  No recordings available yet.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recordings.map((recording) => (
-                <RecordingCard key={recording.id} recording={recording} />
-              ))}
-            </div>
-          )}
-        </section>
+        {/* Past Recordings - Only visible to coaches and super admin */}
+        {canViewRecordings && (
+          <section>
+            <h2 className="font-display text-2xl text-foreground mb-6">
+              Past Recordings
+            </h2>
+            
+            {recordingsLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : recordings.length === 0 ? (
+              <Card className="bg-card border-border">
+                <CardContent className="p-12 text-center">
+                  <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    No recordings available yet.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {recordings.map((recording) => (
+                  <RecordingCard key={recording.id} recording={recording} />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </main>
 
       <Footer />
