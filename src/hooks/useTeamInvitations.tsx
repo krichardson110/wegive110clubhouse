@@ -128,12 +128,56 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
     },
   });
 
+  const resendInvitationMutation = useMutation({
+    mutationFn: async (invitation: TeamInvitation) => {
+      if (!user) throw new Error("Must be logged in");
+
+      // Get the user's profile for the inviter name
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const inviterName = profile?.display_name || user.email?.split('@')[0] || 'Your coach';
+
+      // Resend the invitation email
+      const response = await supabase.functions.invoke('send-team-invite', {
+        body: {
+          invitation_id: invitation.id,
+          team_name: teamName || 'the team',
+          inviter_name: inviterName,
+          create_account: false, // Don't create account on resend
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to resend email');
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      toast({ title: "Invitation email resent!" });
+    },
+    onError: (error: Error) => {
+      console.error("Error resending invitation:", error);
+      toast({ 
+        title: "Failed to resend invitation", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   return {
     invitations: invitationsQuery.data || [],
     isLoading: invitationsQuery.isLoading,
     createInvitation: createInvitationMutation.mutate,
     deleteInvitation: deleteInvitationMutation.mutate,
+    resendInvitation: resendInvitationMutation.mutate,
     isCreating: createInvitationMutation.isPending,
+    isResending: resendInvitationMutation.isPending,
     refetch: () => queryClient.invalidateQueries({ queryKey: ["team-invitations", teamId] }),
   };
 }
