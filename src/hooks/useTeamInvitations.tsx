@@ -103,15 +103,28 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
           description: "You can share the invite link manually.",
           variant: "destructive" 
         });
+        return { ...data, accountCreated: false, userAlreadyExisted: false };
       }
 
-      return { ...data, accountCreated: invitation.create_account && !response.error };
+      // Extract response data from the edge function
+      const responseData = response.data || {};
+      
+      return { 
+        ...data, 
+        accountCreated: responseData.accountCreated || false,
+        userAlreadyExisted: responseData.userAlreadyExisted || false,
+      };
     },
     onSuccess: (data) => {
       if (data?.accountCreated) {
         toast({ 
           title: "Invitation sent with Drive 5 account!", 
           description: "Login credentials were emailed to the invitee."
+        });
+      } else if (data?.userAlreadyExisted) {
+        toast({ 
+          title: "Invitation sent!", 
+          description: "This person already has a Drive 5 account - no new credentials were created."
         });
       } else {
         toast({ title: "Invitation sent successfully!" });
