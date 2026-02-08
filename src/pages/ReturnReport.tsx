@@ -121,7 +121,7 @@ const ReturnReport = () => {
             </div>
           ) : recordings.length === 0 ? (
             <Card className="bg-card border-border">
-              <CardContent className="py-12 text-center">
+              <CardContent className="p-12 text-center">
                 <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
                   No recordings available yet.
