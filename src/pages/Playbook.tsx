@@ -1,16 +1,21 @@
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import PlaybookChapterCard from "@/components/PlaybookChapterCard";
-import { playbookChapters } from "@/data/playbook";
-import { BookOpen, Award, Target, TrendingUp, Settings } from "lucide-react";
+import PlaybookJourneyCard from "@/components/PlaybookJourneyCard";
+import { usePlaybook } from "@/hooks/usePlaybook";
+import { BookOpen, Award, Target, TrendingUp, Settings, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 const Playbook = () => {
   const { isSuperAdmin } = useAuth();
-  const totalReadings = playbookChapters.reduce((acc, ch) => acc + ch.readings.length, 0);
-  const totalExercises = playbookChapters.reduce((acc, ch) => acc + ch.exercises.length, 0);
+  const { data: journeys = [], isLoading } = usePlaybook();
+  
+  const totalChapters = journeys.reduce((acc, j) => acc + j.chapters.length, 0);
+  const totalReadings = journeys.reduce((acc, j) => 
+    acc + j.chapters.reduce((chAcc, ch) => chAcc + ch.readings.length, 0), 0);
+  const totalExercises = journeys.reduce((acc, j) => 
+    acc + j.chapters.reduce((chAcc, ch) => chAcc + ch.exercises.length, 0), 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,7 +29,7 @@ const Playbook = () => {
           <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-accent/10 rounded-full blur-3xl" />
           
           <div className="relative z-10 container mx-auto px-4">
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="max-w-3xl">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-3 rounded-lg bg-primary/20 text-primary">
@@ -39,47 +44,48 @@ const Playbook = () => {
                   LEADERSHIP <span className="gradient-text">PLAYBOOK</span>
                 </h1>
               
-              <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
-                Develop the mindset and character traits that separate good players from great leaders. 
-                Complete readings, exercises, and reflections to grow on and off the field.
-              </p>
+                <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
+                  Develop the mindset and character traits that separate good players from great leaders. 
+                  Complete readings, exercises, and reflections to grow on and off the field.
+                </p>
               
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 max-w-lg">
-                <div className="bg-card/50 backdrop-blur rounded-lg p-4 border border-border text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Target className="w-4 h-4 text-primary" />
-                    <span className="font-display text-2xl text-foreground">{playbookChapters.length}</span>
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 max-w-lg">
+                  <div className="bg-card/50 backdrop-blur rounded-lg p-4 border border-border text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Target className="w-4 h-4 text-primary" />
+                      <span className="font-display text-2xl text-foreground">{totalChapters}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Chapters</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Chapters</span>
-                </div>
-                <div className="bg-card/50 backdrop-blur rounded-lg p-4 border border-border text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <BookOpen className="w-4 h-4 text-accent" />
-                    <span className="font-display text-2xl text-foreground">{totalReadings}</span>
+                  <div className="bg-card/50 backdrop-blur rounded-lg p-4 border border-border text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <BookOpen className="w-4 h-4 text-accent" />
+                      <span className="font-display text-2xl text-foreground">{totalReadings}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Readings</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Readings</span>
-                </div>
-                <div className="bg-card/50 backdrop-blur rounded-lg p-4 border border-border text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <TrendingUp className="w-4 h-4 text-emerald-500" />
-                    <span className="font-display text-2xl text-foreground">{totalExercises}</span>
+                  <div className="bg-card/50 backdrop-blur rounded-lg p-4 border border-border text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      <span className="font-display text-2xl text-foreground">{totalExercises}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Exercises</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Exercises</span>
                 </div>
               </div>
+              
+              {isSuperAdmin && (
+                <Link to="/playbook/admin">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Settings className="w-4 h-4" />
+                    Manage Playbook
+                  </Button>
+                </Link>
+              )}
             </div>
-            {isSuperAdmin && (
-              <Link to="/playbook/admin">
-                <Button variant="outline" size="sm" className="flex items-center gap-2 mt-4 sm:mt-0">
-                  <Settings className="w-4 h-4" />
-                  Manage Playbook
-                </Button>
-              </Link>
-            )}
           </div>
-        </div>
-      </section>
+        </section>
         
         {/* Progress Banner */}
         <section className="py-6 bg-secondary/30 border-y border-border">
@@ -89,33 +95,47 @@ const Playbook = () => {
                 <Award className="w-6 h-6 text-accent" />
                 <div>
                   <p className="font-semibold text-foreground">Your Journey</p>
-                  <p className="text-sm text-muted-foreground">Complete all chapters to become a certified leader</p>
+                  <p className="text-sm text-muted-foreground">Complete all journeys to become a certified leader</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="w-48 h-2 bg-secondary rounded-full overflow-hidden">
                   <div className="h-full w-0 bg-gradient-to-r from-primary to-accent rounded-full" />
                 </div>
-                <span className="text-sm text-muted-foreground">0/{playbookChapters.length} Complete</span>
+                <span className="text-sm text-muted-foreground">0/{journeys.length} Complete</span>
               </div>
             </div>
           </div>
         </section>
         
-        {/* Chapters Section */}
+        {/* Journeys Section */}
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <div className="space-y-4">
-              {playbookChapters.map((chapter, index) => (
-                <div
-                  key={chapter.id}
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <PlaybookChapterCard chapter={chapter} />
-                </div>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : journeys.length > 0 ? (
+              <div className="space-y-6">
+                {journeys.map((journey, index) => (
+                  <div
+                    key={journey.id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <PlaybookJourneyCard journey={journey} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20">
+                <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="font-display text-2xl text-foreground mb-2">No Journeys Available</h3>
+                <p className="text-muted-foreground">
+                  Check back soon for leadership development content.
+                </p>
+              </div>
+            )}
           </div>
         </section>
         
@@ -126,7 +146,7 @@ const Playbook = () => {
               READY TO <span className="gradient-text">LEAD</span>?
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto mb-8">
-              Leadership is a journey, not a destination. Start with Chapter 1 and commit to completing 
+              Leadership is a journey, not a destination. Start with any journey and commit to completing 
               one chapter per week. Your team needs you to lead.
             </p>
             <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">

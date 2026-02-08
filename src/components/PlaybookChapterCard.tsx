@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, BookOpen, PenTool, MessageCircle, FileText, Clock, CheckCircle } from "lucide-react";
-import { PlaybookChapter } from "@/data/playbook";
+import { Chapter } from "@/hooks/usePlaybook";
 import { Button } from "@/components/ui/button";
 
 interface PlaybookChapterCardProps {
-  chapter: PlaybookChapter;
+  chapter: Chapter;
 }
 
 const exerciseTypeIcons = {
