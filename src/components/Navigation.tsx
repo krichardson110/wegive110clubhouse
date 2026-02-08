@@ -4,8 +4,6 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
 import { useAuth } from "@/hooks/useAuth";
-
-const SUPER_ADMIN_EMAIL = 'krichardson@wegive110.com';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +37,7 @@ const externalItems = [
 const Navigation = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isSuperAdmin } = useAuth();
 
   const isActiveInGroup = (items: typeof trainingItems) => 
     items.some(item => location.pathname === item.href);
@@ -152,7 +150,7 @@ const Navigation = () => {
             {externalItems.map((item) => renderNavLink(item))}
             
             {/* Admin Portal Link - Super Admin Only */}
-            {!loading && user && user.email === SUPER_ADMIN_EMAIL && (
+            {!loading && user && isSuperAdmin && (
               <Link
                 to="/admin"
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 bg-primary/10 text-primary hover:bg-primary/20"
@@ -227,7 +225,7 @@ const Navigation = () => {
             {externalItems.map((item) => renderNavLink(item, () => setMobileMenuOpen(false)))}
             
             {/* Admin Portal Link - Mobile */}
-            {!loading && user && user.email === SUPER_ADMIN_EMAIL && (
+            {!loading && user && isSuperAdmin && (
               <Link
                 to="/admin"
                 onClick={() => setMobileMenuOpen(false)}
