@@ -80,8 +80,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch the invitation details
-    const { data: invitation, error: inviteError } = await supabase
+    // Fetch the invitation details using admin client to bypass RLS
+    const { data: invitation, error: inviteError } = await supabaseAdmin
       .from('team_invitations')
       .select('*')
       .eq('id', invitation_id)
@@ -95,8 +95,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the user is authorized to send this invite (they should be the one who created it)
-    if (invitation.invited_by !== userId) {
+    console.log(`[send-team-invite] Found invitation for: ${invitation.email}`);
+
+    // Verify the user is authorized to send this invite (they should be the one who created it or a team coach)
+    const { data: isCoach } = await supabaseAdmin.rpc('is_team_coach', { team_uuid: invitation.team_id });
+    
+    if (invitation.invited_by !== userId && !isCoach) {
       console.log('[send-team-invite] User not authorized to send this invite');
       return new Response(
         JSON.stringify({ error: 'Forbidden' }),
