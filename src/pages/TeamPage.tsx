@@ -17,7 +17,7 @@ import TeamPlaybookContent from "@/components/teams/TeamPlaybookContent";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings, Dumbbell, Video, BookOpen } from "lucide-react";
+import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings, Dumbbell, Video, BookOpen, Clipboard } from "lucide-react";
 
 const TeamPage = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -112,6 +112,12 @@ const TeamPage = () => {
               
               {isCoach && (
                 <div className="flex gap-2">
+                  <Link to={`/teams/${teamId}/admin`}>
+                    <Button variant="outline">
+                      <Clipboard className="w-4 h-4 mr-2" />
+                      Manage Team
+                    </Button>
+                  </Link>
                   <Button onClick={() => setInviteFormOpen(true)}>
                     <UserPlus className="w-4 h-4 mr-2" />
                     Invite

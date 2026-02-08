@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import CoachAdminDropdown from "./navigation/CoachAdminDropdown";
+import MobileCoachTeams from "./navigation/MobileCoachTeams";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -149,6 +151,9 @@ const Navigation = () => {
             {/* External links */}
             {externalItems.map((item) => renderNavLink(item))}
             
+            {/* Coach Admin Dropdown - visible for coaches */}
+            <CoachAdminDropdown />
+            
             {/* Admin Portal Link - Super Admin Only */}
             {!loading && user && isSuperAdmin && (
               <Link
@@ -223,6 +228,9 @@ const Navigation = () => {
               <span className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">External</span>
             </div>
             {externalItems.map((item) => renderNavLink(item, () => setMobileMenuOpen(false)))}
+            
+            {/* Coach Admin Section - Mobile */}
+            <MobileCoachTeams onItemClick={() => setMobileMenuOpen(false)} />
             
             {/* Admin Portal Link - Mobile */}
             {!loading && user && isSuperAdmin && (
