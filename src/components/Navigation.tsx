@@ -15,7 +15,6 @@ import {
 
 const mainNavItems = [
   { name: "Dashboard", href: "/", icon: Home },
-  { name: "My Teams", href: "/teams", icon: Trophy },
   { name: "Progress", href: "/progress", icon: TrendingUp },
   { name: "Clubhouse", href: "/community", icon: Users },
 ];

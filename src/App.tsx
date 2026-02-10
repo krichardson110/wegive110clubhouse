@@ -106,7 +106,7 @@ const App = () => (
                 <Route path="/return-report/admin" element={<ProtectedRoute><ReturnReportAdmin /></ProtectedRoute>} />
                 <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
                 <Route path="/community/badges" element={<ProtectedRoute><BadgesAdmin /></ProtectedRoute>} />
-                <Route path="/teams" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
+                <Route path="/teams" element={<Navigate to="/" replace />} />
                 <Route path="/teams/join" element={<JoinTeam />} />
                 <Route path="/teams/:teamId" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
                 <Route path="/teams/:teamId/admin" element={<ProtectedRoute><TeamAdmin /></ProtectedRoute>} />

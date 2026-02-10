@@ -60,8 +60,8 @@ const TeamPage = () => {
             <p className="text-muted-foreground mb-6">
               This team doesn't exist or you don't have access to it.
             </p>
-            <Link to="/teams">
-              <Button>Back to My Teams</Button>
+            <Link to="/">
+              <Button>Back to Dashboard</Button>
             </Link>
           </div>
         </main>
@@ -88,9 +88,9 @@ const TeamPage = () => {
           <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-primary/10 rounded-full blur-3xl" />
           
           <div className="relative z-10 container mx-auto px-4">
-            <Link to="/teams" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
+            <Link to="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to My Teams
+              Back to Dashboard
             </Link>
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

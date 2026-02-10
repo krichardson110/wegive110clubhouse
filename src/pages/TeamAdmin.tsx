@@ -15,6 +15,7 @@ import {
   Dumbbell, 
   Video, 
   BookOpen,
+  MessageSquare,
   Settings
 } from "lucide-react";
 import TeamRoster from "@/components/teams/TeamRoster";
@@ -23,6 +24,8 @@ import TeamWorkoutsContent from "@/components/teams/TeamWorkoutsContent";
 import TeamVideosContent from "@/components/teams/TeamVideosContent";
 import TeamPlaybookContent from "@/components/teams/TeamPlaybookContent";
 import TeamAdminContentAssignment from "@/components/teams/TeamAdminContentAssignment";
+import CreatePostForm from "@/components/community/CreatePostForm";
+import PostsFeed from "@/components/community/PostsFeed";
 
 const TeamAdmin = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -30,7 +33,7 @@ const TeamAdmin = () => {
   const { user, loading: authLoading } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
   const { members, isLoading: membersLoading, removeMember } = useTeamMembers(teamId);
-  const [activeTab, setActiveTab] = useState("roster");
+  const [activeTab, setActiveTab] = useState("feed");
 
   useEffect(() => {
     if (!authLoading && !teamLoading && (!user || !isMember || !isCoach)) {
@@ -126,6 +129,10 @@ const TeamAdmin = () => {
           <div className="container mx-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-secondary/50 p-1">
+                <TabsTrigger value="feed" className="flex-1 min-w-[100px] gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="hidden sm:inline">Feed</span>
+                </TabsTrigger>
                 <TabsTrigger value="roster" className="flex-1 min-w-[100px] gap-2">
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">Roster</span>
@@ -149,6 +156,13 @@ const TeamAdmin = () => {
               </TabsList>
               
               <div className="mt-6">
+                <TabsContent value="feed" className="mt-0">
+                  <div className="space-y-6">
+                    <CreatePostForm />
+                    <PostsFeed />
+                  </div>
+                </TabsContent>
+
                 <TabsContent value="roster" className="mt-0">
                   <TeamRoster 
                     members={members} 
