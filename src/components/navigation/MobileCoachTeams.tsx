@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Clipboard, Trophy, Users } from "lucide-react";
+import { Clipboard, Plus, Trophy, Users } from "lucide-react";
 import { useCoachTeams } from "@/hooks/useCoachTeams";
+import { useTeams } from "@/hooks/useTeams";
+import { Button } from "@/components/ui/button";
+import CreateTeamForm from "@/components/teams/CreateTeamForm";
 
 interface MobileCoachTeamsProps {
   onItemClick: () => void;
@@ -8,11 +12,21 @@ interface MobileCoachTeamsProps {
 
 const MobileCoachTeams = ({ onItemClick }: MobileCoachTeamsProps) => {
   const { coachTeams, isLoading, isCoach } = useCoachTeams();
+  const { teams, createTeam, isCreating } = useTeams();
+  const [createFormOpen, setCreateFormOpen] = useState(false);
 
   // Don't render if not a coach or still loading
   if (isLoading || !isCoach) {
     return null;
   }
+
+  const canCreateTeam = teams.length === 0 || teams.some(team => team.userRole === "coach");
+
+  const handleCreateTeam = (data: Parameters<typeof createTeam>[0]) => {
+    createTeam(data, {
+      onSuccess: () => setCreateFormOpen(false),
+    });
+  };
 
   return (
     <>
@@ -39,6 +53,23 @@ const MobileCoachTeams = ({ onItemClick }: MobileCoachTeamsProps) => {
           </span>
         </Link>
       ))}
+      {canCreateTeam && (
+        <Button
+          variant="ghost"
+          onClick={() => setCreateFormOpen(true)}
+          className="flex items-center gap-3 w-full justify-start px-3 py-3 text-sm font-medium text-primary hover:bg-secondary"
+        >
+          <Plus className="w-5 h-5" />
+          Create New Team
+        </Button>
+      )}
+
+      <CreateTeamForm
+        open={createFormOpen}
+        onOpenChange={setCreateFormOpen}
+        onSubmit={handleCreateTeam}
+        isLoading={isCreating}
+      />
     </>
   );
 };
