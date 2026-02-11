@@ -7,31 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Settings, Video, ExternalLink, Users } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import RecordingCard from "@/components/RecordingCard";
-import type { ReturnReportSettings, ReturnReportRecording } from "@/types/returnReport";
+import type { ReturnReportSettings } from "@/types/returnReport";
 
 const ReturnReport = () => {
-  const { user, isSuperAdmin } = useAuth();
-
-  // Check if user is a coach of any team
-  const { data: isCoach } = useQuery({
-    queryKey: ["is-coach", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      const { data, error } = await supabase
-        .from("team_members")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("role", "coach")
-        .eq("status", "active")
-        .limit(1);
-      if (error) return false;
-      return data && data.length > 0;
-    },
-    enabled: !!user?.id,
-  });
-
-  const canViewRecordings = isSuperAdmin || isCoach;
+  const { isSuperAdmin } = useAuth();
 
   const { data: settings } = useQuery({
     queryKey: ["return-report-settings"],
@@ -43,19 +22,6 @@ const ReturnReport = () => {
         .single();
       if (error && error.code !== "PGRST116") throw error;
       return data as ReturnReportSettings | null;
-    },
-  });
-
-  const { data: recordings = [], isLoading: recordingsLoading } = useQuery({
-    queryKey: ["return-report-recordings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("return_report_recordings")
-        .select("*")
-        .eq("published", true)
-        .order("recording_date", { ascending: false });
-      if (error) throw error;
-      return data as ReturnReportRecording[];
     },
   });
 
@@ -76,7 +42,7 @@ const ReturnReport = () => {
               <h1 className="font-display text-3xl sm:text-4xl text-foreground">
                 Return & Report
               </h1>
-              <p className="text-muted-foreground">Team meetings and past recordings</p>
+              <p className="text-muted-foreground">Team meetings</p>
             </div>
           </div>
           {isSuperAdmin && (
@@ -124,36 +90,6 @@ const ReturnReport = () => {
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {/* Past Recordings - Only visible to coaches and super admin */}
-        {canViewRecordings && (
-          <section>
-            <h2 className="font-display text-2xl text-foreground mb-6">
-              Past Recordings
-            </h2>
-            
-            {recordingsLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : recordings.length === 0 ? (
-              <Card className="bg-card border-border">
-                <CardContent className="p-12 text-center">
-                  <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    No recordings available yet.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recordings.map((recording) => (
-                  <RecordingCard key={recording.id} recording={recording} />
-                ))}
-              </div>
-            )}
-          </section>
         )}
       </main>
 
