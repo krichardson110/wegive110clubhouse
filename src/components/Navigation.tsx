@@ -32,7 +32,7 @@ const resourceItems = [
 ];
 
 const externalItems = [
-  { name: "Drive 5", href: "https://wegive110.com", icon: Car, external: true },
+  { name: "Drive 5", href: "https://drive5.wegive110.com", icon: Car, external: true },
 ];
 
 const Navigation = () => {
