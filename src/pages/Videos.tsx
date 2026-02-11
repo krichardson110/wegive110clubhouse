@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import VideoLibraryCard from "@/components/VideoLibraryCard";
-import { Video, Search, Settings, Brain, Flame, Heart, Target, Dumbbell, Users, Trophy, Zap, Star, Award, Shield, Crosshair, Timer, Activity, X } from "lucide-react";
+import { Video, Search, Settings, Brain, Flame, Heart, Target, Dumbbell, Users, Trophy, Zap, Star, Award, Shield, Crosshair, Timer, Activity, X, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -236,12 +236,20 @@ const Videos = () => {
                   </span>
                 </div>
                 {isSuperAdmin && (
-                  <Link to="/videos/admin">
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Manage Videos
-                    </Button>
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link to="/videos/admin">
+                      <Button variant="outline" size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Video
+                      </Button>
+                    </Link>
+                    <Link to="/videos/admin">
+                      <Button variant="outline" size="sm">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Manage Videos
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </div>
               
