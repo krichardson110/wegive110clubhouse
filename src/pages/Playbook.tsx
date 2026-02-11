@@ -3,7 +3,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import PlaybookJourneyCard from "@/components/PlaybookJourneyCard";
 import { usePlaybook } from "@/hooks/usePlaybook";
-import { BookOpen, Award, Target, TrendingUp, Settings, Loader2 } from "lucide-react";
+import { BookOpen, Award, Target, TrendingUp, Settings, Loader2, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -76,12 +76,20 @@ const Playbook = () => {
               </div>
               
               {isSuperAdmin && (
-                <Link to="/playbook/admin">
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <Settings className="w-4 h-4" />
-                    Manage Playbook
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link to="/playbook/admin">
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      Add Journey
+                    </Button>
+                  </Link>
+                  <Link to="/playbook/admin">
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      Manage Playbook
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
           </div>
