@@ -278,8 +278,8 @@ const PostsFeed = () => {
       // Fetch profiles for all posts
       const userIds = [...new Set(postsData.map((p) => p.user_id))];
       const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, avatar_url, bio, posts_count, comments_count, likes_given_count, created_at, updated_at, id")
+        .from("profiles_public")
+        .select("*")
         .in("user_id", userIds);
       
       const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
