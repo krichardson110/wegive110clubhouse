@@ -23,7 +23,7 @@ import TeamSchedule from "@/components/teams/TeamSchedule";
 import TeamWorkoutsContent from "@/components/teams/TeamWorkoutsContent";
 import TeamVideosContent from "@/components/teams/TeamVideosContent";
 import TeamPlaybookContent from "@/components/teams/TeamPlaybookContent";
-import TeamAdminContentAssignment from "@/components/teams/TeamAdminContentAssignment";
+
 import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
 
@@ -177,33 +177,15 @@ const TeamAdmin = () => {
                 </TabsContent>
                 
                 <TabsContent value="workouts" className="mt-0">
-                  <div className="space-y-6">
-                    <TeamAdminContentAssignment 
-                      teamId={teamId!} 
-                      contentType="workouts"
-                    />
-                    <TeamWorkoutsContent />
-                  </div>
+                  <TeamWorkoutsContent />
                 </TabsContent>
                 
                 <TabsContent value="videos" className="mt-0">
-                  <div className="space-y-6">
-                    <TeamAdminContentAssignment 
-                      teamId={teamId!} 
-                      contentType="videos"
-                    />
-                    <TeamVideosContent />
-                  </div>
+                  <TeamVideosContent />
                 </TabsContent>
                 
                 <TabsContent value="playbook" className="mt-0">
-                  <div className="space-y-6">
-                    <TeamAdminContentAssignment 
-                      teamId={teamId!} 
-                      contentType="playbook"
-                    />
-                    <TeamPlaybookContent />
-                  </div>
+                  <TeamPlaybookContent />
                 </TabsContent>
               </div>
             </Tabs>
