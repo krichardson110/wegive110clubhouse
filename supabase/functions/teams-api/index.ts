@@ -5,6 +5,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// Input validation helpers
+function validatePositiveInt(value: string | null, defaultValue: number, max?: number): number {
+  if (!value) return defaultValue;
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed) || parsed < 1) return defaultValue;
+  if (max && parsed > max) return max;
+  return parsed;
+}
+
+function isValidUUID(value: string): boolean {
+  return /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value);
+}
+
 interface TeamMemberResponse {
   id: string;
   team_id: string;
@@ -329,9 +342,41 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { team_id, workout_id, title, description, duration_minutes, intensity, notes, logged_at } = body;
 
-      if (!title) {
+      if (!title || typeof title !== 'string' || title.trim().length === 0 || title.length > 500) {
         return new Response(
-          JSON.stringify({ error: 'Title is required' }),
+          JSON.stringify({ error: 'Valid title is required (max 500 characters)' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (team_id && !isValidUUID(team_id)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid team ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (workout_id && !isValidUUID(workout_id)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid workout ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (duration_minutes !== undefined && duration_minutes !== null) {
+        const dur = parseInt(duration_minutes, 10);
+        if (isNaN(dur) || dur < 0 || dur > 1440) {
+          return new Response(
+            JSON.stringify({ error: 'Duration must be between 0 and 1440 minutes' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      const VALID_INTENSITIES = ['low', 'medium', 'high'];
+      if (intensity && !VALID_INTENSITIES.includes(intensity)) {
+        return new Response(
+          JSON.stringify({ error: 'Intensity must be low, medium, or high' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -390,8 +435,14 @@ Deno.serve(async (req) => {
       console.log('[teams-api] Fetching training logs for user');
       
       const teamId = url.searchParams.get('team_id');
-      const limit = parseInt(url.searchParams.get('limit') || '50');
-      const offset = parseInt(url.searchParams.get('offset') || '0');
+      if (teamId && !isValidUUID(teamId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid team ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const limit = validatePositiveInt(url.searchParams.get('limit'), 50, 200);
+      const offset = validatePositiveInt(url.searchParams.get('offset'), 0, 10000) || 0;
 
       let query = supabase
         .from('training_logs')
@@ -443,9 +494,15 @@ Deno.serve(async (req) => {
         );
       }
 
-      const limit = parseInt(url.searchParams.get('limit') || '100');
-      const offset = parseInt(url.searchParams.get('offset') || '0');
+      const limit = validatePositiveInt(url.searchParams.get('limit'), 100, 500);
+      const offset = validatePositiveInt(url.searchParams.get('offset'), 0, 10000) || 0;
       const playerId = url.searchParams.get('player_id');
+      if (playerId && !isValidUUID(playerId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid player ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
       let query = supabase
         .from('training_logs')
@@ -493,7 +550,13 @@ Deno.serve(async (req) => {
       console.log('[teams-api] Fetching training stats for user');
       
       const teamId = url.searchParams.get('team_id');
-      const days = parseInt(url.searchParams.get('days') || '30');
+      if (teamId && !isValidUUID(teamId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid team ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const days = validatePositiveInt(url.searchParams.get('days'), 30, 365);
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
