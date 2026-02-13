@@ -63,7 +63,7 @@ export const useProfileById = (userId: string | undefined) => {
       
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("user_id, display_name, avatar_url, bio, posts_count, comments_count, likes_given_count, created_at, updated_at, id")
         .eq("user_id", userId)
         .single();
       
