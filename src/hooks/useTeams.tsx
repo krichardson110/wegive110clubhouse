@@ -219,7 +219,7 @@ export function useTeamMembers(teamId: string | undefined) {
       if (userIds.length === 0) return [];
       
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, display_name, avatar_url")
         .in("user_id", userIds);
       

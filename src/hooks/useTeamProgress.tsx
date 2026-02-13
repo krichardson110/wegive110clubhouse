@@ -62,7 +62,7 @@ export const useTeamProgress = () => {
       // Get profiles for all members
       const memberUserIds = [...new Set(allMembers?.map(m => m.user_id) || [])];
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select("user_id, display_name, avatar_url")
         .in("user_id", memberUserIds);
 
