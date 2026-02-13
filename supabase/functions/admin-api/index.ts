@@ -5,6 +5,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// Input validation helpers
+function validatePositiveInt(value: string | null, defaultValue: number, max?: number): number {
+  if (!value) return defaultValue;
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed) || parsed < 1) return defaultValue;
+  if (max && parsed > max) return max;
+  return parsed;
+}
+
+function isValidUUID(value: string): boolean {
+  return /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value);
+}
+
+const VALID_ROLES = ['super_admin', 'admin', 'coach', 'player', 'parent', 'user'];
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -85,9 +100,9 @@ Deno.serve(async (req) => {
     if ((path === '/users' || path === '' || path === '/') && req.method === 'GET') {
       console.log('[admin-api] Fetching all users');
       
-      const page = parseInt(url.searchParams.get('page') || '1');
-      const perPage = parseInt(url.searchParams.get('per_page') || '50');
-      const search = url.searchParams.get('search') || '';
+      const page = validatePositiveInt(url.searchParams.get('page'), 1);
+      const perPage = validatePositiveInt(url.searchParams.get('per_page'), 50, 100);
+      const search = (url.searchParams.get('search') || '').trim().slice(0, 200);
 
       // Get users from auth.users using admin API
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers({
@@ -206,6 +221,12 @@ Deno.serve(async (req) => {
     const userMatch = path.match(/^\/users\/([a-f0-9-]+)$/);
     if (userMatch && req.method === 'GET') {
       const targetUserId = userMatch[1];
+      if (!isValidUUID(targetUserId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid user ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.log(`[admin-api] Fetching user: ${targetUserId}`);
 
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
@@ -273,6 +294,12 @@ Deno.serve(async (req) => {
     const resetMatch = path.match(/^\/users\/([a-f0-9-]+)\/reset-password$/);
     if (resetMatch && req.method === 'POST') {
       const targetUserId = resetMatch[1];
+      if (!isValidUUID(targetUserId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid user ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.log(`[admin-api] Sending password reset for user: ${targetUserId}`);
 
       // Get user email
@@ -314,12 +341,18 @@ Deno.serve(async (req) => {
     const updatePasswordMatch = path.match(/^\/users\/([a-f0-9-]+)\/update-password$/);
     if (updatePasswordMatch && req.method === 'POST') {
       const targetUserId = updatePasswordMatch[1];
+      if (!isValidUUID(targetUserId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid user ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.log(`[admin-api] Updating password for user: ${targetUserId}`);
 
       const body = await req.json();
       const { password } = body;
 
-      if (!password || password.length < 6) {
+      if (!password || typeof password !== 'string' || password.length < 6 || password.length > 128) {
         return new Response(
           JSON.stringify({ error: 'Password must be at least 6 characters' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -349,6 +382,12 @@ Deno.serve(async (req) => {
     const deleteUserMatch = path.match(/^\/users\/([a-f0-9-]+)$/);
     if (deleteUserMatch && req.method === 'DELETE') {
       const targetUserId = deleteUserMatch[1];
+      if (!isValidUUID(targetUserId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid user ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.log(`[admin-api] Deleting user: ${targetUserId}`);
 
       // Prevent deleting super admin
@@ -457,6 +496,12 @@ Deno.serve(async (req) => {
     const teamDetailMatch = path.match(/^\/teams\/([a-f0-9-]+)$/);
     if (teamDetailMatch && req.method === 'GET') {
       const teamId = teamDetailMatch[1];
+      if (!isValidUUID(teamId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid team ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.log(`[admin-api] Fetching team details: ${teamId}`);
 
       // Get team
@@ -523,6 +568,12 @@ Deno.serve(async (req) => {
     const deleteTeamMatch = path.match(/^\/teams\/([a-f0-9-]+)$/);
     if (deleteTeamMatch && req.method === 'DELETE') {
       const teamId = deleteTeamMatch[1];
+      if (!isValidUUID(teamId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid team ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.log(`[admin-api] Deleting team: ${teamId}`);
 
       const { error: deleteError } = await supabaseAdmin
@@ -623,9 +674,16 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { email, role } = body;
       
-      if (!email || !role) {
+      if (!email || typeof email !== 'string' || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
         return new Response(
-          JSON.stringify({ error: 'Email and role are required' }),
+          JSON.stringify({ error: 'Valid email is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!role || typeof role !== 'string' || !VALID_ROLES.includes(role)) {
+        return new Response(
+          JSON.stringify({ error: 'Valid role is required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -679,6 +737,12 @@ Deno.serve(async (req) => {
     const roleDeleteMatch = path.match(/^\/roles\/([a-f0-9-]+)$/);
     if (roleDeleteMatch && req.method === 'DELETE') {
       const roleId = roleDeleteMatch[1];
+      if (!isValidUUID(roleId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid role ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       console.log(`[admin-api] Removing role: ${roleId}`);
 
       // Don't allow removing own super_admin role

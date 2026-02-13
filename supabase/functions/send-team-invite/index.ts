@@ -70,12 +70,19 @@ Deno.serve(async (req) => {
     const userId = claims.claims.sub;
     console.log(`[send-team-invite] Authenticated user: ${userId}`);
 
-    // Parse request body
-    const { invitation_id, team_name, inviter_name, create_account }: InviteRequest = await req.json();
+    const body = await req.json();
+    const { invitation_id, team_name, inviter_name, create_account }: InviteRequest = body;
 
-    if (!invitation_id || !team_name) {
+    if (!invitation_id || typeof invitation_id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(invitation_id)) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: invitation_id and team_name' }),
+        JSON.stringify({ error: 'Valid invitation_id is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!team_name || typeof team_name !== 'string' || team_name.trim().length === 0 || team_name.length > 200) {
+      return new Response(
+        JSON.stringify({ error: 'Valid team_name is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
