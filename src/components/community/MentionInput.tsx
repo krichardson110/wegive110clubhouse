@@ -38,7 +38,7 @@ const MentionInput = ({
     queryFn: async () => {
       let query = supabase
         .from("profiles")
-        .select("*")
+        .select("user_id, display_name, avatar_url, bio, posts_count, comments_count, likes_given_count, created_at, updated_at, id")
         .limit(5);
       
       if (mentionSearch) {

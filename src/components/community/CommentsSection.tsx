@@ -36,7 +36,7 @@ const CommentsSection = ({ postId }: CommentsSectionProps) => {
       const userIds = [...new Set(commentsData.map((c) => c.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("*")
+        .select("user_id, display_name, avatar_url, bio, posts_count, comments_count, likes_given_count, created_at, updated_at, id")
         .in("user_id", userIds);
       
       const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
