@@ -54,11 +54,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Verify the JWT
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claims, error: claimsError } = await supabase.auth.getClaims(token);
+    // Verify the JWT by getting the user
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
     
-    if (claimsError || !claims?.claims) {
+    if (authError || !authUser) {
       console.log('[send-team-invite] Invalid token');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
@@ -66,7 +65,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const userId = claims.claims.sub;
+    const userId = authUser.id;
     console.log(`[send-team-invite] Authenticated user: ${userId}`);
 
     const body = await req.json();
@@ -127,7 +126,7 @@ Deno.serve(async (req) => {
     const resend = new Resend(resendApiKey.trim());
 
     // Build the invite URL
-    const baseUrl = (req.headers.get('origin') || 'https://wegive110clubhouse.lovable.app').replace(/\/$/, '');
+    const baseUrl = (req.headers.get('origin') || 'https://clubhouse.wegive110.com').replace(/\/$/, '');
     let inviteUrl = `${baseUrl}/teams/join?token=${invitation.token}`;
 
     // Determine the role description
