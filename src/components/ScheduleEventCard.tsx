@@ -1,11 +1,13 @@
-import { Clock, MapPin, Users, ChevronRight, Paperclip, FileText, Image, File } from "lucide-react";
+import { Clock, MapPin, Users, ChevronRight, Paperclip, FileText, Image, File, ClipboardList } from "lucide-react";
 import { ScheduleEvent, EventType, eventTypeConfig, EventAttachment } from "@/types/schedule";
+
 
 interface ScheduleEventCardProps {
   event: ScheduleEvent;
+  linkedPracticeName?: string;
 }
 
-const ScheduleEventCard = ({ event }: ScheduleEventCardProps) => {
+const ScheduleEventCard = ({ event, linkedPracticeName }: ScheduleEventCardProps) => {
   const config = eventTypeConfig[event.event_type as EventType];
   const attachments = event.attachments || [];
 
@@ -65,6 +67,17 @@ const ScheduleEventCard = ({ event }: ScheduleEventCardProps) => {
         <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/50">
           {event.notes}
         </p>
+      )}
+
+      {/* Linked Practice Plan */}
+      {event.practice_id && linkedPracticeName && (
+        <div className="mt-3 pt-3 border-t border-border/50">
+          <div className="flex items-center gap-2 text-xs">
+            <ClipboardList className="w-3.5 h-3.5 text-primary" />
+            <span className="text-muted-foreground">Practice Plan:</span>
+            <span className="font-medium text-foreground">{linkedPracticeName}</span>
+          </div>
+        </div>
       )}
 
       {/* Attachments */}

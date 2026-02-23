@@ -233,7 +233,7 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
                         </div>
                       )}
                     </div>
-                    <ScheduleEventCard event={event} />
+                    <ScheduleEventCard event={event} linkedPracticeName={(event as any).linked_practice_name} />
                   </div>
                 );
               })}
@@ -286,7 +286,7 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
           </DialogHeader>
           {selectedEvent && (
             <div className="space-y-4">
-              <ScheduleEventCard event={selectedEvent} />
+              <ScheduleEventCard event={selectedEvent} linkedPracticeName={(selectedEvent as any).linked_practice_name} />
               {canModifyEvent(selectedEvent) && (
                 <div className="flex gap-2 pt-2">
                   <Button

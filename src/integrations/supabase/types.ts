@@ -647,6 +647,7 @@ export type Database = {
           location: string | null
           notes: string | null
           opponent: string | null
+          practice_id: string | null
           published: boolean
           team_id: string | null
           title: string
@@ -664,6 +665,7 @@ export type Database = {
           location?: string | null
           notes?: string | null
           opponent?: string | null
+          practice_id?: string | null
           published?: boolean
           team_id?: string | null
           title: string
@@ -681,12 +683,20 @@ export type Database = {
           location?: string | null
           notes?: string | null
           opponent?: string | null
+          practice_id?: string | null
           published?: boolean
           team_id?: string | null
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "schedule_events_practice_id_fkey"
+            columns: ["practice_id"]
+            isOneToOne: false
+            referencedRelation: "practices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "schedule_events_team_id_fkey"
             columns: ["team_id"]

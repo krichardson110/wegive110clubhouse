@@ -22,6 +22,7 @@ export interface ScheduleEvent {
   is_home?: boolean | null;
   published: boolean;
   team_id?: string | null;
+  practice_id?: string | null;
   attachments?: EventAttachment[] | null;
   created_at?: string;
   updated_at?: string;

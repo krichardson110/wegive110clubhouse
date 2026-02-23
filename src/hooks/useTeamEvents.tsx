@@ -13,18 +13,21 @@ export function useTeamEvents() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("schedule_events")
-        .select("*")
+        .select("*, practices(id, title)")
         .eq("published", true)
         .order("event_date", { ascending: true });
 
       if (error) throw error;
-      return (data || []).map(mapDbToScheduleEvent);
+      return (data || []).map((row: any) => ({
+        ...mapDbToScheduleEvent(row),
+        linked_practice_name: row.practices?.title || null,
+      }));
     },
   });
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: Omit<ScheduleEvent, "id" | "created_at" | "updated_at"> & { recurrence?: RecurrenceConfig }) => {
-      const { attachments, recurrence, ...rest } = eventData;
+      const { attachments, recurrence, linked_practice_name, ...rest } = eventData as any;
 
       // Generate dates from recurrence
       const dates =
@@ -58,7 +61,7 @@ export function useTeamEvents() {
   });
 
   const updateEventMutation = useMutation({
-    mutationFn: async ({ id, attachments, ...updates }: Partial<ScheduleEvent> & { id: string }) => {
+    mutationFn: async ({ id, attachments, linked_practice_name, ...updates }: Partial<ScheduleEvent> & { id: string; linked_practice_name?: string }) => {
       const { data, error } = await supabase
         .from("schedule_events")
         .update({ ...updates, attachments: attachments as any })
