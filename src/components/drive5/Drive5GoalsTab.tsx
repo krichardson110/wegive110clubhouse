@@ -12,6 +12,7 @@ import {
 import GoalSetupDialog from "./GoalSetupDialog";
 import { Progress } from "@/components/ui/progress";
 import { format, differenceInDays } from "date-fns";
+import GoalTasksList from "./GoalTasksList";
 
 interface Drive5GoalsTabProps {
   teamId?: string;
@@ -153,6 +154,8 @@ const GoalCard = ({ goal }: { goal: PlayerGoal }) => {
         <span>Started {format(new Date(goal.start_date), "MMM d")}</span>
         <span>Ends {format(new Date(goal.end_date), "MMM d")}</span>
       </div>
+
+      <GoalTasksList goal={goal} />
     </div>
   );
 };
