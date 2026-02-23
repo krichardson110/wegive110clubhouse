@@ -4,8 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Copy, Check, Mail, UserPlus } from "lucide-react";
+import { Copy, Check, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface InvitePlayerFormProps {
@@ -108,25 +107,6 @@ const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink 
             </div>
           )}
 
-          {/* Auto-create Drive 5 account toggle */}
-          <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg border border-border">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-primary" />
-                <Label htmlFor="create-account" className="font-medium cursor-pointer">
-                  Create Drive 5 Account
-                </Label>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Auto-create login credentials and send via email
-              </p>
-            </div>
-            <Switch
-              id="create-account"
-              checked={formData.create_account}
-              onCheckedChange={(checked) => setFormData({ ...formData, create_account: checked })}
-            />
-          </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -134,7 +114,7 @@ const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink 
             </Button>
             <Button type="submit" disabled={isLoading || !formData.email}>
               <Mail className="w-4 h-4 mr-2" />
-              {isLoading ? "Creating..." : formData.create_account ? "Create & Invite" : "Create Invitation"}
+              {isLoading ? "Sending..." : "Send Invitation"}
             </Button>
           </DialogFooter>
         </form>
