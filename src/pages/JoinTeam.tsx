@@ -1,31 +1,72 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useAcceptInvitation } from "@/hooks/useTeamInvitations";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Trophy, UserPlus, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const JoinTeam = () => {
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const acceptInvitation = useAcceptInvitation();
   
   const [token, setToken] = useState(searchParams.get("token") || "");
   const [isJoining, setIsJoining] = useState(false);
+  const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
+  const autoLoginAttempted = useRef(false);
 
-  // Auto-join if token is in URL and user is logged in
+  // Auto-login if email and temp password are in URL (new account from invite)
+  useEffect(() => {
+    if (autoLoginAttempted.current) return;
+    
+    const email = searchParams.get("email");
+    const tp = searchParams.get("tp");
+    
+    if (email && tp && !user && !authLoading) {
+      autoLoginAttempted.current = true;
+      setIsAutoLoggingIn(true);
+      
+      // Clean the URL to remove credentials (keep token)
+      const urlToken = searchParams.get("token") || "";
+      window.history.replaceState(null, '', `/teams/join?token=${urlToken}`);
+      
+      supabase.auth.signInWithPassword({ email, password: tp })
+        .then(({ error }) => {
+          if (error) {
+            console.error("Auto-login failed:", error);
+            toast({
+              title: "Auto-login failed",
+              description: "Please sign in manually with the credentials from your email.",
+              variant: "destructive",
+            });
+            setIsAutoLoggingIn(false);
+          }
+          // If successful, onAuthStateChange will update the user state
+          // ForcePasswordWrapper will show password change screen
+          // After password change, this component re-renders with user set
+        })
+        .catch(() => {
+          setIsAutoLoggingIn(false);
+        });
+    }
+  }, [searchParams, user, authLoading]);
+
+  // Auto-join if token is in URL and user is logged in (and not auto-logging in)
   useEffect(() => {
     const urlToken = searchParams.get("token");
-    if (urlToken && user && !isJoining) {
+    if (urlToken && user && !isJoining && !isAutoLoggingIn) {
       handleJoin(urlToken);
     }
-  }, [searchParams, user]);
+  }, [searchParams, user, isAutoLoggingIn]);
 
   const handleJoin = async (inviteToken?: string) => {
     const tokenToUse = inviteToken || token;
@@ -42,10 +83,15 @@ const JoinTeam = () => {
     });
   };
 
-  if (authLoading) {
+  if (authLoading || isAutoLoggingIn) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          {isAutoLoggingIn && (
+            <p className="text-muted-foreground">Signing you in...</p>
+          )}
+        </div>
       </div>
     );
   }

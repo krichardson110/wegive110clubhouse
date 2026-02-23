@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,6 @@ interface ForcePasswordChangeProps {
 }
 
 const ForcePasswordChange = ({ onComplete }: ForcePasswordChangeProps) => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -83,7 +81,8 @@ const ForcePasswordChange = ({ onComplete }: ForcePasswordChangeProps) => {
       });
 
       onComplete();
-      navigate('/');
+      // Don't navigate - let the underlying page handle routing
+      // (e.g., JoinTeam will auto-accept the invitation)
     } catch (error) {
       toast({
         title: 'Error',

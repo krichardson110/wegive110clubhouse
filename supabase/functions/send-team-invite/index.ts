@@ -129,7 +129,8 @@ Deno.serve(async (req) => {
 
     // Build the invite URL (use the request origin so preview links go to preview, published links go to published)
     const baseUrl = (req.headers.get('origin') || 'https://wegive110clubhouse.lovable.app').replace(/\/$/, '');
-    const inviteUrl = `${baseUrl}/teams/join?token=${invitation.token}`;
+    // We'll build the final invite URL after account creation so we can include credentials if applicable
+    let inviteUrl = `${baseUrl}/teams/join?token=${invitation.token}`;
 
     // Determine the role description
     const roleDescriptions: Record<string, string> = {
@@ -153,7 +154,6 @@ Deno.serve(async (req) => {
       if (existingUser) {
         console.log(`[send-team-invite] User already exists: ${invitation.email}`);
         // User already exists, don't create new account but still send invite
-        // Set a flag so we can tell the caller
       } else {
         // Generate temporary password
         tempPassword = generateTempPassword();
@@ -188,6 +188,11 @@ Deno.serve(async (req) => {
           }
         }
       }
+    }
+
+    // Update invite URL with credentials if account was created
+    if (accountCreated && tempPassword) {
+      inviteUrl = `${baseUrl}/teams/join?token=${invitation.token}&email=${encodeURIComponent(invitation.email)}&tp=${encodeURIComponent(tempPassword)}`;
     }
 
     // Build email content
