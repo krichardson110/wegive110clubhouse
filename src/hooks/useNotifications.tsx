@@ -194,7 +194,7 @@ export const useAchievementNotifications = () => {
       "achievement",
       `${days}-Day Streak! 🔥`,
       `Amazing! You've been active for ${days} days in a row. Keep it going!`,
-      { url: "/progress", tag: `streak-${days}` }
+      { url: "/drive5", tag: `streak-${days}` }
     );
   }, [sendNotification, isEnabled, preferences.achievements]);
 
@@ -222,47 +222,34 @@ export const useAchievementNotifications = () => {
   };
 };
 
-// Hook for sending post notifications
-export const usePostNotifications = () => {
+// Hook for Drive 5 streak reminder notifications
+export const useDrive5Notifications = () => {
   const { sendNotification, isEnabled, preferences } = useNotifications();
-  const { user } = useAuth();
 
-  const notifyNewComment = useCallback((postExcerpt: string, commenterName: string) => {
-    if (!isEnabled || !preferences.posts) return;
+  const notifyStreakAtRisk = useCallback((currentStreak: number) => {
+    if (!isEnabled || !preferences.reminders) return;
     
     sendNotification(
-      "post",
-      "New Comment 💬",
-      `${commenterName} commented on your post: "${postExcerpt.slice(0, 50)}..."`,
-      { url: "/community", tag: `comment-${Date.now()}` }
+      "reminder",
+      "🔥 Streak Alert!",
+      `Your ${currentStreak}-day streak is at risk! Complete your Drive 5 check-in today.`,
+      { url: "/drive5", tag: "drive5-streak-warning" }
     );
-  }, [sendNotification, isEnabled, preferences.posts]);
+  }, [sendNotification, isEnabled, preferences.reminders]);
 
-  const notifyNewLike = useCallback((postExcerpt: string, likerName: string) => {
-    if (!isEnabled || !preferences.posts) return;
+  const notifyDailyReminder = useCallback(() => {
+    if (!isEnabled || !preferences.reminders) return;
     
     sendNotification(
-      "post",
-      "Someone Liked Your Post ❤️",
-      `${likerName} liked: "${postExcerpt.slice(0, 50)}..."`,
-      { url: "/community", tag: `like-${Date.now()}` }
+      "reminder",
+      "Time to Train! ⚾",
+      "Don't forget to complete your daily Drive 5 check-in.",
+      { url: "/drive5", tag: "drive5-daily-reminder" }
     );
-  }, [sendNotification, isEnabled, preferences.posts]);
-
-  const notifyMention = useCallback((postExcerpt: string, mentionerName: string) => {
-    if (!isEnabled || !preferences.posts) return;
-    
-    sendNotification(
-      "post",
-      "You Were Mentioned! 📣",
-      `${mentionerName} mentioned you: "${postExcerpt.slice(0, 50)}..."`,
-      { url: "/community", tag: `mention-${Date.now()}` }
-    );
-  }, [sendNotification, isEnabled, preferences.posts]);
+  }, [sendNotification, isEnabled, preferences.reminders]);
 
   return {
-    notifyNewComment,
-    notifyNewLike,
-    notifyMention,
+    notifyStreakAtRisk,
+    notifyDailyReminder,
   };
 };
