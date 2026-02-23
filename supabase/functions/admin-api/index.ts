@@ -267,10 +267,8 @@ Deno.serve(async (req) => {
             email_confirmed_at: user.email_confirmed_at,
             created_at: user.created_at,
             last_sign_in_at: user.last_sign_in_at,
-            is_super_admin: user.email === SUPER_ADMIN_EMAIL,
-            user_type: user.email === SUPER_ADMIN_EMAIL 
-              ? 'Super Admin' 
-              : (memberships?.some(m => m.role === 'coach') ? 'Coach' : 'Player'),
+            is_super_admin: false,
+            user_type: memberships?.some(m => m.role === 'coach') ? 'Coach' : 'Player',
             profile,
             team_memberships: memberships || [],
             stats: {
@@ -384,8 +382,13 @@ Deno.serve(async (req) => {
       console.log(`[admin-api] Deleting user: ${targetUserId}`);
 
       // Prevent deleting super admin
-      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
-      if (userData?.user?.email === SUPER_ADMIN_EMAIL) {
+      const { data: targetRoles } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', targetUserId)
+        .eq('role', 'super_admin');
+      
+      if (targetRoles && targetRoles.length > 0) {
         return new Response(
           JSON.stringify({ error: 'Cannot delete super admin account' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
