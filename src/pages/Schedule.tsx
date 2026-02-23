@@ -31,12 +31,15 @@ const Schedule = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("schedule_events")
-        .select("*")
+        .select("*, practices(id, title)")
         .eq("published", true)
         .order("event_date", { ascending: true });
 
       if (error) throw error;
-      return (data || []).map(mapDbToScheduleEvent);
+      return (data || []).map((row: any) => ({
+        ...mapDbToScheduleEvent(row),
+        linked_practice_name: row.practices?.title || null,
+      }));
     },
   });
 
@@ -302,7 +305,7 @@ const Schedule = () => {
                   {selectedDateEvents.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {selectedDateEvents.map(event => (
-                        <ScheduleEventCard key={event.id} event={event} />
+                        <ScheduleEventCard key={event.id} event={event} linkedPracticeName={(event as any).linked_practice_name} />
                       ))}
                     </div>
                   ) : (
