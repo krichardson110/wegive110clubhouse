@@ -141,6 +141,100 @@ export type Database = {
           },
         ]
       }
+      daily_checkins: {
+        Row: {
+          category_id: string
+          checkin_date: string
+          completed: boolean
+          created_at: string
+          duration_minutes: number | null
+          goal_id: string | null
+          id: string
+          notes: string | null
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          checkin_date?: string
+          completed?: boolean
+          created_at?: string
+          duration_minutes?: number | null
+          goal_id?: string | null
+          id?: string
+          notes?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          checkin_date?: string
+          completed?: boolean
+          created_at?: string
+          duration_minutes?: number | null
+          goal_id?: string | null
+          id?: string
+          notes?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_checkins_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "drive5_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "player_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drive5_categories: {
+        Row: {
+          color_gradient: string
+          created_at: string
+          description: string | null
+          display_order: number
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       exercise_responses: {
         Row: {
           chapter_id: string
@@ -220,6 +314,107 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      player_goals: {
+        Row: {
+          category_id: string
+          created_at: string
+          current_value: number | null
+          description: string | null
+          end_date: string
+          id: string
+          start_date: string
+          status: string
+          target_value: number | null
+          team_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          target_value?: number | null
+          team_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          target_value?: number | null
+          team_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_goals_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "drive5_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_goals_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_streaks: {
+        Row: {
+          current_streak: number
+          id: string
+          last_checkin_date: string | null
+          longest_streak: number
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          id?: string
+          last_checkin_date?: string | null
+          longest_streak?: number
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          id?: string
+          last_checkin_date?: string | null
+          longest_streak?: number
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_streaks_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_comments: {
         Row: {
