@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ScheduleEvent, EventType, eventTypes, eventTypeConfig, EventAttachment } from "@/types/schedule";
 import { useTeams } from "@/hooks/useTeams";
+import { usePractices } from "@/hooks/usePractices";
 import EventAttachmentUpload from "@/components/teams/EventAttachmentUpload";
 import RecurrencePicker, { RecurrenceConfig } from "@/components/RecurrencePicker";
+import { ClipboardList } from "lucide-react";
 
 interface ScheduleEventFormProps {
   event?: ScheduleEvent | null;
@@ -46,8 +48,12 @@ const ScheduleEventForm = ({
     is_home: event?.is_home ?? true,
     published: event?.published ?? true,
     team_id: event?.team_id || defaultTeamId || "",
+    practice_id: event?.practice_id || "",
     attachments: event?.attachments || [] as EventAttachment[],
   });
+
+  // Get the selected team's practices for linking
+  const { practices } = usePractices(formData.team_id || defaultTeamId || undefined);
 
   const [recurrence, setRecurrence] = useState<RecurrenceConfig>({
     pattern: "none",
@@ -64,12 +70,14 @@ const ScheduleEventForm = ({
       notes: formData.notes || null,
       is_home: formData.event_type === "game" ? formData.is_home : null,
       team_id: formData.team_id || null,
+      practice_id: formData.event_type === "practice" && formData.practice_id ? formData.practice_id : null,
       attachments: formData.attachments.length > 0 ? formData.attachments : null,
       recurrence: !event ? recurrence : undefined,
     });
   };
 
   const showOpponentField = formData.event_type === "game";
+  const showPracticeSelector = formData.event_type === "practice";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -195,6 +203,36 @@ const ScheduleEventForm = ({
           </>
         )}
       </div>
+
+      {/* Practice Plan Selector - only for practice events */}
+      {showPracticeSelector && (
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <ClipboardList className="w-4 h-4" />
+            Link Practice Plan
+          </Label>
+          <Select
+            value={formData.practice_id}
+            onValueChange={(value) => setFormData({ ...formData, practice_id: value === "none" ? "" : value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a practice plan (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No practice plan</SelectItem>
+              {practices.map((practice) => (
+                <SelectItem key={practice.id} value={practice.id}>
+                  {practice.title} — {practice.practice_date}
+                  {practice.drills && practice.drills.length > 0 && ` (${practice.drills.length} drills)`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Assign a practice plan so players can view drills and details for this event.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="notes">Notes</Label>
