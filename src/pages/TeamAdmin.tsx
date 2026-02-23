@@ -36,7 +36,7 @@ const TeamAdmin = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
-  const { members, isLoading: membersLoading, removeMember, refetch: refetchMembers } = useTeamMembers(teamId);
+  const { members, isLoading: membersLoading, removeMember, editMemberPlayers, isEditingPlayers, refetch: refetchMembers } = useTeamMembers(teamId);
   const { 
     invitations, 
     createInvitation, 
@@ -199,6 +199,10 @@ const TeamAdmin = () => {
                       isLoading={membersLoading} 
                       isCoach={isCoach} 
                       onRemoveMember={removeMember}
+                      onEditMember={(memberId, players, legacyUpdate) => {
+                        editMemberPlayers({ memberId, players, legacyUpdate });
+                      }}
+                      isEditing={isEditingPlayers}
                     />
                   </div>
                 </TabsContent>
