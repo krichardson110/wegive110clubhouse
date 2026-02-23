@@ -13,7 +13,7 @@ import { Trophy, UserPlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const JoinTeam = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, forcePasswordChange } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,21 +23,26 @@ const JoinTeam = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
   const autoLoginAttempted = useRef(false);
+  const joinAttempted = useRef(false);
+
+  // Read credentials from URL once before they get cleaned
+  const emailParam = useRef(searchParams.get("email"));
+  const tpParam = useRef(searchParams.get("tp"));
+  const tokenParam = useRef(searchParams.get("token") || "");
 
   // Auto-login if email and temp password are in URL (new account from invite)
   useEffect(() => {
     if (autoLoginAttempted.current) return;
     
-    const email = searchParams.get("email");
-    const tp = searchParams.get("tp");
+    const email = emailParam.current;
+    const tp = tpParam.current;
     
     if (email && tp && !user && !authLoading) {
       autoLoginAttempted.current = true;
       setIsAutoLoggingIn(true);
       
       // Clean the URL to remove credentials (keep token)
-      const urlToken = searchParams.get("token") || "";
-      window.history.replaceState(null, '', `/teams/join?token=${urlToken}`);
+      window.history.replaceState(null, '', `/teams/join?token=${tokenParam.current}`);
       
       supabase.auth.signInWithPassword({ email, password: tp })
         .then(({ error }) => {
@@ -49,24 +54,27 @@ const JoinTeam = () => {
               variant: "destructive",
             });
             setIsAutoLoggingIn(false);
+          } else {
+            // Login succeeded - ForcePasswordWrapper will show password change screen
+            // After password change, this component re-renders with user set
+            // We keep isAutoLoggingIn true briefly to avoid flashing the join UI
+            setTimeout(() => setIsAutoLoggingIn(false), 500);
           }
-          // If successful, onAuthStateChange will update the user state
-          // ForcePasswordWrapper will show password change screen
-          // After password change, this component re-renders with user set
         })
         .catch(() => {
           setIsAutoLoggingIn(false);
         });
     }
-  }, [searchParams, user, authLoading]);
+  }, [user, authLoading]);
 
-  // Auto-join if token is in URL and user is logged in (and not auto-logging in)
+  // Auto-join if token is in URL and user is logged in, not changing password, and not auto-logging in
   useEffect(() => {
-    const urlToken = searchParams.get("token");
-    if (urlToken && user && !isJoining && !isAutoLoggingIn) {
+    const urlToken = tokenParam.current || searchParams.get("token");
+    if (urlToken && user && !isJoining && !isAutoLoggingIn && !forcePasswordChange && !joinAttempted.current) {
+      joinAttempted.current = true;
       handleJoin(urlToken);
     }
-  }, [searchParams, user, isAutoLoggingIn]);
+  }, [user, isAutoLoggingIn, forcePasswordChange, searchParams]);
 
   const handleJoin = async (inviteToken?: string) => {
     const tokenToUse = inviteToken || token;
@@ -77,23 +85,32 @@ const JoinTeam = () => {
       onSuccess: (result) => {
         navigate(`/teams/${result.team_id}`);
       },
+      onError: () => {
+        joinAttempted.current = false; // Allow retry on error
+      },
       onSettled: () => {
         setIsJoining(false);
       },
     });
   };
 
-  if (authLoading || isAutoLoggingIn) {
+  if (authLoading || isAutoLoggingIn || isJoining) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          {isAutoLoggingIn && (
-            <p className="text-muted-foreground">Signing you in...</p>
-          )}
+          <p className="text-muted-foreground">
+            {isAutoLoggingIn ? "Signing you in..." : isJoining ? "Joining team..." : "Loading..."}
+          </p>
         </div>
       </div>
     );
+  }
+
+  // If user is logged in and force password change is active, don't show anything - 
+  // ForcePasswordWrapper handles it
+  if (user && forcePasswordChange) {
+    return null;
   }
 
   return (
@@ -136,7 +153,10 @@ const JoinTeam = () => {
                   </div>
                   
                   <Button 
-                    onClick={() => handleJoin()} 
+                    onClick={() => {
+                      joinAttempted.current = false;
+                      handleJoin();
+                    }} 
                     className="w-full"
                     disabled={!token.trim() || isJoining}
                   >
