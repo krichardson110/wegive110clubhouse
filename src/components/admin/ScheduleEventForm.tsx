@@ -8,10 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { ScheduleEvent, EventType, eventTypes, eventTypeConfig, EventAttachment } from "@/types/schedule";
 import { useTeams } from "@/hooks/useTeams";
 import EventAttachmentUpload from "@/components/teams/EventAttachmentUpload";
+import RecurrencePicker, { RecurrenceConfig } from "@/components/RecurrencePicker";
 
 interface ScheduleEventFormProps {
   event?: ScheduleEvent | null;
-  onSubmit: (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => void;
+  onSubmit: (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at"> & { recurrence?: RecurrenceConfig }) => void;
   onCancel: () => void;
   isLoading?: boolean;
   defaultTeamId?: string;
@@ -48,6 +49,11 @@ const ScheduleEventForm = ({
     attachments: event?.attachments || [] as EventAttachment[],
   });
 
+  const [recurrence, setRecurrence] = useState<RecurrenceConfig>({
+    pattern: "none",
+    endDate: (() => { const d = new Date(); d.setMonth(d.getMonth() + 3); return d.toISOString().split("T")[0]; })(),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
@@ -59,6 +65,7 @@ const ScheduleEventForm = ({
       is_home: formData.event_type === "game" ? formData.is_home : null,
       team_id: formData.team_id || null,
       attachments: formData.attachments.length > 0 ? formData.attachments : null,
+      recurrence: !event ? recurrence : undefined,
     });
   };
 
@@ -223,6 +230,15 @@ const ScheduleEventForm = ({
         />
         <Label htmlFor="published">Published (visible to team members)</Label>
       </div>
+
+      {/* Recurrence - only show for new events */}
+      {!event && (
+        <RecurrencePicker
+          value={recurrence}
+          onChange={setRecurrence}
+          minDate={formData.event_date}
+        />
+      )}
 
       <div className="flex justify-end gap-3 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>

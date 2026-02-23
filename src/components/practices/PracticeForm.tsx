@@ -21,6 +21,7 @@ import {
   PracticePhase
 } from "@/types/practice";
 import { Badge } from "@/components/ui/badge";
+import RecurrencePicker, { RecurrenceConfig } from "@/components/RecurrencePicker";
 
 interface PracticeFormData {
   title: string;
@@ -61,6 +62,10 @@ const PracticeForm = ({ practice, onSubmit, onCancel, isLoading, teamId }: Pract
   const [selectedFocusAreas, setSelectedFocusAreas] = useState<string[]>(practice?.focus_areas || []);
   const [equipmentInput, setEquipmentInput] = useState("");
   const [equipment, setEquipment] = useState<string[]>(practice?.equipment_needed || []);
+  const [recurrence, setRecurrence] = useState<RecurrenceConfig>({
+    pattern: "none",
+    endDate: (() => { const d = new Date(); d.setMonth(d.getMonth() + 3); return d.toISOString().split("T")[0]; })(),
+  });
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<PracticeFormData>({
     defaultValues: {
@@ -122,6 +127,7 @@ const PracticeForm = ({ practice, onSubmit, onCancel, isLoading, teamId }: Pract
       focus_areas: selectedFocusAreas,
       equipment_needed: equipment,
       team_id: teamId,
+      recurrence: !practice ? recurrence : undefined,
     });
   };
 
@@ -300,6 +306,17 @@ const PracticeForm = ({ practice, onSubmit, onCancel, isLoading, teamId }: Pract
           />
           <Label htmlFor="published">Published (visible to team)</Label>
         </div>
+
+        {/* Recurrence - only show for new practices */}
+        {!practice && (
+          <div className="md:col-span-2">
+            <RecurrencePicker
+              value={recurrence}
+              onChange={setRecurrence}
+              minDate={watch("practice_date")}
+            />
+          </div>
+        )}
       </div>
 
       {/* Drills Section */}

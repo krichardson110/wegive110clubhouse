@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 import { ScheduleEvent, mapDbToScheduleEvent } from "@/types/schedule";
+import { generateRecurringDates, RecurrenceConfig } from "@/components/RecurrencePicker";
 
 export function useTeamEvents() {
   const { toast } = useToast();
@@ -22,19 +23,32 @@ export function useTeamEvents() {
   });
 
   const createEventMutation = useMutation({
-    mutationFn: async (eventData: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
-      const { attachments, ...rest } = eventData;
+    mutationFn: async (eventData: Omit<ScheduleEvent, "id" | "created_at" | "updated_at"> & { recurrence?: RecurrenceConfig }) => {
+      const { attachments, recurrence, ...rest } = eventData;
+
+      // Generate dates from recurrence
+      const dates =
+        recurrence && recurrence.pattern !== "none"
+          ? generateRecurringDates(rest.event_date, recurrence.pattern, recurrence.endDate)
+          : [rest.event_date];
+
+      const rows = dates.map((date) => ({
+        ...rest,
+        event_date: date,
+        attachments: attachments as any,
+      }));
+
       const { data, error } = await supabase
         .from("schedule_events")
-        .insert({ ...rest, attachments: attachments as any })
-        .select()
-        .single();
+        .insert(rows)
+        .select();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      toast({ title: "Event created successfully!" });
+    onSuccess: (data) => {
+      const count = data?.length ?? 1;
+      toast({ title: count > 1 ? `${count} events created!` : "Event created successfully!" });
       queryClient.invalidateQueries({ queryKey: ["schedule-events"] });
     },
     onError: (error) => {

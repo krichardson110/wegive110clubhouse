@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import ScheduleEventCard from "@/components/ScheduleEventCard";
 import ScheduleEventForm from "@/components/admin/ScheduleEventForm";
 import { supabase } from "@/integrations/supabase/client";
+import { generateRecurringDates, RecurrenceConfig } from "@/components/RecurrencePicker";
 import { ScheduleEvent, EventType, eventTypeConfig, mapDbToScheduleEvent } from "@/types/schedule";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -39,33 +40,44 @@ const Schedule = () => {
     },
   });
 
-  const handleCreateEvent = async (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
+  const handleCreateEvent = async (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at"> & { recurrence?: RecurrenceConfig }) => {
     setIsCreating(true);
     try {
+      const { recurrence, ...eventData } = data;
+
+      // Generate dates from recurrence
+      const dates =
+        recurrence && recurrence.pattern !== "none"
+          ? generateRecurringDates(eventData.event_date, recurrence.pattern, recurrence.endDate)
+          : [eventData.event_date];
+
+      const rows = dates.map((date) => ({
+        title: eventData.title,
+        event_date: date,
+        event_time: eventData.event_time,
+        end_time: eventData.end_time || null,
+        event_type: eventData.event_type,
+        location: eventData.location || null,
+        opponent: eventData.opponent || null,
+        is_home: eventData.is_home ?? null,
+        notes: eventData.notes || null,
+        published: true,
+        team_id: eventData.team_id || null,
+        attachments: (eventData.attachments || []) as unknown as null,
+      }));
+
       const { error } = await supabase
         .from("schedule_events")
-        .insert([{
-          title: data.title,
-          event_date: data.event_date,
-          event_time: data.event_time,
-          end_time: data.end_time || null,
-          event_type: data.event_type,
-          location: data.location || null,
-          opponent: data.opponent || null,
-          is_home: data.is_home ?? null,
-          notes: data.notes || null,
-          published: true,
-          team_id: data.team_id || null,
-          attachments: (data.attachments || []) as unknown as null,
-        }]);
+        .insert(rows);
 
       if (error) throw error;
       
-      toast.success("Event created successfully");
+      const count = rows.length;
+      toast.success(count > 1 ? `${count} events created!` : "Event created successfully");
       queryClient.invalidateQueries({ queryKey: ["schedule-events"] });
       setShowAddEventDialog(false);
     } catch (error: any) {
-      toast.error("Failed to create event: " + error.message);
+      toast.error("Failed to create event");
     } finally {
       setIsCreating(false);
     }

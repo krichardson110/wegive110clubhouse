@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 import { Practice, PracticeDrill, PracticeSeason, PracticePhase } from "@/types/practice";
+import { generateRecurringDates, RecurrenceConfig } from "@/components/RecurrencePicker";
 
 export function usePractices(teamId?: string) {
   const { toast } = useToast();
@@ -51,18 +52,28 @@ export function usePractices(teamId?: string) {
   });
 
   const createPracticeMutation = useMutation({
-    mutationFn: async (practiceData: Omit<Practice, "id" | "created_at" | "updated_at" | "drills">) => {
+    mutationFn: async (input: Omit<Practice, "id" | "created_at" | "updated_at" | "drills"> & { recurrence?: RecurrenceConfig }) => {
+      const { recurrence, ...practiceData } = input;
+
+      // Generate dates from recurrence
+      const dates =
+        recurrence && recurrence.pattern !== "none"
+          ? generateRecurringDates(practiceData.practice_date, recurrence.pattern, recurrence.endDate)
+          : [practiceData.practice_date];
+
+      const rows = dates.map((date) => ({ ...practiceData, practice_date: date }));
+
       const { data, error } = await supabase
         .from("practices")
-        .insert(practiceData)
-        .select()
-        .single();
+        .insert(rows)
+        .select();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      toast({ title: "Practice created successfully!" });
+    onSuccess: (data) => {
+      const count = data?.length ?? 1;
+      toast({ title: count > 1 ? `${count} practices created!` : "Practice created successfully!" });
       queryClient.invalidateQueries({ queryKey: ["practices"] });
     },
     onError: (error) => {

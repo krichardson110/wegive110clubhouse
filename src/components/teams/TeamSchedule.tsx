@@ -103,7 +103,7 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
     }
   };
 
-  const handleCreateEvent = (data: Omit<ScheduleEvent, "id" | "created_at" | "updated_at">) => {
+  const handleCreateEvent = (data: any) => {
     createEvent(data, {
       onSuccess: () => setShowEventForm(false),
     });
