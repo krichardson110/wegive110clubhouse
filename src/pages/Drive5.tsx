@@ -20,17 +20,17 @@ const Drive5 = () => {
       <Navigation />
       <main className="pt-16">
         <section className="relative py-8 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[hsl(25_80%_12%)] to-background" />
-          <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-b from-clubhouse-purple-dark/30 to-background" />
+          <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-clubhouse-glow/10 rounded-full blur-3xl" />
           
           <div className="relative z-10 container mx-auto px-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-orange-500/20 text-orange-500">
+                  <div className="p-2 rounded-lg bg-accent/20 text-accent">
                     <Flame className="w-6 h-6" />
                   </div>
-                  <span className="text-sm font-medium text-orange-500 uppercase tracking-wider">
+                  <span className="text-sm font-medium text-accent uppercase tracking-wider">
                     Drive 5
                   </span>
                 </div>

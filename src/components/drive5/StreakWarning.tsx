@@ -19,12 +19,12 @@ const StreakWarning = ({ teamId, onNavigate }: StreakWarningProps) => {
   if (!user || !hasActiveStreak || hasCheckedInToday) return null;
 
   return (
-    <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 flex items-center gap-3 animate-pulse">
-      <div className="p-2 rounded-full bg-orange-500/20">
-        <AlertTriangle className="w-5 h-5 text-orange-500" />
+    <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 flex items-center gap-3 animate-pulse">
+      <div className="p-2 rounded-full bg-accent/20">
+        <AlertTriangle className="w-5 h-5 text-accent" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-orange-400">
+        <p className="font-medium text-accent">
           <Flame className="w-4 h-4 inline mr-1" />
           Your {streak.current_streak}-day streak is at risk!
         </p>
@@ -35,7 +35,7 @@ const StreakWarning = ({ teamId, onNavigate }: StreakWarningProps) => {
       {onNavigate && (
         <button
           onClick={onNavigate}
-          className="shrink-0 text-orange-500 hover:text-orange-400 transition-colors"
+          className="shrink-0 text-accent hover:text-accent/80 transition-colors"
         >
           <ArrowRight className="w-5 h-5" />
         </button>

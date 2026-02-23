@@ -70,11 +70,11 @@ const WeeklyProgressChart = ({ teamId }: WeeklyProgressChartProps) => {
                     key={index}
                     fill={
                       entry.count === maxCheckins
-                        ? "hsl(142 71% 45%)"
+                        ? "hsl(var(--accent))"
                         : entry.count >= 3
                         ? "hsl(var(--primary))"
                         : entry.count > 0
-                        ? "hsl(var(--muted-foreground) / 0.5)"
+                        ? "hsl(var(--clubhouse-purple-light) / 0.5)"
                         : "hsl(var(--muted) / 0.3)"
                     }
                   />
