@@ -53,17 +53,20 @@ const PracticesAdmin = () => {
   });
 
   const handleCreatePractice = async (data: any) => {
-    const { drills, ...practiceData } = data;
+    const { drills, recurrence, ...practiceData } = data;
     
     createPractice({
       ...practiceData,
       created_by: user?.id,
+      recurrence,
     }, {
-      onSuccess: (newPractice: any) => {
-        if (drills && drills.length > 0) {
+      onSuccess: (newPractices: any) => {
+        // Add drills to the first practice only (template)
+        const firstPractice = Array.isArray(newPractices) ? newPractices[0] : newPractices;
+        if (drills && drills.length > 0 && firstPractice) {
           drills.forEach((drill: any, index: number) => {
             createDrill({
-              practice_id: newPractice.id,
+              practice_id: firstPractice.id,
               drill_order: index,
               ...drill,
             });
