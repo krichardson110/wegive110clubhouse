@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Flame, Trophy, CheckCircle2, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useDrive5Categories,
   usePlayerGoals,
-  useDailyCheckins,
-  useToggleCheckin,
   usePlayerStreak,
   useTeamLeaderboard,
 } from "@/hooks/useDrive5";
+import { useAllActiveGoalTasks, useTaskCompletions } from "@/hooks/useGoalTasks";
 import StreakWarning from "./StreakWarning";
+import DailyTasksView from "./DailyTasksView";
 import PlayerDetailDialog from "./PlayerDetailDialog";
 import WeeklyReportDialog from "./WeeklyReportDialog";
 import WeeklyProgressChart from "./WeeklyProgressChart";
@@ -26,35 +25,15 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
   const { user } = useAuth();
   const { data: categories = [] } = useDrive5Categories();
   const { data: goals = [] } = usePlayerGoals(teamId);
-  const { data: checkins = [] } = useDailyCheckins(undefined, teamId);
+  const { data: tasks = [] } = useAllActiveGoalTasks(teamId);
+  const { data: completions = [] } = useTaskCompletions();
   const { data: streak } = usePlayerStreak(teamId);
   const { data: leaderboard = [] } = useTeamLeaderboard(teamId);
-  const toggleCheckin = useToggleCheckin();
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
-  const today = new Date().toISOString().split("T")[0];
-  const completedToday = checkins.filter((c) => c.completed).length;
-  const totalCategories = categories.length;
-
-  const handleToggle = (categoryId: string) => {
-    if (!user) return;
-    const existing = checkins.find((c) => c.category_id === categoryId);
-    const goal = goals.find((g) => g.category_id === categoryId);
-
-    toggleCheckin.mutate({
-      user_id: user.id,
-      team_id: teamId,
-      category_id: categoryId,
-      checkin_date: today,
-      completed: !existing?.completed,
-      goal_id: goal?.id,
-    });
-  };
-
-  const isCheckedIn = (categoryId: string) => {
-    return checkins.some((c) => c.category_id === categoryId && c.completed);
-  };
+  const completedToday = tasks.filter((t: any) => completions.some((c) => c.task_id === t.id && c.completed)).length;
+  const totalTasks = tasks.length;
 
   return (
     <div className="space-y-6">
@@ -74,7 +53,7 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
           <CardContent className="pt-6">
             <CheckCircle2 className="w-8 h-8 mx-auto text-primary mb-2" />
             <p className="text-3xl font-bold">
-              {completedToday}/{totalCategories}
+              {completedToday}/{totalTasks}
             </p>
             <p className="text-sm text-muted-foreground">Today</p>
           </CardContent>
@@ -88,52 +67,8 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
         </Card>
       </div>
 
-      {/* Daily Check-In */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Daily Check-In</span>
-            <span className="text-sm font-normal text-muted-foreground">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "short",
-                day: "numeric",
-              })}
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {categories.map((cat) => {
-            const checked = isCheckedIn(cat.id);
-            const goal = goals.find((g) => g.category_id === cat.id);
-            return (
-              <div
-                key={cat.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                  checked
-                    ? "bg-primary/10 border-primary/30"
-                    : "hover:bg-secondary/50 border-border"
-                }`}
-                onClick={() => handleToggle(cat.id)}
-              >
-                <Checkbox
-                  checked={checked}
-                  onCheckedChange={() => handleToggle(cat.id)}
-                  className="pointer-events-none"
-                />
-                <span className="text-xl">{cat.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-medium ${checked ? "line-through text-muted-foreground" : ""}`}>
-                    {cat.name}
-                  </p>
-                  {goal && <p className="text-xs text-muted-foreground truncate">{goal.title}</p>}
-                </div>
-                {checked && <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />}
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      {/* Daily Tasks */}
+      <DailyTasksView teamId={teamId} />
 
       {/* Weekly Progress Chart */}
       <WeeklyProgressChart teamId={teamId} />
