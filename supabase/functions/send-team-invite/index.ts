@@ -283,7 +283,7 @@ Deno.serve(async (req) => {
     if (emailError) {
       console.error('[send-team-invite] Failed to send email:', emailError);
       return new Response(
-        JSON.stringify({ error: 'Failed to send email', details: emailError.message }),
+        JSON.stringify({ error: 'Failed to send invitation email' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('[send-team-invite] Error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

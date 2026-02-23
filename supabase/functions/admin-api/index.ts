@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       if (authError) {
         console.error('[admin-api] Error fetching users:', authError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch users', details: authError.message }),
+          JSON.stringify({ error: 'Failed to fetch users' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -321,7 +321,7 @@ Deno.serve(async (req) => {
       if (linkError) {
         console.error('[admin-api] Error generating reset link:', linkError);
         return new Response(
-          JSON.stringify({ error: 'Failed to generate reset link', details: linkError.message }),
+          JSON.stringify({ error: 'Failed to generate reset link' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -366,7 +366,7 @@ Deno.serve(async (req) => {
       if (updateError) {
         console.error('[admin-api] Error updating password:', updateError);
         return new Response(
-          JSON.stringify({ error: 'Failed to update password', details: updateError.message }),
+          JSON.stringify({ error: 'Failed to update password' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -404,7 +404,7 @@ Deno.serve(async (req) => {
       if (deleteError) {
         console.error('[admin-api] Error deleting user:', deleteError);
         return new Response(
-          JSON.stringify({ error: 'Failed to delete user', details: deleteError.message }),
+          JSON.stringify({ error: 'Failed to delete user' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -584,7 +584,7 @@ Deno.serve(async (req) => {
       if (deleteError) {
         console.error('[admin-api] Error deleting team:', deleteError);
         return new Response(
-          JSON.stringify({ error: 'Failed to delete team', details: deleteError.message }),
+          JSON.stringify({ error: 'Failed to delete team' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -612,7 +612,7 @@ Deno.serve(async (req) => {
       if (deleteError) {
         console.error('[admin-api] Error removing member:', deleteError);
         return new Response(
-          JSON.stringify({ error: 'Failed to remove member', details: deleteError.message }),
+          JSON.stringify({ error: 'Failed to remove member' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -636,7 +636,7 @@ Deno.serve(async (req) => {
       if (rolesError) {
         console.error('[admin-api] Error fetching roles:', rolesError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch roles', details: rolesError.message }),
+          JSON.stringify({ error: 'Failed to fetch roles' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -721,7 +721,7 @@ Deno.serve(async (req) => {
         }
         console.error('[admin-api] Error inserting role:', insertError);
         return new Response(
-          JSON.stringify({ error: 'Failed to assign role', details: insertError.message }),
+          JSON.stringify({ error: 'Failed to assign role' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -767,7 +767,7 @@ Deno.serve(async (req) => {
       if (deleteError) {
         console.error('[admin-api] Error deleting role:', deleteError);
         return new Response(
-          JSON.stringify({ error: 'Failed to remove role', details: deleteError.message }),
+          JSON.stringify({ error: 'Failed to remove role' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -789,7 +789,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('[admin-api] Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', message: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

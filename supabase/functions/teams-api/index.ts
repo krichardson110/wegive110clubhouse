@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       if (membershipError) {
         console.error('[teams-api] Error fetching memberships:', membershipError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch teams', details: membershipError.message }),
+          JSON.stringify({ error: 'Failed to fetch teams' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
       if (teamsError) {
         console.error('[teams-api] Error fetching teams:', teamsError);
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch team details', details: teamsError.message }),
+          JSON.stringify({ error: 'Failed to fetch team details' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -418,7 +418,7 @@ Deno.serve(async (req) => {
       if (logError) {
         console.error('[teams-api] Error creating training log:', logError);
         return new Response(
-          JSON.stringify({ error: 'Failed to create training log', details: logError.message }),
+          JSON.stringify({ error: 'Failed to create training log' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -704,7 +704,7 @@ Deno.serve(async (req) => {
         if (updateError) {
           console.error('[teams-api] Error updating user password:', updateError);
           return new Response(
-            JSON.stringify({ error: 'Failed to set temporary password', details: updateError.message }),
+            JSON.stringify({ error: 'Failed to set temporary password' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -724,7 +724,7 @@ Deno.serve(async (req) => {
         if (createError) {
           console.error('[teams-api] Error creating user:', createError);
           return new Response(
-            JSON.stringify({ error: 'Failed to create user account', details: createError.message }),
+            JSON.stringify({ error: 'Failed to create user account' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -771,7 +771,7 @@ Deno.serve(async (req) => {
         if (memberError) {
           console.error('[teams-api] Error adding team member:', memberError);
           return new Response(
-            JSON.stringify({ error: 'Failed to add user to team', details: memberError.message }),
+            JSON.stringify({ error: 'Failed to add user to team' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -826,7 +826,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('[teams-api] Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', message: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
