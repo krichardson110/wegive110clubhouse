@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Target, Calendar, TrendingUp } from "lucide-react";
+import { Target, Calendar, TrendingUp, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useDrive5Categories,
@@ -23,8 +24,18 @@ const Drive5GoalsTab = ({ teamId }: Drive5GoalsTabProps) => {
   const { data: categories = [] } = useDrive5Categories();
   const { data: goals = [] } = usePlayerGoals(teamId);
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [goalFilter, setGoalFilter] = useState<string>("all");
 
   const activeGoals = goals.filter((g) => g.status === "active");
+
+  // Apply filters
+  const filteredGoals = activeGoals.filter((g) => {
+    if (categoryFilter !== "all" && g.category_id !== categoryFilter) return false;
+    if (goalFilter !== "all" && g.id !== goalFilter) return false;
+    return true;
+  });
+
   const totalProgress =
     activeGoals.length > 0
       ? Math.round(
@@ -74,20 +85,66 @@ const Drive5GoalsTab = ({ teamId }: Drive5GoalsTabProps) => {
               {activeGoals.length === 0 ? "Set Goals" : "Add Goals"}
             </Button>
           </CardTitle>
+
+          {/* Filters */}
+          {activeGoals.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-3 mt-4">
+              <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setGoalFilter("all"); }}>
+                <SelectTrigger className="w-full sm:w-[200px] bg-background">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+                    <SelectValue placeholder="All Categories" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      <span className="flex items-center gap-2">
+                        <span>{cat.icon}</span>
+                        <span>{cat.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={goalFilter} onValueChange={setGoalFilter}>
+                <SelectTrigger className="w-full sm:w-[220px] bg-background">
+                  <SelectValue placeholder="All Goals" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="all">All Goals</SelectItem>
+                  {(categoryFilter !== "all"
+                    ? activeGoals.filter((g) => g.category_id === categoryFilter)
+                    : activeGoals
+                  ).map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {activeGoals.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Target className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <h3 className="text-lg font-semibold mb-2">No goals set yet</h3>
+              <h3 className="text-lg font-sans font-semibold mb-2">No goals set yet</h3>
               <p className="text-sm mb-4">
                 Set your 90-day goals to start tracking progress across all 5 categories.
               </p>
               <Button onClick={() => setGoalDialogOpen(true)}>Set Your Goals</Button>
             </div>
+          ) : filteredGoals.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm font-sans">No goals match the selected filters.</p>
+            </div>
           ) : (
             <div className="space-y-4">
-              {activeGoals.map((goal) => (
+              {filteredGoals.map((goal) => (
                 <GoalCard key={goal.id} goal={goal} />
               ))}
             </div>
