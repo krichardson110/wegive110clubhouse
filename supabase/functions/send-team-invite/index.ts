@@ -104,7 +104,8 @@ Deno.serve(async (req) => {
     console.log(`[send-team-invite] Found invitation for: ${invitation.email}`);
 
     // Verify the user is authorized to send this invite (they should be the one who created it or a team coach)
-    const { data: isCoach } = await supabaseAdmin.rpc('is_team_coach', { team_uuid: invitation.team_id });
+    // Use the user's supabase client (not admin) so auth.uid() works in the RPC
+    const { data: isCoach } = await supabase.rpc('is_team_coach', { team_uuid: invitation.team_id });
     
     if (invitation.invited_by !== userId && !isCoach) {
       console.log('[send-team-invite] User not authorized to send this invite');

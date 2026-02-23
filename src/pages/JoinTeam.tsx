@@ -24,6 +24,8 @@ const JoinTeam = () => {
   const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
   const autoLoginAttempted = useRef(false);
   const joinAttempted = useRef(false);
+  const wasAutoLogin = useRef(false);
+  const [passwordCheckReady, setPasswordCheckReady] = useState(false);
 
   // Read credentials from URL once before they get cleaned
   const emailParam = useRef(searchParams.get("email"));
@@ -39,6 +41,7 @@ const JoinTeam = () => {
     
     if (email && tp && !user && !authLoading) {
       autoLoginAttempted.current = true;
+      wasAutoLogin.current = true;
       setIsAutoLoggingIn(true);
       
       // Clean the URL to remove credentials (keep token)
@@ -54,18 +57,40 @@ const JoinTeam = () => {
               variant: "destructive",
             });
             setIsAutoLoggingIn(false);
-          } else {
-            // Login succeeded - ForcePasswordWrapper will show password change screen
-            // After password change, this component re-renders with user set
-            // We keep isAutoLoggingIn true briefly to avoid flashing the join UI
-            setTimeout(() => setIsAutoLoggingIn(false), 500);
           }
+          // On success: keep isAutoLoggingIn true until forcePasswordChange is resolved
+          // The effect below will handle the transition
         })
         .catch(() => {
           setIsAutoLoggingIn(false);
         });
     }
   }, [user, authLoading]);
+
+  // After auto-login, wait for forcePasswordChange to be properly resolved before proceeding
+  useEffect(() => {
+    if (!wasAutoLogin.current || !isAutoLoggingIn || !user) return;
+    
+    // forcePasswordChange starts as false in useAuth, then gets set to true/false after the async check.
+    // We need to wait for the profile check to complete.
+    // If forcePasswordChange becomes true, the ForcePasswordWrapper will handle it.
+    // Give it up to 3 seconds to resolve, then proceed.
+    
+    if (forcePasswordChange) {
+      // Password change detected — ForcePasswordWrapper will take over
+      setIsAutoLoggingIn(false);
+      return;
+    }
+    
+    // Set a timeout: if forcePasswordChange is still false after 2s, 
+    // assume the check completed and it's genuinely false
+    const timer = setTimeout(() => {
+      setPasswordCheckReady(true);
+      setIsAutoLoggingIn(false);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [user, isAutoLoggingIn, forcePasswordChange]);
 
   // Auto-join if token is in URL and user is logged in, not changing password, and not auto-logging in
   useEffect(() => {
