@@ -42,22 +42,22 @@ const Drive5GoalsTab = ({ teamId }: Drive5GoalsTabProps) => {
         <Card className="text-center">
           <CardContent className="pt-6">
             <Target className="w-8 h-8 mx-auto text-primary mb-2" />
-            <p className="text-3xl font-bold">{activeGoals.length}</p>
-            <p className="text-sm text-muted-foreground">Active Goals</p>
+            <p className="text-3xl font-sans font-bold">{activeGoals.length}</p>
+            <p className="text-sm font-sans text-muted-foreground">Active Goals</p>
           </CardContent>
         </Card>
         <Card className="text-center">
           <CardContent className="pt-6">
             <TrendingUp className="w-8 h-8 mx-auto text-primary mb-2" />
-            <p className="text-3xl font-bold">{totalProgress}%</p>
-            <p className="text-sm text-muted-foreground">Avg Progress</p>
+            <p className="text-3xl font-sans font-bold">{totalProgress}%</p>
+            <p className="text-sm font-sans text-muted-foreground">Avg Progress</p>
           </CardContent>
         </Card>
         <Card className="text-center">
           <CardContent className="pt-6">
             <Calendar className="w-8 h-8 mx-auto text-accent mb-2" />
-            <p className="text-3xl font-bold">90</p>
-            <p className="text-sm text-muted-foreground">Day Plan</p>
+            <p className="text-3xl font-sans font-bold">90</p>
+            <p className="text-sm font-sans text-muted-foreground">Day Plan</p>
           </CardContent>
         </Card>
       </div>
@@ -65,10 +65,10 @@ const Drive5GoalsTab = ({ teamId }: Drive5GoalsTabProps) => {
       {/* Goals List */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between font-sans">
             <div className="flex items-center gap-2">
               <Target className="w-5 h-5" />
-              <span>My 90-Day Goals</span>
+              <span className="font-bold">My 90-Day Goals</span>
             </div>
             <Button size="sm" onClick={() => setGoalDialogOpen(true)}>
               {activeGoals.length === 0 ? "Set Goals" : "Add Goals"}
@@ -123,8 +123,8 @@ const GoalCard = ({ goal }: { goal: PlayerGoal }) => {
         <div className="flex items-center gap-3">
           <span className="text-3xl">{goal.category?.icon || "🎯"}</span>
           <div>
-            <h3 className="text-lg font-bold">{goal.category?.name || "Category"}</h3>
-            <p className="text-sm text-muted-foreground">{goal.title}</p>
+            <h3 className="text-lg font-sans font-bold tracking-normal">{goal.category?.name || "Category"}</h3>
+            <p className="text-sm font-sans text-muted-foreground">{goal.title}</p>
           </div>
         </div>
         <div className="text-right">
@@ -139,7 +139,7 @@ const GoalCard = ({ goal }: { goal: PlayerGoal }) => {
       )}
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between text-sm font-sans">
           <span className="text-muted-foreground">Progress</span>
           <span className="font-medium">
             {goal.current_value} / {goal.target_value} days
