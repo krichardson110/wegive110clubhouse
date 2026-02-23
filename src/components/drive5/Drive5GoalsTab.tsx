@@ -121,12 +121,10 @@ const GoalCard = ({ goal }: { goal: PlayerGoal }) => {
     <div className="p-4 rounded-lg border border-border space-y-3">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{goal.category?.icon || "🎯"}</span>
+          <span className="text-3xl">{goal.category?.icon || "🎯"}</span>
           <div>
-            <h4 className="font-semibold">{goal.title}</h4>
-            <p className="text-xs text-muted-foreground">
-              {goal.category?.name || "Category"}
-            </p>
+            <h3 className="text-lg font-bold">{goal.category?.name || "Category"}</h3>
+            <p className="text-sm text-muted-foreground">{goal.title}</p>
           </div>
         </div>
         <div className="text-right">
