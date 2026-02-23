@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeam, useTeamMembers } from "@/hooks/useTeams";
+import { useTeamInvitations } from "@/hooks/useTeamInvitations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,13 +17,16 @@ import {
   Video, 
   BookOpen,
   MessageSquare,
-  Settings
+  Settings,
+  UserPlus
 } from "lucide-react";
 import TeamRoster from "@/components/teams/TeamRoster";
 import TeamSchedule from "@/components/teams/TeamSchedule";
 import TeamWorkoutsContent from "@/components/teams/TeamWorkoutsContent";
 import TeamVideosContent from "@/components/teams/TeamVideosContent";
 import TeamPlaybookContent from "@/components/teams/TeamPlaybookContent";
+import InvitePlayerForm from "@/components/teams/InvitePlayerForm";
+import PendingInvitations from "@/components/teams/PendingInvitations";
 
 import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
@@ -32,8 +36,18 @@ const TeamAdmin = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
-  const { members, isLoading: membersLoading, removeMember } = useTeamMembers(teamId);
+  const { members, isLoading: membersLoading, removeMember, refetch: refetchMembers } = useTeamMembers(teamId);
+  const { 
+    invitations, 
+    createInvitation, 
+    deleteInvitation, 
+    resendInvitation, 
+    isCreating: isInviting, 
+    isResending 
+  } = useTeamInvitations(teamId, team?.name);
   const [activeTab, setActiveTab] = useState("feed");
+  const [inviteFormOpen, setInviteFormOpen] = useState(false);
+  const [inviteLink, setInviteLink] = useState<string | undefined>();
 
   useEffect(() => {
     if (!authLoading && !teamLoading && (!user || !isMember || !isCoach)) {
@@ -164,12 +178,29 @@ const TeamAdmin = () => {
                 </TabsContent>
 
                 <TabsContent value="roster" className="mt-0">
-                  <TeamRoster 
-                    members={members} 
-                    isLoading={membersLoading} 
-                    isCoach={isCoach} 
-                    onRemoveMember={removeMember}
-                  />
+                  <div className="space-y-6">
+                    <div className="flex justify-end">
+                      <Button onClick={() => setInviteFormOpen(true)}>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add Player
+                      </Button>
+                    </div>
+                    
+                    <PendingInvitations 
+                      invitations={invitations}
+                      onCancel={deleteInvitation}
+                      onResend={resendInvitation}
+                      isResending={isResending}
+                      onApproved={refetchMembers}
+                    />
+                    
+                    <TeamRoster 
+                      members={members} 
+                      isLoading={membersLoading} 
+                      isCoach={isCoach} 
+                      onRemoveMember={removeMember}
+                    />
+                  </div>
                 </TabsContent>
                 
                 <TabsContent value="schedule" className="mt-0">
@@ -193,6 +224,17 @@ const TeamAdmin = () => {
         </section>
       </main>
       <Footer />
+
+      <InvitePlayerForm
+        open={inviteFormOpen}
+        onOpenChange={setInviteFormOpen}
+        onSubmit={(data) => {
+          createInvitation(data);
+          setInviteFormOpen(false);
+        }}
+        isLoading={isInviting}
+        inviteLink={inviteLink}
+      />
     </div>
   );
 };

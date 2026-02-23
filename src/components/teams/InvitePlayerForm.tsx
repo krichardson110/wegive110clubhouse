@@ -28,13 +28,13 @@ const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink 
     email: "",
     invite_type: "player" as 'player' | 'parent' | 'coach',
     player_name: "",
-    create_account: false,
+    create_account: true,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
-    setFormData({ email: "", invite_type: "player", player_name: "", create_account: false });
+    setFormData({ email: "", invite_type: "player", player_name: "", create_account: true });
   };
 
   const handleCopyLink = async () => {
