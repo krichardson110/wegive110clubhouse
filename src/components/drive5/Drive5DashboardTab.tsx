@@ -65,14 +65,14 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
       <div className="grid grid-cols-3 gap-4">
         <Card className="text-center">
           <CardContent className="pt-6">
-            <Flame className="w-8 h-8 mx-auto text-orange-500 mb-2" />
+            <Flame className="w-8 h-8 mx-auto text-accent mb-2" />
             <p className="text-3xl font-bold">{streak?.current_streak || 0}</p>
             <p className="text-sm text-muted-foreground">Day Streak</p>
           </CardContent>
         </Card>
         <Card className="text-center">
           <CardContent className="pt-6">
-            <CheckCircle2 className="w-8 h-8 mx-auto text-green-500 mb-2" />
+            <CheckCircle2 className="w-8 h-8 mx-auto text-primary mb-2" />
             <p className="text-3xl font-bold">
               {completedToday}/{totalCategories}
             </p>
@@ -81,7 +81,7 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
         </Card>
         <Card className="text-center">
           <CardContent className="pt-6">
-            <Trophy className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
+            <Trophy className="w-8 h-8 mx-auto text-accent mb-2" />
             <p className="text-3xl font-bold">{streak?.longest_streak || 0}</p>
             <p className="text-sm text-muted-foreground">Best Streak</p>
           </CardContent>
@@ -111,7 +111,7 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
                 key={cat.id}
                 className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
                   checked
-                    ? "bg-green-500/10 border-green-500/30"
+                    ? "bg-primary/10 border-primary/30"
                     : "hover:bg-secondary/50 border-border"
                 }`}
                 onClick={() => handleToggle(cat.id)}
@@ -128,7 +128,7 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
                   </p>
                   {goal && <p className="text-xs text-muted-foreground truncate">{goal.title}</p>}
                 </div>
-                {checked && <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />}
+                {checked && <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />}
               </div>
             );
           })}
@@ -144,7 +144,7 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-500" />
+                <Trophy className="w-5 h-5 text-accent" />
                 Weekly Leaderboard
               </div>
               <Button variant="outline" size="sm" onClick={() => setReportDialogOpen(true)}>
@@ -163,7 +163,7 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
                 >
                   <span
                     className={`text-lg font-bold w-6 ${
-                      idx < 3 ? "text-yellow-500" : "text-muted-foreground"
+                      idx < 3 ? "text-accent" : "text-muted-foreground"
                     }`}
                   >
                     {idx + 1}

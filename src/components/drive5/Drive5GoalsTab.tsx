@@ -47,7 +47,7 @@ const Drive5GoalsTab = ({ teamId }: Drive5GoalsTabProps) => {
         </Card>
         <Card className="text-center">
           <CardContent className="pt-6">
-            <TrendingUp className="w-8 h-8 mx-auto text-green-500 mb-2" />
+            <TrendingUp className="w-8 h-8 mx-auto text-primary mb-2" />
             <p className="text-3xl font-bold">{totalProgress}%</p>
             <p className="text-sm text-muted-foreground">Avg Progress</p>
           </CardContent>
