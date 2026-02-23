@@ -10,7 +10,6 @@ interface InviteRequest {
   invitation_id: string;
   team_name: string;
   inviter_name: string;
-  create_account?: boolean;
 }
 
 // Generate a secure temporary password
@@ -71,7 +70,7 @@ Deno.serve(async (req) => {
     console.log(`[send-team-invite] Authenticated user: ${userId}`);
 
     const body = await req.json();
-    const { invitation_id, team_name, inviter_name, create_account }: InviteRequest = body;
+    const { invitation_id, team_name, inviter_name }: InviteRequest = body;
 
     if (!invitation_id || typeof invitation_id !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(invitation_id)) {
       return new Response(
@@ -127,9 +126,8 @@ Deno.serve(async (req) => {
 
     const resend = new Resend(resendApiKey.trim());
 
-    // Build the invite URL (use the request origin so preview links go to preview, published links go to published)
+    // Build the invite URL
     const baseUrl = (req.headers.get('origin') || 'https://wegive110clubhouse.lovable.app').replace(/\/$/, '');
-    // We'll build the final invite URL after account creation so we can include credentials if applicable
     let inviteUrl = `${baseUrl}/teams/join?token=${invitation.token}`;
 
     // Determine the role description
@@ -142,50 +140,50 @@ Deno.serve(async (req) => {
 
     let tempPassword: string | null = null;
     let accountCreated = false;
+    let userAlreadyExisted = false;
 
-    // If create_account is true, create a Supabase auth account
-    if (create_account) {
-      console.log(`[send-team-invite] Creating Drive 5 account for: ${invitation.email}`);
+    // Always create an account for the invitee
+    console.log(`[send-team-invite] Creating account for: ${invitation.email}`);
+    
+    // Check if user already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === invitation.email);
+    
+    if (existingUser) {
+      console.log(`[send-team-invite] User already exists: ${invitation.email}`);
+      userAlreadyExisted = true;
+      // User already exists, just send the invite link without credentials
+    } else {
+      // Generate temporary password
+      tempPassword = generateTempPassword();
       
-      // Check if user already exists
-      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-      const existingUser = existingUsers?.users?.find(u => u.email === invitation.email);
-      
-      if (existingUser) {
-        console.log(`[send-team-invite] User already exists: ${invitation.email}`);
-        // User already exists, don't create new account but still send invite
+      // Create the auth user
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: invitation.email,
+        password: tempPassword,
+        email_confirm: true, // Auto-confirm email since coach is inviting
+      });
+
+      if (createError) {
+        console.error('[send-team-invite] Failed to create user:', createError);
+        // Continue with invite even if account creation failed
       } else {
-        // Generate temporary password
-        tempPassword = generateTempPassword();
-        
-        // Create the auth user
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email: invitation.email,
-          password: tempPassword,
-          email_confirm: true, // Auto-confirm email since coach is inviting
-        });
+        console.log(`[send-team-invite] Created user: ${newUser.user?.id}`);
+        accountCreated = true;
 
-        if (createError) {
-          console.error('[send-team-invite] Failed to create user:', createError);
-          // Continue with invite even if account creation failed
-        } else {
-          console.log(`[send-team-invite] Created user: ${newUser.user?.id}`);
-          accountCreated = true;
+        // Create profile with force_password_change flag
+        const displayName = invitation.player_name || invitation.email.split('@')[0];
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            user_id: newUser.user!.id,
+            display_name: displayName,
+            force_password_change: true,
+            temp_password_set_at: new Date().toISOString(),
+          });
 
-          // Create profile with force_password_change flag
-          const displayName = invitation.player_name || invitation.email.split('@')[0];
-          const { error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .insert({
-              user_id: newUser.user!.id,
-              display_name: displayName,
-              force_password_change: true,
-              temp_password_set_at: new Date().toISOString(),
-            });
-
-          if (profileError) {
-            console.error('[send-team-invite] Failed to create profile:', profileError);
-          }
+        if (profileError) {
+          console.error('[send-team-invite] Failed to create profile:', profileError);
         }
       }
     }
@@ -203,9 +201,9 @@ Deno.serve(async (req) => {
     // Credentials section for newly created accounts
     const credentialsSection = accountCreated && tempPassword ? `
       <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 20px; border-radius: 8px; margin: 24px 0;">
-        <h3 style="color: white; margin: 0 0 12px 0; font-size: 16px;">🎉 Your Drive 5 Account Has Been Created!</h3>
+        <h3 style="color: white; margin: 0 0 12px 0; font-size: 16px;">🎉 Your Account Has Been Created!</h3>
         <p style="color: white; margin: 0 0 8px 0; font-size: 14px;">
-          You can now log in to both Drive 5 and the Clubhouse using these credentials:
+          Click the button below to accept the invitation — you'll be signed in automatically and asked to set a new password.
         </p>
         <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 6px; margin-top: 12px;">
           <p style="color: white; margin: 0; font-size: 14px;">
@@ -252,8 +250,10 @@ Deno.serve(async (req) => {
       
       <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
         ${accountCreated 
-          ? 'Click the button above to accept the invitation and access your new account. You can also log in at <a href="https://wegive110.com" style="color: #7c3aed;">wegive110.com</a> (Drive 5) with the same credentials.'
-          : "This invitation will expire in 7 days. If you don't have an account yet, you'll be able to create one when you accept the invitation."
+          ? 'Click the button above to accept the invitation. You\'ll be signed in automatically and prompted to set your own password.'
+          : userAlreadyExisted
+            ? 'You already have an account. Click the button above to sign in and join the team.'
+            : "This invitation will expire in 7 days. If you don't have an account yet, one will be created for you when you accept."
         }
       </p>
       
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
       from: 'We Give 110% Clubhouse <noreply@wegive110.com>',
       to: [invitation.email],
       subject: accountCreated 
-        ? `Your Drive 5 Account is Ready - Join ${team_name}!`
+        ? `Your Account is Ready - Join ${team_name}!`
         : `You're invited to join ${team_name}!`,
       html: emailHtml,
     });
@@ -295,16 +295,13 @@ Deno.serve(async (req) => {
 
     console.log('[send-team-invite] Email sent successfully:', emailResult);
 
-    // Check if we tried to create an account but user already existed
-    const userAlreadyExisted = create_account && !accountCreated;
-
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: accountCreated 
-          ? 'Invitation email sent with Drive 5 account credentials' 
+          ? 'Invitation email sent with account credentials' 
           : userAlreadyExisted
-            ? 'Invitation sent - user already has a Drive 5 account'
+            ? 'Invitation sent - user already has an account'
             : 'Invitation email sent',
         accountCreated,
         userAlreadyExisted,

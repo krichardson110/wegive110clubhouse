@@ -49,7 +49,6 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
       email: string;
       invite_type: 'player' | 'parent' | 'coach';
       player_name?: string;
-      create_account?: boolean;
     }) => {
       if (!teamId || !user) throw new Error("Missing required data");
       
@@ -84,14 +83,12 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
 
       const inviterName = profile?.display_name || user.email?.split('@')[0] || 'Your coach';
 
-      // Now send the invitation email (and optionally create account)
-      const { data: session } = await supabase.auth.getSession();
+      // Send the invitation email and auto-create account
       const response = await supabase.functions.invoke('send-team-invite', {
         body: {
           invitation_id: data.id,
           team_name: teamName || 'the team',
           inviter_name: inviterName,
-          create_account: invitation.create_account || false,
         },
       });
 
@@ -118,13 +115,13 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
     onSuccess: (data) => {
       if (data?.accountCreated) {
         toast({ 
-          title: "Invitation sent with Drive 5 account!", 
-          description: "Login credentials were emailed to the invitee."
+          title: "Invitation sent!", 
+          description: "Account credentials were emailed to the invitee."
         });
       } else if (data?.userAlreadyExisted) {
         toast({ 
           title: "Invitation sent!", 
-          description: "This person already has a Drive 5 account - no new credentials were created."
+          description: "This person already has an account - they can use their existing credentials."
         });
       } else {
         toast({ title: "Invitation sent successfully!" });

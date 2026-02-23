@@ -14,7 +14,6 @@ interface InvitePlayerFormProps {
     email: string; 
     invite_type: 'player' | 'parent' | 'coach'; 
     player_name?: string;
-    create_account?: boolean;
   }) => void;
   isLoading?: boolean;
   inviteLink?: string;
@@ -27,13 +26,12 @@ const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink 
     email: "",
     invite_type: "player" as 'player' | 'parent' | 'coach',
     player_name: "",
-    create_account: true,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
-    setFormData({ email: "", invite_type: "player", player_name: "", create_account: true });
+    setFormData({ email: "", invite_type: "player", player_name: "" });
   };
 
   const handleCopyLink = async () => {
