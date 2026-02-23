@@ -59,7 +59,7 @@ const Drive5 = () => {
         </section>
 
         <section className="py-6">
-          <div className="container mx-auto px-4 max-w-2xl">
+          <div className="container mx-auto px-4">
             <Drive5Dashboard teamId={teamId} />
           </div>
         </section>
