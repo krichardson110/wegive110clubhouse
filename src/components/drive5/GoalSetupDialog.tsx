@@ -20,9 +20,8 @@ const GoalSetupDialog = ({ open, onOpenChange, categories, existingGoals, teamId
   const createGoal = useCreateGoal();
   const [goals, setGoals] = useState<Record<string, { title: string; description: string; target: number }>>({});
 
-  const categoriesWithoutGoals = categories.filter(
-    cat => !existingGoals.some(g => g.category_id === cat.id)
-  );
+  // Show all categories — players can have multiple goals per category
+  const availableCategories = categories;
 
   const updateGoal = (catId: string, field: string, value: string | number) => {
     setGoals(prev => ({
@@ -63,12 +62,12 @@ const GoalSetupDialog = ({ open, onOpenChange, categories, existingGoals, teamId
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {categoriesWithoutGoals.length === 0 ? (
+          {availableCategories.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
-              You've already set goals for all categories! 🎯
+              No categories available.
             </p>
           ) : (
-            categoriesWithoutGoals.map(cat => (
+            availableCategories.map(cat => (
               <div key={cat.id} className="space-y-3 p-4 rounded-lg border border-border">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{cat.icon}</span>
