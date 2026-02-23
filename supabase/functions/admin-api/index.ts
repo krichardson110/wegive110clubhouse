@@ -89,13 +89,6 @@ Deno.serve(async (req) => {
     const isSuperAdmin = roleData.some(r => r.role === 'super_admin');
     console.log(`[admin-api] User is admin, super_admin: ${isSuperAdmin}`);
 
-    // Create admin client with service role for admin operations
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
     // GET /users - List all users with their profiles and team memberships
     if ((path === '/users' || path === '' || path === '/') && req.method === 'GET') {
       console.log('[admin-api] Fetching all users');
