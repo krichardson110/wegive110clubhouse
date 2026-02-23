@@ -2,7 +2,7 @@ import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import ResourcesSection from "@/components/ResourcesSection";
 import MotivationalSection from "@/components/MotivationalSection";
-import RecentUpdates from "@/components/RecentUpdates";
+
 import Footer from "@/components/Footer";
 import PlayerProgressDashboard from "@/components/progress/PlayerProgressDashboard";
 
@@ -30,7 +30,7 @@ const Index = () => {
         
         <ResourcesSection />
         <MotivationalSection />
-        <RecentUpdates />
+        
       </main>
       <Footer />
     </div>
