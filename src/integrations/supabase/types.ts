@@ -330,6 +330,57 @@ export type Database = {
           },
         ]
       }
+      goal_tasks: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          goal_id: string
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          goal_id: string
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          goal_id?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_tasks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "drive5_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_tasks_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "player_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journeys: {
         Row: {
           color_gradient: string | null
@@ -948,6 +999,44 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_completions: {
+        Row: {
+          completed: boolean
+          completion_date: string
+          created_at: string
+          id: string
+          notes: string | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completion_date?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completion_date?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_completions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "goal_tasks"
             referencedColumns: ["id"]
           },
         ]
