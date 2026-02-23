@@ -22,6 +22,7 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
   const { data: completions = [] } = useTaskCompletions();
   const toggleCompletion = useToggleTaskCompletion();
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeGoal, setActiveGoal] = useState<string>("all");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -51,11 +52,27 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
   const completedTasks = tasks.filter((t: any) => isTaskCompleted(t.id)).length;
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+  // Unique goals from visible tasks
+  const goalsInCategory = activeCategory === "all"
+    ? tasks
+    : tasks.filter((t: any) => t.category_id === activeCategory);
+  const uniqueGoals = Array.from(
+    new Map(goalsInCategory.map((t: any) => [t.goal?.id, t.goal])).values()
+  ).filter(Boolean) as { id: string; title: string }[];
+
   // Filtered view
-  const visibleGroups =
-    activeCategory === "all"
-      ? tasksByCategory
-      : tasksByCategory.filter((g) => g.category.id === activeCategory);
+  const filteredTasks = tasks.filter((t: any) => {
+    if (activeCategory !== "all" && t.category_id !== activeCategory) return false;
+    if (activeGoal !== "all" && t.goal?.id !== activeGoal) return false;
+    return true;
+  });
+
+  const visibleGroups = categories
+    .map((cat) => ({
+      category: cat,
+      tasks: filteredTasks.filter((t: any) => t.category_id === cat.id),
+    }))
+    .filter((group) => group.tasks.length > 0);
 
   if (totalTasks === 0) {
     return (
@@ -95,7 +112,7 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
       {/* Category filter pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
         <button
-          onClick={() => setActiveCategory("all")}
+          onClick={() => { setActiveCategory("all"); setActiveGoal("all"); }}
           className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-colors ${
             activeCategory === "all"
               ? "bg-primary text-primary-foreground shadow-sm"
@@ -110,7 +127,7 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
           return (
             <button
               key={category.id}
-              onClick={() => setActiveCategory(category.id)}
+              onClick={() => { setActiveCategory(category.id); setActiveGoal("all"); }}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-colors flex items-center gap-1.5 ${
                 activeCategory === category.id
                   ? "bg-primary text-primary-foreground shadow-sm"
@@ -128,6 +145,35 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
           );
         })}
       </div>
+
+      {/* Goal filter pills */}
+      {uniqueGoals.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          <button
+            onClick={() => setActiveGoal("all")}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-colors ${
+              activeGoal === "all"
+                ? "bg-accent text-accent-foreground shadow-sm"
+                : "bg-secondary/60 text-muted-foreground hover:bg-secondary"
+            }`}
+          >
+            All Goals
+          </button>
+          {uniqueGoals.map((goal) => (
+            <button
+              key={goal.id}
+              onClick={() => setActiveGoal(goal.id)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-colors max-w-[180px] truncate ${
+                activeGoal === goal.id
+                  ? "bg-accent text-accent-foreground shadow-sm"
+                  : "bg-secondary/60 text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              {goal.title}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Task cards by category */}
       {visibleGroups.map(({ category, tasks: catTasks }) => {
