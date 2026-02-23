@@ -1,5 +1,7 @@
-import { Clock, MapPin, Users, ChevronRight, Paperclip, FileText, Image, File, ClipboardList } from "lucide-react";
+import { useState } from "react";
+import { Clock, MapPin, Users, ChevronRight, Paperclip, FileText, Image, File, ClipboardList, ExternalLink } from "lucide-react";
 import { ScheduleEvent, EventType, eventTypeConfig, EventAttachment } from "@/types/schedule";
+import PracticePlanModal from "@/components/PracticePlanModal";
 
 
 interface ScheduleEventCardProps {
@@ -8,6 +10,7 @@ interface ScheduleEventCardProps {
 }
 
 const ScheduleEventCard = ({ event, linkedPracticeName }: ScheduleEventCardProps) => {
+  const [showPracticePlan, setShowPracticePlan] = useState(false);
   const config = eventTypeConfig[event.event_type as EventType];
   const attachments = event.attachments || [];
 
@@ -72,11 +75,19 @@ const ScheduleEventCard = ({ event, linkedPracticeName }: ScheduleEventCardProps
       {/* Linked Practice Plan */}
       {event.practice_id && linkedPracticeName && (
         <div className="mt-3 pt-3 border-t border-border/50">
-          <div className="flex items-center gap-2 text-xs">
+          <button
+            type="button"
+            className="flex items-center gap-2 text-xs group/practice w-full text-left hover:bg-background/50 rounded-md p-1.5 -m-1.5 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPracticePlan(true);
+            }}
+          >
             <ClipboardList className="w-3.5 h-3.5 text-primary" />
             <span className="text-muted-foreground">Practice Plan:</span>
-            <span className="font-medium text-foreground">{linkedPracticeName}</span>
-          </div>
+            <span className="font-medium text-primary group-hover/practice:underline">{linkedPracticeName}</span>
+            <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover/practice:opacity-100 transition-opacity ml-auto" />
+          </button>
         </div>
       )}
 
@@ -103,6 +114,15 @@ const ScheduleEventCard = ({ event, linkedPracticeName }: ScheduleEventCardProps
             ))}
           </div>
         </div>
+      )}
+
+      {/* Practice Plan Modal */}
+      {event.practice_id && (
+        <PracticePlanModal
+          practiceId={event.practice_id}
+          open={showPracticePlan}
+          onOpenChange={setShowPracticePlan}
+        />
       )}
     </div>
   );
