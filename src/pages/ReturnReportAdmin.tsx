@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ReturnReportSettingsForm from "@/components/admin/ReturnReportSettingsForm";
-import RecordingsManager from "@/components/admin/RecordingsManager";
+
 import type { ReturnReportSettings } from "@/types/returnReport";
 
 const ReturnReportAdmin = () => {
@@ -67,7 +67,7 @@ const ReturnReportAdmin = () => {
           </Link>
           <div>
             <h1 className="font-display text-3xl text-foreground">Manage Return & Report</h1>
-            <p className="text-muted-foreground">Configure your team meeting and past recordings</p>
+            <p className="text-muted-foreground">Configure your team meeting settings</p>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ const ReturnReportAdmin = () => {
               onSave={(data) => settingsMutation.mutate(data)}
               isLoading={settingsMutation.isPending}
             />
-            <RecordingsManager />
+            
           </div>
         )}
       </div>
