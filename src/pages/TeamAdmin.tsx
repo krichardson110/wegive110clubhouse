@@ -18,7 +18,8 @@ import {
   BookOpen,
   MessageSquare,
   Settings,
-  UserPlus
+  UserPlus,
+  Flame
 } from "lucide-react";
 import TeamRoster from "@/components/teams/TeamRoster";
 import TeamSchedule from "@/components/teams/TeamSchedule";
@@ -30,6 +31,7 @@ import PendingInvitations from "@/components/teams/PendingInvitations";
 
 import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
+import Drive5Dashboard from "@/components/drive5/Drive5Dashboard";
 
 const TeamAdmin = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -167,6 +169,10 @@ const TeamAdmin = () => {
                   <BookOpen className="w-4 h-4" />
                   <span className="hidden sm:inline">Playbook</span>
                 </TabsTrigger>
+                <TabsTrigger value="drive5" className="flex-1 min-w-[100px] gap-2">
+                  <Flame className="w-4 h-4" />
+                  <span className="hidden sm:inline">Drive 5</span>
+                </TabsTrigger>
               </TabsList>
               
               <div className="mt-6">
@@ -221,6 +227,10 @@ const TeamAdmin = () => {
                 
                 <TabsContent value="playbook" className="mt-0">
                   <TeamPlaybookContent />
+                </TabsContent>
+
+                <TabsContent value="drive5" className="mt-0">
+                  <Drive5Dashboard teamId={teamId} />
                 </TabsContent>
               </div>
             </Tabs>

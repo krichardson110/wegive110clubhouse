@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Car, LogIn, LogOut, MessageSquare, ChevronDown, Trophy, Shield, TrendingUp } from "lucide-react";
+import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Flame, LogIn, LogOut, MessageSquare, ChevronDown, Trophy, Shield, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
@@ -15,6 +15,7 @@ import {
 
 const mainNavItems = [
   { name: "Dashboard", href: "/", icon: Home },
+  { name: "Drive 5", href: "/drive5", icon: Flame },
   { name: "Progress", href: "/progress", icon: TrendingUp },
   { name: "Clubhouse", href: "/community", icon: Users },
 ];
@@ -31,9 +32,7 @@ const resourceItems = [
   { name: "Return & Report", href: "/return-report", icon: MessageSquare },
 ];
 
-const externalItems = [
-  { name: "Drive 5", href: "https://drive5.wegive110.com", icon: Car, external: true },
-];
+const externalItems: { name: string; href: string; icon: React.ElementType; external?: boolean }[] = [];
 
 const Navigation = () => {
   const location = useLocation();
