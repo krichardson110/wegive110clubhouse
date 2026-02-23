@@ -45,24 +45,24 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
         <Card className="text-center">
           <CardContent className="pt-6">
             <Flame className="w-8 h-8 mx-auto text-accent mb-2" />
-            <p className="text-3xl font-bold">{streak?.current_streak || 0}</p>
-            <p className="text-sm text-muted-foreground">Day Streak</p>
+            <p className="text-3xl font-sans font-bold">{streak?.current_streak || 0}</p>
+            <p className="text-sm font-sans text-muted-foreground">Day Streak</p>
           </CardContent>
         </Card>
         <Card className="text-center">
           <CardContent className="pt-6">
             <CheckCircle2 className="w-8 h-8 mx-auto text-primary mb-2" />
-            <p className="text-3xl font-bold">
+            <p className="text-3xl font-sans font-bold">
               {completedToday}/{totalTasks}
             </p>
-            <p className="text-sm text-muted-foreground">Today</p>
+            <p className="text-sm font-sans text-muted-foreground">Today</p>
           </CardContent>
         </Card>
         <Card className="text-center">
           <CardContent className="pt-6">
             <Trophy className="w-8 h-8 mx-auto text-accent mb-2" />
-            <p className="text-3xl font-bold">{streak?.longest_streak || 0}</p>
-            <p className="text-sm text-muted-foreground">Best Streak</p>
+            <p className="text-3xl font-sans font-bold">{streak?.longest_streak || 0}</p>
+            <p className="text-sm font-sans text-muted-foreground">Best Streak</p>
           </CardContent>
         </Card>
       </div>

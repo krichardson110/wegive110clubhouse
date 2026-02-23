@@ -63,11 +63,11 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
     <div className="space-y-4">
       {/* Summary */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
+        <h3 className="text-lg font-sans font-bold flex items-center gap-2">
           <ListTodo className="w-5 h-5" />
           Today's Tasks
         </h3>
-        <span className="text-sm font-medium text-muted-foreground">
+        <span className="text-sm font-sans font-medium text-muted-foreground">
           {completedTasks}/{totalTasks} complete
         </span>
       </div>
@@ -79,7 +79,7 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
         return (
           <Card key={category.id} className={allDone ? "border-primary/30 bg-primary/5" : ""}>
             <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm flex items-center justify-between">
+              <CardTitle className="text-sm font-sans font-semibold flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{category.icon}</span>
                   <span>{category.name}</span>
