@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.send-team-invite]
 verify_jwt = false
+
+[functions.drive5-reports]
+verify_jwt = false

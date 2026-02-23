@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Flame, Target, Trophy, CheckCircle2 } from "lucide-react";
+import { Flame, Target, Trophy, CheckCircle2, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   useDrive5Categories, 
@@ -13,6 +13,9 @@ import {
   useTeamLeaderboard 
 } from "@/hooks/useDrive5";
 import GoalSetupDialog from "./GoalSetupDialog";
+import StreakWarning from "./StreakWarning";
+import PlayerDetailDialog from "./PlayerDetailDialog";
+import WeeklyReportDialog from "./WeeklyReportDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 
@@ -29,6 +32,8 @@ const Drive5Dashboard = ({ teamId }: Drive5DashboardProps) => {
   const { data: leaderboard = [] } = useTeamLeaderboard(teamId);
   const toggleCheckin = useToggleCheckin();
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
   const completedToday = checkins.filter(c => c.completed).length;
@@ -55,6 +60,9 @@ const Drive5Dashboard = ({ teamId }: Drive5DashboardProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Streak Warning */}
+      <StreakWarning teamId={teamId} />
+
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="text-center">
@@ -172,15 +180,24 @@ const Drive5Dashboard = ({ teamId }: Drive5DashboardProps) => {
       {teamId && leaderboard.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-yellow-500" />
-              Weekly Leaderboard
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                Weekly Leaderboard
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setReportDialogOpen(true)}>
+                <FileText className="w-4 h-4 mr-1" />
+                Report
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {leaderboard.slice(0, 10).map((player, idx) => (
-                <div key={player.user_id} className="flex items-center gap-3">
+                <div key={player.user_id} 
+                  className="flex items-center gap-3 cursor-pointer hover:bg-secondary/50 rounded-lg p-1 -m-1 transition-colors"
+                  onClick={() => setSelectedPlayer(player)}
+                >
                   <span className={`text-lg font-bold w-6 ${idx < 3 ? "text-yellow-500" : "text-muted-foreground"}`}>
                     {idx + 1}
                   </span>
@@ -209,6 +226,19 @@ const Drive5Dashboard = ({ teamId }: Drive5DashboardProps) => {
         onOpenChange={setGoalDialogOpen}
         categories={categories}
         existingGoals={goals}
+        teamId={teamId}
+      />
+
+      <PlayerDetailDialog
+        open={!!selectedPlayer}
+        onOpenChange={(open) => !open && setSelectedPlayer(null)}
+        player={selectedPlayer}
+      />
+
+      <WeeklyReportDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        leaderboard={leaderboard}
         teamId={teamId}
       />
     </div>
