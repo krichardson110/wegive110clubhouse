@@ -205,6 +205,57 @@ export type Database = {
           },
         ]
       }
+      depth_chart: {
+        Row: {
+          created_at: string
+          depth_order: number
+          id: string
+          notes: string | null
+          player_name: string
+          position: string
+          team_id: string
+          team_member_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          depth_order?: number
+          id?: string
+          notes?: string | null
+          player_name: string
+          position: string
+          team_id: string
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          depth_order?: number
+          id?: string
+          notes?: string | null
+          player_name?: string
+          position?: string
+          team_id?: string
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "depth_chart_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "depth_chart_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drive5_categories: {
         Row: {
           color_gradient: string

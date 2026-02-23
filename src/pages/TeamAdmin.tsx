@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Settings,
   UserPlus,
-  Flame
+  Flame,
+  LayoutGrid
 } from "lucide-react";
 import TeamRoster from "@/components/teams/TeamRoster";
 import TeamSchedule from "@/components/teams/TeamSchedule";
@@ -32,6 +33,7 @@ import PendingInvitations from "@/components/teams/PendingInvitations";
 import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
 import Drive5Dashboard from "@/components/drive5/Drive5Dashboard";
+import DepthChart from "@/components/teams/DepthChart";
 
 const TeamAdmin = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -173,6 +175,10 @@ const TeamAdmin = () => {
                   <Flame className="w-4 h-4" />
                   <span className="hidden sm:inline">Drive 5</span>
                 </TabsTrigger>
+                <TabsTrigger value="depthchart" className="flex-1 min-w-[100px] gap-2">
+                  <LayoutGrid className="w-4 h-4" />
+                  <span className="hidden sm:inline">Depth Chart</span>
+                </TabsTrigger>
               </TabsList>
               
               <div className="mt-6">
@@ -231,6 +237,10 @@ const TeamAdmin = () => {
 
                 <TabsContent value="drive5" className="mt-0">
                   <Drive5Dashboard teamId={teamId} />
+                </TabsContent>
+
+                <TabsContent value="depthchart" className="mt-0">
+                  <DepthChart teamId={teamId!} members={members} isCoach={isCoach} />
                 </TabsContent>
               </div>
             </Tabs>
