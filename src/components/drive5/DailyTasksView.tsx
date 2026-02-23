@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, ListTodo } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { useDrive5Categories } from "@/hooks/useDrive5";
 import {
@@ -19,6 +21,7 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
   const { data: tasks = [] } = useAllActiveGoalTasks(teamId);
   const { data: completions = [] } = useTaskCompletions();
   const toggleCompletion = useToggleTaskCompletion();
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -46,13 +49,20 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t: any) => isTaskCompleted(t.id)).length;
+  const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // Filtered view
+  const visibleGroups =
+    activeCategory === "all"
+      ? tasksByCategory
+      : tasksByCategory.filter((g) => g.category.id === activeCategory);
 
   if (totalTasks === 0) {
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
           <ListTodo className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <h3 className="font-semibold mb-1">No tasks yet</h3>
+          <h3 className="font-sans font-semibold mb-1">No tasks yet</h3>
           <p className="text-sm">Add recurring tasks to your goals in the Goals tab to see them here.</p>
         </CardContent>
       </Card>
@@ -61,18 +71,66 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Summary */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-sans font-bold flex items-center gap-2">
-          <ListTodo className="w-5 h-5" />
-          Today's Tasks
-        </h3>
-        <span className="text-sm font-sans font-medium text-muted-foreground">
-          {completedTasks}/{totalTasks} complete
-        </span>
+      {/* Header with progress */}
+      <Card>
+        <CardContent className="pt-5 pb-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-sans font-bold flex items-center gap-2">
+              <ListTodo className="w-5 h-5" />
+              Today's Tasks
+            </h3>
+            <span className="text-sm font-sans font-semibold text-primary">
+              {completedTasks}/{totalTasks}
+            </span>
+          </div>
+          <Progress value={progressPercent} className="h-2" />
+          <p className="text-xs text-muted-foreground font-sans">
+            {progressPercent === 100
+              ? "🎉 All tasks complete! Great work today."
+              : `${progressPercent}% done — keep going!`}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Category filter pills */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <button
+          onClick={() => setActiveCategory("all")}
+          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-colors ${
+            activeCategory === "all"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "bg-secondary/60 text-muted-foreground hover:bg-secondary"
+          }`}
+        >
+          All ({totalTasks})
+        </button>
+        {tasksByCategory.map(({ category, tasks: catTasks }) => {
+          const catCompleted = catTasks.filter((t: any) => isTaskCompleted(t.id)).length;
+          const allDone = catCompleted === catTasks.length;
+          return (
+            <button
+              key={category.id}
+              onClick={() => setActiveCategory(category.id)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-colors flex items-center gap-1.5 ${
+                activeCategory === category.id
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : allDone
+                  ? "bg-primary/10 text-primary"
+                  : "bg-secondary/60 text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              <span>{category.icon}</span>
+              <span className="hidden sm:inline">{category.name}</span>
+              <span className="text-[10px] opacity-75">
+                {catCompleted}/{catTasks.length}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {tasksByCategory.map(({ category, tasks: catTasks }) => {
+      {/* Task cards by category */}
+      {visibleGroups.map(({ category, tasks: catTasks }) => {
         const catCompleted = catTasks.filter((t: any) => isTaskCompleted(t.id)).length;
         const allDone = catCompleted === catTasks.length;
 
@@ -83,6 +141,7 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{category.icon}</span>
                   <span>{category.name}</span>
+                  {allDone && <CheckCircle2 className="w-4 h-4 text-primary" />}
                 </div>
                 <span className="text-xs text-muted-foreground font-normal">
                   {catCompleted}/{catTasks.length}
@@ -106,10 +165,10 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
                       className="pointer-events-none"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${completed ? "line-through text-muted-foreground" : ""}`}>
+                      <p className={`text-sm font-sans ${completed ? "line-through text-muted-foreground" : ""}`}>
                         {task.title}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground truncate font-sans">
                         {task.goal?.title}
                       </p>
                     </div>
