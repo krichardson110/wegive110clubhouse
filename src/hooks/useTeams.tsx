@@ -278,11 +278,55 @@ export function useTeamMembers(teamId: string | undefined) {
     },
   });
 
+  const editMemberPlayersMutation = useMutation({
+    mutationFn: async ({ memberId, players, legacyUpdate }: {
+      memberId: string;
+      players: { id?: string; player_name: string; player_number: string; position: string }[];
+      legacyUpdate: { player_name: string | null; player_number: string | null; position: string | null };
+    }) => {
+      // Update legacy fields on team_members
+      const { error: memberError } = await supabase
+        .from("team_members")
+        .update(legacyUpdate)
+        .eq("id", memberId);
+      if (memberError) throw memberError;
+
+      // Delete existing players and re-insert
+      const { error: deleteError } = await supabase
+        .from("team_member_players")
+        .delete()
+        .eq("team_member_id", memberId);
+      if (deleteError) throw deleteError;
+
+      // Insert updated players
+      if (players.length > 0) {
+        const { error: insertError } = await supabase
+          .from("team_member_players")
+          .insert(players.map(p => ({
+            team_member_id: memberId,
+            player_name: p.player_name,
+            player_number: p.player_number || null,
+            position: p.position || null,
+          })));
+        if (insertError) throw insertError;
+      }
+    },
+    onSuccess: () => {
+      toast({ title: "Player details updated" });
+      queryClient.invalidateQueries({ queryKey: ["team-members", teamId] });
+    },
+    onError: () => {
+      toast({ title: "Failed to update player details", variant: "destructive" });
+    },
+  });
+
   return {
     members: membersQuery.data || [],
     isLoading: membersQuery.isLoading,
     removeMember: removeMemberMutation.mutate,
     updateMember: updateMemberMutation.mutate,
+    editMemberPlayers: editMemberPlayersMutation.mutate,
+    isEditingPlayers: editMemberPlayersMutation.isPending,
     coaches: membersQuery.data?.filter(m => m.role === "coach") || [],
     players: membersQuery.data?.filter(m => m.role === "player") || [],
     parents: membersQuery.data?.filter(m => m.role === "parent") || [],

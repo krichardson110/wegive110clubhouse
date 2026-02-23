@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,6 +7,7 @@ import { MoreVertical, Trash2, UserCog, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import EditPlayerDialog from "./EditPlayerDialog";
 import type { TeamMember, TeamMemberPlayer } from "@/types/team";
 
 interface TeamRosterProps {
@@ -13,11 +15,13 @@ interface TeamRosterProps {
   isLoading: boolean;
   isCoach: boolean;
   onRemoveMember?: (memberId: string) => void;
+  onEditMember?: (memberId: string, players: { id?: string; player_name: string; player_number: string; position: string }[], legacyUpdate: { player_name: string | null; player_number: string | null; position: string | null }) => void;
+  isEditing?: boolean;
 }
 
-const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember }: TeamRosterProps) => {
+const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember, onEditMember, isEditing }: TeamRosterProps) => {
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const coaches = members.filter(m => m.role === "coach");
-  // Combine players and parents - they have the same functionality now
   const playerMembers = members.filter(m => m.role === "player" || m.role === "parent");
 
   const getInitials = (name: string) => {
@@ -28,9 +32,7 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember }: TeamRosterP
     return member.profile?.display_name || "Unknown";
   };
 
-  // Get all players for display - either from players array or legacy player_name field
   const getMemberPlayers = (member: TeamMember): { name: string; number: string | null; position: string | null }[] => {
-    // If member has players in the new table, use those
     if (member.players && member.players.length > 0) {
       return member.players.map(p => ({
         name: p.player_name,
@@ -38,7 +40,6 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember }: TeamRosterP
         position: p.position
       }));
     }
-    // Fall back to legacy player_name field on team_members
     if (member.player_name) {
       return [{
         name: member.player_name,
@@ -75,11 +76,9 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember }: TeamRosterP
           {getInitials(getAccountHolderName(member))}
         </AvatarFallback>
       </Avatar>
-
       <div className="flex-1 min-w-0">
         <span className="font-medium">{getAccountHolderName(member)}</span>
       </div>
-
       <Badge variant="default">Coach</Badge>
     </div>
   );
@@ -90,10 +89,7 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember }: TeamRosterP
     const isParentAccount = member.role === "parent";
 
     return (
-      <div
-        key={member.id}
-        className="p-3 rounded-lg hover:bg-secondary/50 transition-colors"
-      >
+      <div key={member.id} className="p-3 rounded-lg hover:bg-secondary/50 transition-colors">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={member.profile?.avatar_url || undefined} />
@@ -147,7 +143,7 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember }: TeamRosterP
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setEditingMember(member)}>
                   <UserCog className="w-4 h-4 mr-2" />
                   Edit Member
                 </DropdownMenuItem>
@@ -179,7 +175,6 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember }: TeamRosterP
           )}
         </div>
 
-        {/* Show all players if multiple */}
         {players.length > 1 && (
           <div className="mt-2 ml-13 pl-10 border-l-2 border-border space-y-2">
             {players.map((player, idx) => (
@@ -199,48 +194,54 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember }: TeamRosterP
     );
   };
 
-  // Count total players for display
   const totalPlayers = playerMembers.reduce((count, member) => {
     const players = getMemberPlayers(member);
     return count + (players.length || 1);
   }, 0);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Team Roster</span>
-          <span className="text-sm font-normal text-muted-foreground">
-            {totalPlayers} player{totalPlayers !== 1 ? "s" : ""}, {coaches.length} coach{coaches.length !== 1 ? "es" : ""}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {coaches.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-2">Coaches</h4>
-            <div className="space-y-1">
-              {coaches.map(renderCoachRow)}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Team Roster</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {totalPlayers} player{totalPlayers !== 1 ? "s" : ""}, {coaches.length} coach{coaches.length !== 1 ? "es" : ""}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {coaches.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">Coaches</h4>
+              <div className="space-y-1">{coaches.map(renderCoachRow)}</div>
             </div>
-          </div>
-        )}
-
-        {playerMembers.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-2">Players & Families</h4>
-            <div className="space-y-1">
-              {playerMembers.map(renderPlayerMemberRow)}
+          )}
+          {playerMembers.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">Players & Families</h4>
+              <div className="space-y-1">{playerMembers.map(renderPlayerMemberRow)}</div>
             </div>
-          </div>
-        )}
+          )}
+          {members.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              No team members yet. Invite players to get started!
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {members.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            No team members yet. Invite players to get started!
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      <EditPlayerDialog
+        open={!!editingMember}
+        onOpenChange={(open) => { if (!open) setEditingMember(null); }}
+        member={editingMember}
+        onSave={(memberId, players, legacyUpdate) => {
+          onEditMember?.(memberId, players, legacyUpdate);
+          setEditingMember(null);
+        }}
+        isSaving={isEditing}
+      />
+    </>
   );
 };
 
