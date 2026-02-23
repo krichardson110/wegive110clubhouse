@@ -326,3 +326,55 @@ export function useTeamLeaderboard(teamId?: string) {
     enabled: !!teamId,
   });
 }
+
+export function useWeeklyCheckinHistory(teamId?: string) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["weekly-checkin-history", user?.id, teamId],
+    queryFn: async () => {
+      if (!user) return [];
+
+      // Get check-ins for the last 14 days
+      const days = 14;
+      const startDate = new Date(Date.now() - days * 86400000).toISOString().split("T")[0];
+
+      let query = supabase
+        .from("daily_checkins")
+        .select("checkin_date, completed")
+        .eq("user_id", user.id)
+        .eq("completed", true)
+        .gte("checkin_date", startDate)
+        .order("checkin_date", { ascending: true });
+
+      if (teamId) query = query.eq("team_id", teamId);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Count check-ins per day
+      const countsByDate: Record<string, number> = {};
+      data?.forEach((c) => {
+        countsByDate[c.checkin_date] = (countsByDate[c.checkin_date] || 0) + 1;
+      });
+
+      // Build array for last 14 days
+      const result = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(Date.now() - i * 86400000);
+        const dateStr = date.toISOString().split("T")[0];
+        const dayLabel = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+        const shortLabel = date.toLocaleDateString("en-US", { weekday: "narrow", day: "numeric" });
+        result.push({
+          date: dateStr,
+          label: shortLabel,
+          fullLabel: dayLabel,
+          count: countsByDate[dateStr] || 0,
+        });
+      }
+
+      return result;
+    },
+    enabled: !!user,
+  });
+}

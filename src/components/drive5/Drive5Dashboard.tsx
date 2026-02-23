@@ -18,6 +18,7 @@ import PlayerDetailDialog from "./PlayerDetailDialog";
 import WeeklyReportDialog from "./WeeklyReportDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import WeeklyProgressChart from "./WeeklyProgressChart";
 
 interface Drive5DashboardProps {
   teamId?: string;
@@ -130,6 +131,9 @@ const Drive5Dashboard = ({ teamId }: Drive5DashboardProps) => {
           })}
         </CardContent>
       </Card>
+
+      {/* Weekly Progress Chart */}
+      <WeeklyProgressChart teamId={teamId} />
 
       {/* Goals Section */}
       <Card>
