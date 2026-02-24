@@ -24,22 +24,7 @@ export function useTeamInvitations(teamId: string | undefined, teamName?: string
       
       if (pendingError) throw pendingError;
 
-      // Get recently accepted invitations (within last 7 days) to show "Accepted" status
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const { data: accepted, error: acceptedError } = await supabase
-        .from("team_invitations")
-        .select("*")
-        .eq("team_id", teamId)
-        .not("accepted_at", "is", null)
-        .gte("accepted_at", sevenDaysAgo.toISOString())
-        .order("accepted_at", { ascending: false });
-      
-      if (acceptedError) throw acceptedError;
-
-      // Combine both lists - pending first, then accepted
-      return [...(pending || []), ...(accepted || [])] as TeamInvitation[];
+      return (pending || []) as TeamInvitation[];
     },
     enabled: !!teamId,
   });
