@@ -10,6 +10,7 @@ import {
   useTeamLeaderboard,
 } from "@/hooks/useDrive5";
 import { useAllActiveGoalTasks, useTaskCompletions } from "@/hooks/useGoalTasks";
+import TeamCategoryLeaderboard from "./TeamCategoryLeaderboard";
 import StreakWarning from "./StreakWarning";
 import DailyTasksView from "./DailyTasksView";
 import PlayerDetailDialog from "./PlayerDetailDialog";
@@ -66,6 +67,9 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Team Category Leaderboard */}
+      <TeamCategoryLeaderboard teamId={teamId} />
 
       {/* Daily Tasks */}
       <DailyTasksView teamId={teamId} />

@@ -378,3 +378,74 @@ export function useWeeklyCheckinHistory(teamId?: string) {
     enabled: !!user,
   });
 }
+
+export interface CategoryLeaderboardEntry {
+  user_id: string;
+  name: string;
+  avatar_url: string | null;
+  total_completions: number;
+  category_completions: Record<string, number>;
+}
+
+export function useTeamCategoryLeaderboard(teamId?: string) {
+  return useQuery({
+    queryKey: ["team-category-leaderboard", teamId],
+    queryFn: async () => {
+      if (!teamId) return [];
+
+      // Get team members (players only)
+      const { data: members, error: membersError } = await supabase
+        .from("team_members")
+        .select("user_id, player_name, role")
+        .eq("team_id", teamId)
+        .eq("status", "active")
+        .eq("role", "player");
+
+      if (membersError) throw membersError;
+      if (!members?.length) return [];
+
+      const userIds = members.map(m => m.user_id);
+
+      // Get all completed check-ins for last 7 days with category
+      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+      const { data: checkins, error: checkinsError } = await supabase
+        .from("daily_checkins")
+        .select("user_id, category_id, completed")
+        .in("user_id", userIds)
+        .gte("checkin_date", weekAgo)
+        .eq("completed", true);
+
+      if (checkinsError) throw checkinsError;
+
+      // Get profiles
+      const { data: profiles } = await supabase
+        .from("profiles_public")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", userIds);
+
+      // Count per user per category
+      const userCategoryCounts: Record<string, Record<string, number>> = {};
+      const userTotals: Record<string, number> = {};
+
+      checkins?.forEach(c => {
+        if (!userCategoryCounts[c.user_id]) userCategoryCounts[c.user_id] = {};
+        userCategoryCounts[c.user_id][c.category_id] = (userCategoryCounts[c.user_id][c.category_id] || 0) + 1;
+        userTotals[c.user_id] = (userTotals[c.user_id] || 0) + 1;
+      });
+
+      const result: CategoryLeaderboardEntry[] = members.map(m => {
+        const profile = profiles?.find(p => p.user_id === m.user_id);
+        return {
+          user_id: m.user_id,
+          name: m.player_name || profile?.display_name || "Unknown",
+          avatar_url: profile?.avatar_url || null,
+          total_completions: userTotals[m.user_id] || 0,
+          category_completions: userCategoryCounts[m.user_id] || {},
+        };
+      }).sort((a, b) => b.total_completions - a.total_completions);
+
+      return result;
+    },
+    enabled: !!teamId,
+  });
+}
