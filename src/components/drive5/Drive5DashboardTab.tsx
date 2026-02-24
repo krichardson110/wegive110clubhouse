@@ -42,10 +42,6 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
       {/* Streak Warning */}
       <StreakWarning teamId={teamId} />
 
-      {/* Daily Tasks */}
-      <CollapsibleSection title="Daily Tasks" icon={<ListTodo className="w-4 h-4" />}>
-        <DailyTasksView teamId={teamId} />
-      </CollapsibleSection>
 
       {/* Stats Row */}
       <CollapsibleSection title="Quick Stats" icon={<Flame className="w-4 h-4" />}>
