@@ -22,7 +22,8 @@ interface TeamRosterProps {
 const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember, onEditMember, isEditing }: TeamRosterProps) => {
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const coaches = members.filter(m => m.role === "coach");
-  const playerMembers = members.filter(m => m.role === "player" || m.role === "parent");
+  const players = members.filter(m => m.role === "player");
+  const parents = members.filter(m => m.role === "parent");
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -194,9 +195,10 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember, onEditMember,
     );
   };
 
-  const totalPlayers = playerMembers.reduce((count, member) => {
-    const players = getMemberPlayers(member);
-    return count + (players.length || 1);
+  const allPlayerMembers = [...players, ...parents];
+  const totalPlayers = allPlayerMembers.reduce((count, member) => {
+    const p = getMemberPlayers(member);
+    return count + (p.length || 1);
   }, 0);
 
   return (
@@ -206,21 +208,27 @@ const TeamRoster = ({ members, isLoading, isCoach, onRemoveMember, onEditMember,
           <CardTitle className="flex items-center justify-between">
             <span>Team Roster</span>
             <span className="text-sm font-normal text-muted-foreground">
-              {totalPlayers} player{totalPlayers !== 1 ? "s" : ""}, {coaches.length} coach{coaches.length !== 1 ? "es" : ""}
+              {totalPlayers} player{totalPlayers !== 1 ? "s" : ""}, {coaches.length} coach{coaches.length !== 1 ? "es" : ""}, {parents.length} parent{parents.length !== 1 ? "s" : ""}
             </span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {coaches.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Coaches</h4>
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Coaches</h4>
               <div className="space-y-1">{coaches.map(renderCoachRow)}</div>
             </div>
           )}
-          {playerMembers.length > 0 && (
+          {players.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Players & Families</h4>
-              <div className="space-y-1">{playerMembers.map(renderPlayerMemberRow)}</div>
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Players</h4>
+              <div className="space-y-1">{players.map(renderPlayerMemberRow)}</div>
+            </div>
+          )}
+          {parents.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Parents</h4>
+              <div className="space-y-1">{parents.map(renderPlayerMemberRow)}</div>
             </div>
           )}
           {members.length === 0 && (
