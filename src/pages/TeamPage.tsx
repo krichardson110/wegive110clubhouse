@@ -12,11 +12,12 @@ import TeamSchedule from "@/components/teams/TeamSchedule";
 import TeamWorkoutsContent from "@/components/teams/TeamWorkoutsContent";
 import TeamVideosContent from "@/components/teams/TeamVideosContent";
 import TeamPlaybookContent from "@/components/teams/TeamPlaybookContent";
+import TeamPracticesContent from "@/components/teams/TeamPracticesContent";
 import Drive5Dashboard from "@/components/drive5/Drive5Dashboard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings, Dumbbell, Video, BookOpen, Clipboard, Flame } from "lucide-react";
+import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings, Dumbbell, Video, BookOpen, Clipboard, Flame, ClipboardList } from "lucide-react";
 
 const TeamPage = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -118,7 +119,7 @@ const TeamPage = () => {
         <section className="py-6">
           <div className="container mx-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full max-w-3xl grid-cols-7 mb-6">
+              <TabsList className="grid w-full max-w-4xl grid-cols-8 mb-6">
                 <TabsTrigger value="feed" className="gap-1.5">
                   <MessageSquare className="w-4 h-4" />
                   <span className="hidden sm:inline">Feed</span>
@@ -134,6 +135,10 @@ const TeamPage = () => {
                 <TabsTrigger value="schedule" className="gap-1.5">
                   <Calendar className="w-4 h-4" />
                   <span className="hidden sm:inline">Schedule</span>
+                </TabsTrigger>
+                <TabsTrigger value="practices" className="gap-1.5">
+                  <ClipboardList className="w-4 h-4" />
+                  <span className="hidden sm:inline">Practices</span>
                 </TabsTrigger>
                 <TabsTrigger value="workouts" className="gap-1.5">
                   <Dumbbell className="w-4 h-4" />
@@ -173,6 +178,10 @@ const TeamPage = () => {
 
               <TabsContent value="schedule">
                 <TeamSchedule isCoach={isCoach} teamId={teamId} />
+              </TabsContent>
+
+              <TabsContent value="practices">
+                <TeamPracticesContent teamId={teamId!} isCoach={isCoach} />
               </TabsContent>
 
               <TabsContent value="workouts">
