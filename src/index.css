@@ -80,7 +80,7 @@
     font-family: 'Inter', sans-serif;
   }
 
-  h1, h2, h3, .display-font {
+  .font-display {
     font-family: 'Bebas Neue', sans-serif;
     letter-spacing: 0.05em;
   }
