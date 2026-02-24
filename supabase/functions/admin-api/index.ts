@@ -400,33 +400,120 @@ Deno.serve(async (req) => {
       }
       console.log(`[admin-api] Deleting user: ${targetUserId}`);
 
-      // Prevent deleting super admin
-      const { data: targetRoles } = await supabaseAdmin
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', targetUserId)
-        .eq('role', 'super_admin');
-      
-      if (targetRoles && targetRoles.length > 0) {
+      // Only super admins can delete users
+      if (!isSuperAdmin) {
         return new Response(
-          JSON.stringify({ error: 'Cannot delete super admin account' }),
+          JSON.stringify({ error: 'Only super admins can delete users' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      // Prevent deleting yourself
+      if (targetUserId === userId) {
+        return new Response(
+          JSON.stringify({ error: 'Cannot delete your own account' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Clean up all user data from the database before deleting auth user
+      console.log(`[admin-api] Cleaning up data for user: ${targetUserId}`);
+
+      // Get team member IDs for this user (needed for team_member_players and depth_chart)
+      const { data: memberRecords } = await supabaseAdmin
+        .from('team_members')
+        .select('id')
+        .eq('user_id', targetUserId);
+      const memberIds = memberRecords?.map(m => m.id) || [];
+
+      // Delete in dependency order - child tables first
+      const cleanupOps = [
+        // Team member related
+        ...(memberIds.length > 0 ? [
+          supabaseAdmin.from('team_member_players').delete().in('team_member_id', memberIds),
+          supabaseAdmin.from('depth_chart').delete().in('team_member_id', memberIds),
+        ] : []),
+        // Community
+        supabaseAdmin.from('comment_likes').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('post_likes').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('post_comments').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('posts').delete().eq('user_id', targetUserId),
+        // Team community
+        supabaseAdmin.from('team_post_likes').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('team_post_comments').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('team_posts').delete().eq('user_id', targetUserId),
+        // Drive 5
+        supabaseAdmin.from('task_completions').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('daily_checkins').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('goal_tasks').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('player_goals').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('player_streaks').delete().eq('user_id', targetUserId),
+        // Workouts & Videos
+        supabaseAdmin.from('workout_favorites').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('video_watch_sessions').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('training_logs').delete().eq('user_id', targetUserId),
+        // Playbook
+        supabaseAdmin.from('exercise_responses').delete().eq('user_id', targetUserId),
+        // Badges & Roles
+        supabaseAdmin.from('user_badges').delete().eq('user_id', targetUserId),
+        supabaseAdmin.from('user_roles').delete().eq('user_id', targetUserId),
+        // Activity
+        supabaseAdmin.from('user_activity_logs').delete().eq('user_id', targetUserId),
+        // Invitations
+        supabaseAdmin.from('team_invitations').delete().eq('invited_by', targetUserId),
+      ];
+
+      const cleanupResults = await Promise.all(cleanupOps);
+      const cleanupErrors = cleanupResults.filter(r => r.error);
+      if (cleanupErrors.length > 0) {
+        console.error('[admin-api] Some cleanup errors (continuing):', cleanupErrors.map(r => r.error?.message));
+      }
+
+      // Delete team memberships
+      await supabaseAdmin.from('team_members').delete().eq('user_id', targetUserId);
+
+      // Delete teams created by this user (only if no other members)
+      const { data: ownedTeams } = await supabaseAdmin
+        .from('teams')
+        .select('id')
+        .eq('created_by', targetUserId);
+
+      if (ownedTeams && ownedTeams.length > 0) {
+        for (const team of ownedTeams) {
+          const { count } = await supabaseAdmin
+            .from('team_members')
+            .select('id', { count: 'exact', head: true })
+            .eq('team_id', team.id)
+            .eq('status', 'active');
+
+          if (!count || count === 0) {
+            // No active members left, safe to delete team
+            await supabaseAdmin.from('team_invitations').delete().eq('team_id', team.id);
+            await supabaseAdmin.from('team_events').delete().eq('team_id', team.id);
+            await supabaseAdmin.from('depth_chart').delete().eq('team_id', team.id);
+            await supabaseAdmin.from('schedule_events').delete().eq('team_id', team.id);
+            await supabaseAdmin.from('teams').delete().eq('id', team.id);
+          }
+        }
+      }
+
+      // Delete profile
+      await supabaseAdmin.from('profiles').delete().eq('user_id', targetUserId);
+
+      // Finally delete the auth user
       const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
 
       if (deleteError) {
-        console.error('[admin-api] Error deleting user:', deleteError);
+        console.error('[admin-api] Error deleting auth user:', deleteError);
         return new Response(
-          JSON.stringify({ error: 'Failed to delete user' }),
+          JSON.stringify({ error: 'Failed to delete user account' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      console.log('[admin-api] User deleted successfully');
+      console.log('[admin-api] User and all associated data deleted successfully');
       return new Response(
-        JSON.stringify({ success: true, message: 'User deleted successfully' }),
+        JSON.stringify({ success: true, message: 'User and all associated data deleted successfully' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
