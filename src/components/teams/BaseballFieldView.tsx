@@ -7,16 +7,16 @@ interface BaseballFieldViewProps {
 
 // Position coordinates on the field (percentage-based for responsiveness)
 const POSITION_COORDS: Record<string, { x: number; y: number }> = {
-  P:  { x: 50, y: 58 },
-  C:  { x: 50, y: 84 },
-  "1B": { x: 70, y: 60 },
-  "2B": { x: 62, y: 40 },
-  "3B": { x: 30, y: 60 },
-  SS: { x: 38, y: 40 },
-  LF: { x: 16, y: 20 },
-  CF: { x: 50, y: 8 },
-  RF: { x: 84, y: 20 },
-  DH: { x: 90, y: 88 },
+  P:  { x: 50, y: 60 },
+  C:  { x: 50, y: 86 },
+  "1B": { x: 64, y: 61 },
+  "2B": { x: 59, y: 50 },
+  "3B": { x: 36, y: 61 },
+  SS: { x: 41, y: 50 },
+  LF: { x: 24, y: 34 },
+  CF: { x: 50, y: 20 },
+  RF: { x: 76, y: 34 },
+  DH: { x: 84, y: 90 },
 };
 
 const depthLabel = (order: number) => {
@@ -112,9 +112,9 @@ const BaseballFieldView = ({ entries }: BaseballFieldViewProps) => {
         <line x1="250" y1="375" x2="155" y2="285" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
         <line x1="155" y1="285" x2="250" y2="195" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
 
-        {/* Foul lines extending to outfield */}
-        <line x1="250" y1="370" x2="15" y2="120" stroke="white" strokeWidth="2" strokeOpacity="0.8" />
-        <line x1="250" y1="370" x2="485" y2="120" stroke="white" strokeWidth="2" strokeOpacity="0.8" />
+        {/* Foul lines extending to outfield - through 3B (155,285) and 1B (345,285) */}
+        <line x1="250" y1="375" x2="5" y2="141" stroke="white" strokeWidth="2" strokeOpacity="0.8" />
+        <line x1="250" y1="375" x2="495" y2="141" stroke="white" strokeWidth="2" strokeOpacity="0.8" />
 
         {/* Bases - white diamonds */}
         <rect x="244" y="189" width="12" height="12" rx="1" transform="rotate(45 250 195)" fill="white" />
