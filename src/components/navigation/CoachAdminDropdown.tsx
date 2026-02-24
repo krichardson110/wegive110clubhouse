@@ -62,7 +62,7 @@ const CoachAdminDropdown = () => {
           {coachTeams.map((team) => (
             <DropdownMenuItem key={team.id} asChild>
               <Link
-                to={`/teams/${team.id}/admin`}
+                to={`/teams/${team.id}`}
                 className="flex items-center justify-between cursor-pointer"
               >
                 <span className="truncate">{team.name}</span>
