@@ -14,13 +14,14 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Loader2, Shield, Users, Activity, MessageSquare, 
   Search, RefreshCw, Key, Mail, Trash2, Eye,
-  LogOut, Home, ChevronLeft, ChevronRight, UsersRound, Award, BarChart3
+  LogOut, Home, ChevronLeft, ChevronRight, UsersRound, Award, BarChart3, UserCog
 } from 'lucide-react';
 import clubhouseLogo from '@/assets/clubhouse-logo.png';
 import TeamManagement from './TeamManagement';
 import ActivityLogsManager from './ActivityLogsManager';
 import UserBadgeManager from './UserBadgeManager';
 import RoleManager from './RoleManager';
+import AdminUserEditDialog from './AdminUserEditDialog';
 
 interface UserData {
   id: string;
@@ -64,6 +65,7 @@ const AdminDashboard = () => {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -495,6 +497,16 @@ const AdminDashboard = () => {
                                 size="icon"
                                 onClick={() => {
                                   setSelectedUser(u);
+                                  setShowEditDialog(true);
+                                }}
+                                title="Edit User"
+                              >
+                                <UserCog className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedUser(u);
                                   setShowResetDialog(true);
                                 }}
                                 title="Generate Reset Link"
@@ -689,6 +701,16 @@ const AdminDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit User Dialog */}
+      <AdminUserEditDialog
+        user={selectedUser}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSaved={() => {
+          fetchData();
+        }}
+      />
     </div>
   );
 };
