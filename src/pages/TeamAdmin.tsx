@@ -118,7 +118,7 @@ const TeamAdmin = () => {
         <section className="py-6">
           <div className="container mx-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full max-w-4xl grid-cols-8 mb-6">
+              <TabsList className="grid w-full grid-cols-8 mb-6">
                 <TabsTrigger value="feed" className="gap-1.5">
                   <MessageSquare className="w-4 h-4" />
                   <span className="hidden sm:inline">Feed</span>
@@ -153,7 +153,7 @@ const TeamAdmin = () => {
                 </TabsTrigger>
               </TabsList>
 
-              <div className="max-w-4xl">
+              <div>
                 <TabsContent value="feed" className="mt-0">
                   <div className="space-y-6">
                     {user && <CreatePostForm />}
