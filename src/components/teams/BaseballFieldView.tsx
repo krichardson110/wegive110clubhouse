@@ -7,16 +7,16 @@ interface BaseballFieldViewProps {
 
 // Position coordinates on the field (percentage-based for responsiveness)
 const POSITION_COORDS: Record<string, { x: number; y: number }> = {
-  P:  { x: 50, y: 60 },
-  C:  { x: 50, y: 82 },
-  "1B": { x: 72, y: 58 },
-  "2B": { x: 62, y: 42 },
-  "3B": { x: 28, y: 58 },
-  SS: { x: 38, y: 42 },
-  LF: { x: 18, y: 22 },
-  CF: { x: 50, y: 10 },
-  RF: { x: 82, y: 22 },
-  DH: { x: 88, y: 82 },
+  P:  { x: 50, y: 58 },
+  C:  { x: 50, y: 84 },
+  "1B": { x: 70, y: 60 },
+  "2B": { x: 62, y: 40 },
+  "3B": { x: 30, y: 60 },
+  SS: { x: 38, y: 40 },
+  LF: { x: 16, y: 20 },
+  CF: { x: 50, y: 8 },
+  RF: { x: 84, y: 20 },
+  DH: { x: 90, y: 88 },
 };
 
 const depthLabel = (order: number) => {
@@ -30,55 +30,116 @@ const BaseballFieldView = ({ entries }: BaseballFieldViewProps) => {
     entries.filter((e) => e.position === posKey).sort((a, b) => a.depth_order - b.depth_order);
 
   return (
-    <div className="relative w-full" style={{ paddingBottom: "90%" }}>
+    <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingBottom: "90%" }}>
       {/* Field SVG background */}
       <svg
         viewBox="0 0 500 450"
         className="absolute inset-0 w-full h-full"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Outfield grass */}
-        <ellipse cx="250" cy="280" rx="240" ry="220" className="fill-emerald-800/30" />
-        
-        {/* Infield dirt */}
-        <polygon
-          points="250,200 340,280 250,360 160,280"
-          className="fill-amber-800/25"
-          strokeWidth="2"
-          stroke="hsl(var(--border))"
-          strokeOpacity="0.4"
+        <defs>
+          {/* Grass stripe pattern */}
+          <pattern id="grassStripes" patternUnits="userSpaceOnUse" width="24" height="24" patternTransform="rotate(0)">
+            <rect width="24" height="12" fill="#2d6b3f" />
+            <rect y="12" width="24" height="12" fill="#327344" />
+          </pattern>
+          {/* Infield dirt texture */}
+          <radialGradient id="dirtGradient" cx="50%" cy="50%">
+            <stop offset="0%" stopColor="#c4956a" />
+            <stop offset="100%" stopColor="#a67c52" />
+          </radialGradient>
+          {/* Mound gradient */}
+          <radialGradient id="moundGradient" cx="50%" cy="40%">
+            <stop offset="0%" stopColor="#d4a574" />
+            <stop offset="100%" stopColor="#a67c52" />
+          </radialGradient>
+          {/* Warning track */}
+          <radialGradient id="warningTrack" cx="50%" cy="65%">
+            <stop offset="85%" stopColor="transparent" />
+            <stop offset="88%" stopColor="#8B6F47" stopOpacity="0.5" />
+            <stop offset="95%" stopColor="#8B6F47" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#6B5635" stopOpacity="0.4" />
+          </radialGradient>
+        </defs>
+
+        {/* Sky / background fill */}
+        <rect width="500" height="450" fill="#1a472a" />
+
+        {/* Outfield grass with stripes */}
+        <ellipse cx="250" cy="290" rx="245" ry="230" fill="url(#grassStripes)" />
+
+        {/* Warning track overlay */}
+        <ellipse cx="250" cy="290" rx="245" ry="230" fill="url(#warningTrack)" />
+
+        {/* Outfield wall */}
+        <path
+          d="M 15,120 Q 250,-10 485,120"
+          fill="none"
+          stroke="#1a3a1a"
+          strokeWidth="6"
         />
+        <path
+          d="M 15,120 Q 250,-10 485,120"
+          fill="none"
+          stroke="#ffdd00"
+          strokeWidth="1.5"
+          strokeDasharray="0"
+          strokeOpacity="0.6"
+        />
+
+        {/* Foul territory */}
+        <polygon points="250,365 0,100 0,450 250,450" fill="#1a472a" fillOpacity="0.85" />
+        <polygon points="250,365 500,100 500,450 250,450" fill="#1a472a" fillOpacity="0.85" />
+
+        {/* Infield dirt - full diamond area */}
+        <polygon
+          points="250,195 345,285 250,375 155,285"
+          fill="url(#dirtGradient)"
+        />
+
+        {/* Infield grass (cutout circle) */}
+        <circle cx="250" cy="285" r="52" fill="#327344" />
+        <circle cx="250" cy="285" r="52" fill="url(#grassStripes)" fillOpacity="0.5" />
 
         {/* Pitcher's mound */}
-        <circle cx="250" cy="270" r="10" className="fill-amber-700/30" />
+        <circle cx="250" cy="272" r="11" fill="url(#moundGradient)" />
+        {/* Pitcher's rubber */}
+        <rect x="245" y="270" width="10" height="2.5" rx="0.5" fill="white" />
 
-        {/* Base paths */}
-        <line x1="250" y1="200" x2="340" y2="280" stroke="hsl(var(--border))" strokeWidth="1.5" strokeOpacity="0.5" />
-        <line x1="340" y1="280" x2="250" y2="360" stroke="hsl(var(--border))" strokeWidth="1.5" strokeOpacity="0.5" />
-        <line x1="250" y1="360" x2="160" y2="280" stroke="hsl(var(--border))" strokeWidth="1.5" strokeOpacity="0.5" />
-        <line x1="160" y1="280" x2="250" y2="200" stroke="hsl(var(--border))" strokeWidth="1.5" strokeOpacity="0.5" />
+        {/* Base paths - white lines */}
+        <line x1="250" y1="195" x2="345" y2="285" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
+        <line x1="345" y1="285" x2="250" y2="375" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
+        <line x1="250" y1="375" x2="155" y2="285" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
+        <line x1="155" y1="285" x2="250" y2="195" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
 
-        {/* Bases */}
-        <rect x="244" y="194" width="12" height="12" transform="rotate(45 250 200)" className="fill-white/80" />
-        <rect x="334" y="274" width="12" height="12" transform="rotate(45 340 280)" className="fill-white/80" />
-        <rect x="154" y="274" width="12" height="12" transform="rotate(45 160 280)" className="fill-white/80" />
+        {/* Foul lines extending to outfield */}
+        <line x1="250" y1="370" x2="15" y2="120" stroke="white" strokeWidth="2" strokeOpacity="0.8" />
+        <line x1="250" y1="370" x2="485" y2="120" stroke="white" strokeWidth="2" strokeOpacity="0.8" />
+
+        {/* Bases - white diamonds */}
+        <rect x="244" y="189" width="12" height="12" rx="1" transform="rotate(45 250 195)" fill="white" />
+        <rect x="339" y="279" width="12" height="12" rx="1" transform="rotate(45 345 285)" fill="white" />
+        <rect x="149" y="279" width="12" height="12" rx="1" transform="rotate(45 155 285)" fill="white" />
 
         {/* Home plate */}
-        <polygon points="246,358 250,365 254,358 254,355 246,355" className="fill-white/80" />
+        <polygon points="245,370 250,378 255,370 255,366 245,366" fill="white" />
 
-        {/* Foul lines */}
-        <line x1="250" y1="360" x2="10" y2="100" stroke="hsl(var(--border))" strokeWidth="1" strokeOpacity="0.3" />
-        <line x1="250" y1="360" x2="490" y2="100" stroke="hsl(var(--border))" strokeWidth="1" strokeOpacity="0.3" />
+        {/* Batter's boxes */}
+        <rect x="230" y="363" width="12" height="20" rx="1" fill="none" stroke="white" strokeWidth="1" strokeOpacity="0.5" />
+        <rect x="258" y="363" width="12" height="20" rx="1" fill="none" stroke="white" strokeWidth="1" strokeOpacity="0.5" />
 
-        {/* Outfield arc */}
-        <path
-          d="M 30,140 Q 250,20 470,140"
-          fill="none"
-          stroke="hsl(var(--border))"
-          strokeWidth="1.5"
-          strokeOpacity="0.3"
-          strokeDasharray="6,4"
-        />
+        {/* Catcher's circle */}
+        <circle cx="250" cy="386" r="10" fill="#a67c52" fillOpacity="0.6" />
+
+        {/* On-deck circles */}
+        <circle cx="210" cy="400" r="7" fill="none" stroke="white" strokeWidth="0.8" strokeOpacity="0.4" />
+        <circle cx="290" cy="400" r="7" fill="none" stroke="white" strokeWidth="0.8" strokeOpacity="0.4" />
+
+        {/* Dugout areas */}
+        <rect x="180" y="415" width="55" height="15" rx="3" fill="#333" fillOpacity="0.5" />
+        <rect x="265" y="415" width="55" height="15" rx="3" fill="#333" fillOpacity="0.5" />
+        <text x="207" y="426" textAnchor="middle" fill="white" fillOpacity="0.4" fontSize="7" fontFamily="sans-serif">HOME</text>
+        <text x="292" y="426" textAnchor="middle" fill="white" fillOpacity="0.4" fontSize="7" fontFamily="sans-serif">AWAY</text>
       </svg>
 
       {/* Player position cards overlaid on field */}
