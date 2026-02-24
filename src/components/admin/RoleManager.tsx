@@ -32,8 +32,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, UserPlus, Trash2, Loader2, Search, Crown, ShieldCheck, Users } from "lucide-react";
+import { Shield, UserPlus, Trash2, Loader2, Search, Crown, ShieldCheck, Settings, ChevronDown, ChevronUp, Video, Dumbbell, BookOpen, Calendar, ClipboardList, Award, Radio, Heart, Users as UsersIcon, MessageSquare } from "lucide-react";
 
 interface UserRole {
   id: string;
@@ -45,9 +46,30 @@ interface UserRole {
   user_display_name?: string;
 }
 
+interface AdminPermission {
+  id: string;
+  user_id: string;
+  permission: string;
+  enabled: boolean;
+}
+
+const AVAILABLE_PERMISSIONS = [
+  { key: "manage_users", label: "User Management", description: "View and edit user profiles, reset passwords", icon: UsersIcon },
+  { key: "manage_teams", label: "Team Management", description: "Create, edit, and manage teams and rosters", icon: UsersIcon },
+  { key: "manage_videos", label: "Video Library", description: "Add, edit, and remove video content and categories", icon: Video },
+  { key: "manage_workouts", label: "Workouts", description: "Manage workout content, categories, and exercises", icon: Dumbbell },
+  { key: "manage_playbook", label: "Playbook", description: "Edit journeys, chapters, and playbook content", icon: BookOpen },
+  { key: "manage_schedule", label: "Schedule", description: "Create and manage schedule events", icon: Calendar },
+  { key: "manage_practices", label: "Practices", description: "Create and manage practice plans and drills", icon: ClipboardList },
+  { key: "manage_badges", label: "Badges", description: "Create, edit, and award badges to users", icon: Award },
+  { key: "manage_recordings", label: "Return Report", description: "Manage return report recordings and settings", icon: Radio },
+  { key: "manage_wellness", label: "Wellness Videos", description: "Manage wellness video content", icon: Heart },
+  { key: "manage_community", label: "Community", description: "Moderate community posts and comments", icon: MessageSquare },
+];
+
 const roleConfig: Record<string, { label: string; description: string; color: string; icon: typeof Shield }> = {
   super_admin: { label: "Super Admin", description: "Full system access — manage all users, teams, content, and settings", color: "bg-red-500/20 text-red-400 border-red-500/30", icon: Crown },
-  admin: { label: "Admin", description: "Manage users, teams, and content on behalf of the super admin", color: "bg-orange-500/20 text-orange-400 border-orange-500/30", icon: ShieldCheck },
+  admin: { label: "Admin", description: "Permissions controlled by super admin", color: "bg-orange-500/20 text-orange-400 border-orange-500/30", icon: ShieldCheck },
 };
 
 const RoleManager = () => {
@@ -59,6 +81,7 @@ const RoleManager = () => {
   const [selectedRole, setSelectedRole] = useState<AppRole>("admin");
   const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
   const [isAddingRole, setIsAddingRole] = useState(false);
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   // Fetch all user roles with user info
   const { data: userRoles = [], isLoading } = useQuery({
@@ -78,7 +101,6 @@ const RoleManager = () => {
       );
 
       if (!response.ok) {
-        // If endpoint doesn't exist yet, return empty array
         if (response.status === 404) return [];
         throw new Error("Failed to fetch roles");
       }
@@ -88,6 +110,61 @@ const RoleManager = () => {
     },
     enabled: isSuperAdmin,
   });
+
+  // Fetch permissions for expanded user
+  const { data: userPermissions = [], isLoading: permissionsLoading } = useQuery({
+    queryKey: ["admin-permissions", expandedUserId],
+    queryFn: async () => {
+      if (!expandedUserId) return [];
+      const { data, error } = await supabase
+        .from("admin_permissions")
+        .select("*")
+        .eq("user_id", expandedUserId);
+      if (error) throw error;
+      return (data || []) as AdminPermission[];
+    },
+    enabled: !!expandedUserId && isSuperAdmin,
+  });
+
+  // Toggle permission mutation
+  const togglePermissionMutation = useMutation({
+    mutationFn: async ({ userId, permission, enabled }: { userId: string; permission: string; enabled: boolean }) => {
+      const existing = userPermissions.find(p => p.permission === permission);
+      if (existing) {
+        const { error } = await supabase
+          .from("admin_permissions")
+          .update({ enabled, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("admin_permissions")
+          .insert({ user_id: userId, permission, enabled, granted_by: user?.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-permissions", expandedUserId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Bulk toggle all permissions
+  const toggleAllPermissions = async (userId: string, enabled: boolean) => {
+    for (const perm of AVAILABLE_PERMISSIONS) {
+      await togglePermissionMutation.mutateAsync({ userId, permission: perm.key, enabled });
+    }
+    toast({
+      title: enabled ? "All Permissions Enabled" : "All Permissions Disabled",
+      description: `All admin permissions have been ${enabled ? "enabled" : "disabled"}.`,
+    });
+  };
 
   // Add role mutation
   const addRoleMutation = useMutation({
@@ -185,6 +262,13 @@ const RoleManager = () => {
 
     addRoleMutation.mutate({ email: selectedEmail.trim(), role: selectedRole });
   };
+
+  const isPermissionEnabled = (permission: string) => {
+    const found = userPermissions.find(p => p.permission === permission);
+    return found ? found.enabled : false;
+  };
+
+  const enabledCount = AVAILABLE_PERMISSIONS.filter(p => isPermissionEnabled(p.key)).length;
 
   const filteredRoles = userRoles
     .filter((role: UserRole) => role.role === 'super_admin' || role.role === 'admin')
@@ -289,61 +373,141 @@ const RoleManager = () => {
               {searchTerm ? "No roles match your search." : "No roles assigned yet."}
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Assigned</TableHead>
-                    <TableHead className="w-16"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRoles.map((role: UserRole) => {
-                    const config = roleConfig[role.role];
-                    const Icon = config.icon;
-                    return (
-                      <TableRow key={role.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">
-                              {role.user_display_name || "Unknown User"}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {role.user_email}
-                            </div>
+            <div className="space-y-3">
+              {filteredRoles.map((role: UserRole) => {
+                const config = roleConfig[role.role];
+                const Icon = config.icon;
+                const isExpanded = expandedUserId === role.user_id && role.role === "admin";
+                const isAdmin = role.role === "admin";
+
+                return (
+                  <div key={role.id} className="rounded-lg border bg-card">
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">
+                            {role.user_display_name || "Unknown User"}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <Badge variant="outline" className={config.color}>
-                              <Icon className="w-3 h-3 mr-1" />
-                              {config.label}
-                            </Badge>
-                            <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
-                              {config.description}
+                          <div className="text-sm text-muted-foreground truncate">
+                            {role.user_email}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-right">
+                          <Badge variant="outline" className={config.color}>
+                            <Icon className="w-3 h-3 mr-1" />
+                            {config.label}
+                          </Badge>
+                          {isAdmin && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {enabledCount > 0 && isExpanded
+                                ? `${enabledCount} of ${AVAILABLE_PERMISSIONS.length} permissions`
+                                : config.description}
                             </p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {new Date(role.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
+                          )}
+                          {!isAdmin && (
+                            <p className="text-xs text-muted-foreground mt-1">{config.description}</p>
+                          )}
+                        </div>
+                        {isAdmin && (
                           <Button
                             variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteRoleId(role.id)}
-                            disabled={role.user_id === user?.id && role.role === "super_admin"}
+                            size="sm"
+                            onClick={() => setExpandedUserId(isExpanded ? null : role.user_id)}
+                            className="gap-1"
                           >
-                            <Trash2 className="w-4 h-4 text-destructive" />
+                            <Settings className="w-4 h-4" />
+                            {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                           </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteRoleId(role.id)}
+                          disabled={role.user_id === user?.id && role.role === "super_admin"}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Permissions Panel */}
+                    {isExpanded && (
+                      <div className="border-t px-4 py-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium flex items-center gap-2">
+                            <Settings className="w-4 h-4 text-muted-foreground" />
+                            Permissions for {role.user_display_name || role.user_email}
+                          </h4>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleAllPermissions(role.user_id, true)}
+                              disabled={togglePermissionMutation.isPending}
+                            >
+                              Enable All
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleAllPermissions(role.user_id, false)}
+                              disabled={togglePermissionMutation.isPending}
+                            >
+                              Disable All
+                            </Button>
+                          </div>
+                        </div>
+
+                        {permissionsLoading ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {AVAILABLE_PERMISSIONS.map((perm) => {
+                              const PermIcon = perm.icon;
+                              const enabled = isPermissionEnabled(perm.key);
+                              return (
+                                <div
+                                  key={perm.key}
+                                  className={`flex items-center justify-between p-3 rounded-md border transition-colors ${
+                                    enabled ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-border"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <PermIcon className={`w-4 h-4 flex-shrink-0 ${enabled ? "text-primary" : "text-muted-foreground"}`} />
+                                    <div className="min-w-0">
+                                      <p className={`text-sm font-medium ${enabled ? "text-foreground" : "text-muted-foreground"}`}>
+                                        {perm.label}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground truncate">
+                                        {perm.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Switch
+                                    checked={enabled}
+                                    onCheckedChange={(checked) =>
+                                      togglePermissionMutation.mutate({
+                                        userId: role.user_id,
+                                        permission: perm.key,
+                                        enabled: checked,
+                                      })
+                                    }
+                                    disabled={togglePermissionMutation.isPending}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
