@@ -37,9 +37,9 @@ const HeroSection = () => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
             <Button variant="hero" size="xl" asChild>
-              <a href="https://drive5.wegive110.com" target="_blank" rel="noopener noreferrer">
+              <Link to="/drive5">
                 Drive 5: Track Your Training
-              </a>
+              </Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
               <Link to="/playbook">Playbook</Link>
