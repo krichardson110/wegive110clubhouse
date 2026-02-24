@@ -42,6 +42,11 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
       {/* Streak Warning */}
       <StreakWarning teamId={teamId} />
 
+      {/* Daily Tasks */}
+      <CollapsibleSection title="Daily Tasks" icon={<ListTodo className="w-4 h-4" />}>
+        <DailyTasksView teamId={teamId} />
+      </CollapsibleSection>
+
       {/* Stats Row */}
       <CollapsibleSection title="Quick Stats" icon={<Flame className="w-4 h-4" />}>
         <div className="grid grid-cols-3 gap-4">
@@ -71,19 +76,14 @@ const Drive5DashboardTab = ({ teamId }: Drive5DashboardTabProps) => {
         </div>
       </CollapsibleSection>
 
-      {/* Team Category Leaderboard */}
-      <CollapsibleSection title="Team Leaderboard" icon={<Trophy className="w-4 h-4" />}>
-        <TeamCategoryLeaderboard teamId={teamId} />
-      </CollapsibleSection>
-
-      {/* Daily Tasks */}
-      <CollapsibleSection title="Daily Tasks" icon={<ListTodo className="w-4 h-4" />}>
-        <DailyTasksView teamId={teamId} />
-      </CollapsibleSection>
-
       {/* Weekly Progress Chart */}
       <CollapsibleSection title="Weekly Progress" icon={<BarChart3 className="w-4 h-4" />}>
         <WeeklyProgressChart teamId={teamId} />
+      </CollapsibleSection>
+
+      {/* Team Category Leaderboard */}
+      <CollapsibleSection title="Team Leaderboard" icon={<Trophy className="w-4 h-4" />}>
+        <TeamCategoryLeaderboard teamId={teamId} />
       </CollapsibleSection>
 
       {/* Team Leaderboard */}
