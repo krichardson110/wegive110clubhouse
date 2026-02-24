@@ -66,6 +66,7 @@ const Schedule = () => {
         notes: eventData.notes || null,
         published: true,
         team_id: eventData.team_id || null,
+        practice_id: eventData.practice_id || null,
         attachments: (eventData.attachments || []) as unknown as null,
       }));
 

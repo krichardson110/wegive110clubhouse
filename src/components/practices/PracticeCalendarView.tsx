@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Practice, seasonConfig, phaseConfig } from "@/types/practice";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import PracticeCard from "./PracticeCard";
+import PracticePlanModal from "@/components/PracticePlanModal";
 
 interface PracticeCalendarViewProps {
   practices: Practice[];
@@ -18,7 +17,7 @@ interface PracticeCalendarViewProps {
 
 const PracticeCalendarView = ({ practices, isCoach, onEdit, onDelete }: PracticeCalendarViewProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedPractice, setSelectedPractice] = useState<Practice | null>(null);
+  const [selectedPracticeId, setSelectedPracticeId] = useState<string | null>(null);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -96,7 +95,7 @@ const PracticeCalendarView = ({ practices, isCoach, onEdit, onDelete }: Practice
                   )}
                   onClick={() => {
                     if (dayPractices.length === 1) {
-                      setSelectedPractice(dayPractices[0]);
+                      setSelectedPracticeId(dayPractices[0].id);
                     }
                   }}
                 >
@@ -118,7 +117,7 @@ const PracticeCalendarView = ({ practices, isCoach, onEdit, onDelete }: Practice
                           )}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedPractice(practice);
+                            setSelectedPracticeId(practice.id);
                           }}
                         >
                           {practice.title}
@@ -139,27 +138,11 @@ const PracticeCalendarView = ({ practices, isCoach, onEdit, onDelete }: Practice
       </Card>
 
       {/* Practice detail modal */}
-      <Dialog open={!!selectedPractice} onOpenChange={(open) => !open && setSelectedPractice(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Practice Details</DialogTitle>
-          </DialogHeader>
-          {selectedPractice && (
-            <PracticeCard
-              practice={selectedPractice}
-              isCoach={isCoach}
-              onEdit={() => {
-                onEdit?.(selectedPractice);
-                setSelectedPractice(null);
-              }}
-              onDelete={() => {
-                onDelete?.(selectedPractice.id);
-                setSelectedPractice(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <PracticePlanModal
+        practiceId={selectedPracticeId}
+        open={!!selectedPracticeId}
+        onOpenChange={(open) => !open && setSelectedPracticeId(null)}
+      />
     </>
   );
 };

@@ -1,13 +1,12 @@
 import { format } from "date-fns";
-import { Calendar, Clock, MapPin, ChevronDown, ChevronUp, Users, Target } from "lucide-react";
+import { Calendar, Clock, MapPin, ChevronDown, ChevronUp, Users, Target, Eye } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Practice, seasonConfig, phaseConfig } from "@/types/practice";
 import { cn } from "@/lib/utils";
-import PracticeDrillList from "./PracticeDrillList";
+import PracticePlanModal from "@/components/PracticePlanModal";
 
 interface PracticeCardProps {
   practice: Practice;
@@ -17,7 +16,7 @@ interface PracticeCardProps {
 }
 
 const PracticeCard = ({ practice, isCoach, onEdit, onDelete }: PracticeCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const practiceDate = new Date(practice.practice_date + "T00:00:00");
   const season = seasonConfig[practice.season];
   const phase = phaseConfig[practice.phase];
@@ -31,8 +30,11 @@ const PracticeCard = ({ practice, isCoach, onEdit, onDelete }: PracticeCardProps
   };
 
   return (
-    <Card className="border-border hover:border-primary/50 transition-all duration-300">
-      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+    <>
+      <Card
+        className="border-border hover:border-primary/50 transition-all duration-300 cursor-pointer"
+        onClick={() => setShowPreview(true)}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -78,9 +80,16 @@ const PracticeCard = ({ practice, isCoach, onEdit, onDelete }: PracticeCardProps
                   </div>
                 </div>
               )}
+
+              {practice.drills && practice.drills.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {practice.drills.length} drill{practice.drills.length !== 1 ? "s" : ""} •{" "}
+                  ~{practice.drills.reduce((sum, d) => sum + (d.duration_minutes || 0), 0)} min total
+                </p>
+              )}
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
               {isCoach && (
                 <>
                   <Button variant="ghost" size="sm" onClick={onEdit}>
@@ -91,55 +100,20 @@ const PracticeCard = ({ practice, isCoach, onEdit, onDelete }: PracticeCardProps
                   </Button>
                 </>
               )}
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  {isExpanded ? (
-                    <ChevronUp className="w-5 h-5" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
+              <Button variant="ghost" size="icon" onClick={() => setShowPreview(true)}>
+                <Eye className="w-5 h-5" />
+              </Button>
             </div>
           </div>
         </CardHeader>
-        
-        <CollapsibleContent>
-          <CardContent className="pt-0">
-            {practice.description && (
-              <p className="text-muted-foreground mb-4">{practice.description}</p>
-            )}
-            
-            {practice.equipment_needed && practice.equipment_needed.length > 0 && (
-              <div className="mb-4">
-                <h4 className="text-sm font-medium mb-2">Equipment Needed:</h4>
-                <div className="flex flex-wrap gap-1">
-                  {practice.equipment_needed.map((item, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {practice.notes && (
-              <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-                <h4 className="text-sm font-medium mb-1">Notes:</h4>
-                <p className="text-sm text-muted-foreground">{practice.notes}</p>
-              </div>
-            )}
-            
-            {practice.drills && practice.drills.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-3">Practice Plan ({practice.drills.length} drills)</h4>
-                <PracticeDrillList drills={practice.drills} />
-              </div>
-            )}
-          </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
+      </Card>
+
+      <PracticePlanModal
+        practiceId={practice.id}
+        open={showPreview}
+        onOpenChange={setShowPreview}
+      />
+    </>
   );
 };
 
