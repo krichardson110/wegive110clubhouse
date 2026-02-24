@@ -316,10 +316,15 @@ const RoleManager = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={config.color}>
-                            <Icon className="w-3 h-3 mr-1" />
-                            {config.label}
-                          </Badge>
+                          <div>
+                            <Badge variant="outline" className={config.color}>
+                              <Icon className="w-3 h-3 mr-1" />
+                              {config.label}
+                            </Badge>
+                            <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
+                              {config.description}
+                            </p>
+                          </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(role.created_at).toLocaleDateString()}
