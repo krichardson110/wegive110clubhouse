@@ -22,7 +22,7 @@ const TeamPracticesContent = ({ teamId, isCoach }: TeamPracticesContentProps) =>
       const { data, error } = await supabase
         .from("practices")
         .select("*, practice_drills(*)")
-        .eq("team_id", teamId)
+        .or(`team_id.eq.${teamId},team_id.is.null`)
         .eq("published", true)
         .order("practice_date", { ascending: false });
 
