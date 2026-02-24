@@ -33,6 +33,7 @@ const TeamPage = () => {
   };
   
   const [inviteFormOpen, setInviteFormOpen] = useState(false);
+  const [defaultInviteType, setDefaultInviteType] = useState<'player' | 'parent' | 'coach'>('player');
   const [activeTab, setActiveTab] = useState("feed");
 
   if (teamLoading) {
@@ -224,6 +225,7 @@ const TeamPage = () => {
       <InvitePlayerForm
         open={inviteFormOpen}
         onOpenChange={setInviteFormOpen}
+        defaultInviteType={defaultInviteType}
         onSubmit={handleInvite}
         isLoading={isCreating}
       />

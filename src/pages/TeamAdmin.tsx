@@ -52,6 +52,7 @@ const TeamAdmin = () => {
   const [activeTab, setActiveTab] = useState("feed");
   const [inviteFormOpen, setInviteFormOpen] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | undefined>();
+  const [defaultInviteType, setDefaultInviteType] = useState<'player' | 'parent' | 'coach'>('player');
 
   useEffect(() => {
     if (!authLoading && !teamLoading && (!user || !isMember || !isCoach)) {
@@ -191,10 +192,18 @@ const TeamAdmin = () => {
 
                 <TabsContent value="roster" className="mt-0">
                   <div className="space-y-6">
-                    <div className="flex justify-end">
-                      <Button onClick={() => setInviteFormOpen(true)}>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <Button onClick={() => { setDefaultInviteType('player'); setInviteFormOpen(true); }}>
                         <UserPlus className="w-4 h-4 mr-2" />
                         Add Player
+                      </Button>
+                      <Button variant="outline" onClick={() => { setDefaultInviteType('coach'); setInviteFormOpen(true); }}>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add Coach
+                      </Button>
+                      <Button variant="outline" onClick={() => { setDefaultInviteType('parent'); setInviteFormOpen(true); }}>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add Parent
                       </Button>
                     </div>
                     
@@ -252,6 +261,7 @@ const TeamAdmin = () => {
       <InvitePlayerForm
         open={inviteFormOpen}
         onOpenChange={setInviteFormOpen}
+        defaultInviteType={defaultInviteType}
         onSubmit={(data) => {
           createInvitation(data);
           setInviteFormOpen(false);
