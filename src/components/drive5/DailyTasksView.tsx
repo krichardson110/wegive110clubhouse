@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, ListTodo } from "lucide-react";
+import { CheckCircle2, ChevronDown, ListTodo } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { useDrive5Categories } from "@/hooks/useDrive5";
@@ -181,52 +182,92 @@ const DailyTasksView = ({ teamId }: DailyTasksViewProps) => {
         const allDone = catCompleted === catTasks.length;
 
         return (
-          <Card key={category.id} className={allDone ? "border-primary/30 bg-primary/5" : ""}>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm font-sans font-semibold flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{category.icon}</span>
-                  <span>{category.name}</span>
-                  {allDone && <CheckCircle2 className="w-4 h-4 text-primary" />}
-                </div>
-                <span className="text-xs text-muted-foreground font-normal">
-                  {catCompleted}/{catTasks.length}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3 pt-0 space-y-1">
-              {catTasks.map((task: any) => {
-                const completed = isTaskCompleted(task.id);
-                return (
-                  <div
-                    key={task.id}
-                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
-                      completed ? "opacity-60" : "hover:bg-secondary/50"
-                    }`}
-                    onClick={() => handleToggle(task.id)}
-                  >
-                    <Checkbox
-                      checked={completed}
-                      onCheckedChange={() => handleToggle(task.id)}
-                      className="pointer-events-none"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-sans ${completed ? "line-through text-muted-foreground" : ""}`}>
-                        {task.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate font-sans">
-                        {task.goal?.title}
-                      </p>
-                    </div>
-                    {completed && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+          <CategoryTaskCard
+            key={category.id}
+            category={category}
+            catTasks={catTasks}
+            isTaskCompleted={isTaskCompleted}
+            onToggle={handleToggle}
+          />
         );
       })}
     </div>
+  );
+};
+
+
+const CategoryTaskCard = ({ category, catTasks, isTaskCompleted, onToggle }: {
+  category: any;
+  catTasks: any[];
+  isTaskCompleted: (id: string) => boolean;
+  onToggle: (id: string) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(true);
+  const catCompleted = catTasks.filter((t: any) => isTaskCompleted(t.id)).length;
+  const allDone = catCompleted === catTasks.length;
+
+  return (
+    <Card className={allDone ? "border-primary/30 bg-primary/5" : ""}>
+      <CardHeader
+        className="py-3 px-4 cursor-pointer select-none"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <CardTitle className="text-sm font-sans font-semibold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{category.icon}</span>
+            <span>{category.name}</span>
+            {allDone && <CheckCircle2 className="w-4 h-4 text-primary" />}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-normal">
+              {catCompleted}/{catTasks.length}
+            </span>
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                isOpen ? "rotate-0" : "-rotate-90"
+              )}
+            />
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <div
+        className={cn(
+          "transition-all duration-200 overflow-hidden",
+          isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
+        <CardContent className="px-4 pb-3 pt-0 space-y-1">
+          {catTasks.map((task: any) => {
+            const completed = isTaskCompleted(task.id);
+            return (
+              <div
+                key={task.id}
+                className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                  completed ? "opacity-60" : "hover:bg-secondary/50"
+                }`}
+                onClick={() => onToggle(task.id)}
+              >
+                <Checkbox
+                  checked={completed}
+                  onCheckedChange={() => onToggle(task.id)}
+                  className="pointer-events-none"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-sans ${completed ? "line-through text-muted-foreground" : ""}`}>
+                    {task.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate font-sans">
+                    {task.goal?.title}
+                  </p>
+                </div>
+                {completed && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
+              </div>
+            );
+          })}
+        </CardContent>
+      </div>
+    </Card>
   );
 };
 
