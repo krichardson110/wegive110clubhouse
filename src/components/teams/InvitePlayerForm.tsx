@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,16 +17,25 @@ interface InvitePlayerFormProps {
   }) => void;
   isLoading?: boolean;
   inviteLink?: string;
+  defaultInviteType?: 'player' | 'parent' | 'coach';
 }
 
-const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink }: InvitePlayerFormProps) => {
+const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink, defaultInviteType = 'player' }: InvitePlayerFormProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
-    invite_type: "player" as 'player' | 'parent' | 'coach',
+    invite_type: defaultInviteType as 'player' | 'parent' | 'coach',
     player_name: "",
   });
+
+  // Reset form when dialog opens with new default type
+  useEffect(() => {
+    if (open) {
+      setFormData({ email: "", invite_type: defaultInviteType, player_name: "" });
+      setCopied(false);
+    }
+  }, [open, defaultInviteType]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,9 +56,11 @@ const InvitePlayerForm = ({ open, onOpenChange, onSubmit, isLoading, inviteLink 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Invite to Team</DialogTitle>
+          <DialogTitle>
+            {formData.invite_type === 'coach' ? 'Invite Coach' : formData.invite_type === 'parent' ? 'Invite Parent' : 'Invite Player'}
+          </DialogTitle>
           <DialogDescription>
-            Send an invitation email or share the invite link directly.
+            Send an invitation email to add a {formData.invite_type} to the team.
           </DialogDescription>
         </DialogHeader>
 
