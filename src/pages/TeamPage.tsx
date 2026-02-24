@@ -166,6 +166,22 @@ const TeamPage = () => {
               </TabsContent>
 
               <TabsContent value="roster" className="space-y-4">
+                {isCoach && (
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    <Button onClick={() => { setDefaultRole('player'); setAddMemberOpen(true); }}>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Add Player
+                    </Button>
+                    <Button variant="outline" onClick={() => { setDefaultRole('coach'); setAddMemberOpen(true); }}>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Add Coach
+                    </Button>
+                    <Button variant="outline" onClick={() => { setDefaultRole('parent'); setAddMemberOpen(true); }}>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Add Parent
+                    </Button>
+                  </div>
+                )}
                 <TeamRoster
                   members={members}
                   isLoading={membersLoading}
