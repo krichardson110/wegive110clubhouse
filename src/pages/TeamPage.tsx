@@ -93,23 +93,11 @@ const TeamPage = () => {
               </div>
               
               {isCoach && (
-                <div className="flex gap-2">
-                  <Link to={`/teams/${teamId}/admin`}>
-                    <Button variant="outline">
-                      <Clipboard className="w-4 h-4 mr-2" />
-                      Manage Team
-                    </Button>
-                  </Link>
-                  <Button onClick={() => setAddMemberOpen(true)}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Add Member
+                <Link to={`/teams/${teamId}/settings`}>
+                  <Button variant="outline" size="icon">
+                    <Settings className="w-4 h-4" />
                   </Button>
-                  <Link to={`/teams/${teamId}/settings`}>
-                    <Button variant="outline" size="icon">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                </div>
+                </Link>
               )}
             </div>
           </div>
