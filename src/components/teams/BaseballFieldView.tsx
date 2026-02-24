@@ -73,13 +73,13 @@ const BaseballFieldView = ({ entries }: BaseballFieldViewProps) => {
 
         {/* Outfield wall */}
         <path
-          d="M 15,120 Q 250,-10 485,120"
+          d="M 5,141 Q 250,-10 495,141"
           fill="none"
           stroke="#1a3a1a"
           strokeWidth="6"
         />
         <path
-          d="M 15,120 Q 250,-10 485,120"
+          d="M 5,141 Q 250,-10 495,141"
           fill="none"
           stroke="#ffdd00"
           strokeWidth="1.5"
