@@ -45,13 +45,9 @@ interface UserRole {
   user_display_name?: string;
 }
 
-const roleConfig: Record<AppRole, { label: string; color: string; icon: typeof Shield }> = {
-  super_admin: { label: "Super Admin", color: "bg-red-500/20 text-red-400 border-red-500/30", icon: Crown },
-  admin: { label: "Admin", color: "bg-orange-500/20 text-orange-400 border-orange-500/30", icon: ShieldCheck },
-  coach: { label: "Coach", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", icon: Users },
-  player: { label: "Player", color: "bg-green-500/20 text-green-400 border-green-500/30", icon: Users },
-  parent: { label: "Parent", color: "bg-purple-500/20 text-purple-400 border-purple-500/30", icon: Users },
-  user: { label: "User", color: "bg-muted text-muted-foreground border-muted", icon: Users },
+const roleConfig: Record<string, { label: string; description: string; color: string; icon: typeof Shield }> = {
+  super_admin: { label: "Super Admin", description: "Full system access — manage all users, teams, content, and settings", color: "bg-red-500/20 text-red-400 border-red-500/30", icon: Crown },
+  admin: { label: "Admin", description: "Manage users, teams, and content on behalf of the super admin", color: "bg-orange-500/20 text-orange-400 border-orange-500/30", icon: ShieldCheck },
 };
 
 const RoleManager = () => {
@@ -190,10 +186,12 @@ const RoleManager = () => {
     addRoleMutation.mutate({ email: selectedEmail.trim(), role: selectedRole });
   };
 
-  const filteredRoles = userRoles.filter((role: UserRole) =>
-    role.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    role.user_display_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRoles = userRoles
+    .filter((role: UserRole) => role.role === 'super_admin' || role.role === 'admin')
+    .filter((role: UserRole) =>
+      role.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.user_display_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   if (!isSuperAdmin) {
     return (
@@ -212,10 +210,10 @@ const RoleManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5" />
-            Assign Role
+            Assign Management Role
           </CardTitle>
           <CardDescription>
-            Grant administrative privileges to users by email address
+            Grant system management privileges to internal staff who help administer the Clubhouse platform. These roles are for internal users only — coaches, players, and parents are managed through Teams.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -239,10 +237,6 @@ const RoleManager = () => {
                 <SelectContent>
                   <SelectItem value="super_admin">Super Admin</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="coach">Coach</SelectItem>
-                  <SelectItem value="player">Player</SelectItem>
-                  <SelectItem value="parent">Parent</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -268,10 +262,10 @@ const RoleManager = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5" />
-                User Roles
+                Management Roles
               </CardTitle>
               <CardDescription>
-                {filteredRoles.length} role{filteredRoles.length !== 1 ? "s" : ""} assigned
+                Internal staff with system management access — {filteredRoles.length} role{filteredRoles.length !== 1 ? "s" : ""} assigned
               </CardDescription>
             </div>
             <div className="relative w-full sm:w-64">
