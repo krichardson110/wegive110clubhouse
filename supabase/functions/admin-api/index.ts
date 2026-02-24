@@ -775,6 +775,175 @@ Deno.serve(async (req) => {
       );
     }
 
+    // PUT /users/:userId/profile - Update user profile (display name)
+    const updateProfileMatch = path.match(/^\/users\/([a-f0-9-]+)\/profile$/);
+    if (updateProfileMatch && req.method === 'PUT') {
+      const targetUserId = updateProfileMatch[1];
+      if (!isValidUUID(targetUserId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid user ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(`[admin-api] Updating profile for user: ${targetUserId}`);
+
+      const body = await req.json();
+      const { display_name } = body;
+
+      if (display_name !== undefined && typeof display_name !== 'string') {
+        return new Response(
+          JSON.stringify({ error: 'display_name must be a string' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Upsert profile
+      const { error: upsertError } = await supabaseAdmin
+        .from('profiles')
+        .upsert(
+          { user_id: targetUserId, display_name: display_name?.trim() || null },
+          { onConflict: 'user_id' }
+        );
+
+      if (upsertError) {
+        console.error('[admin-api] Error updating profile:', upsertError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to update profile' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[admin-api] Profile updated successfully');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Profile updated' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // POST /users/:userId/teams - Add user to a team
+    const addToTeamMatch = path.match(/^\/users\/([a-f0-9-]+)\/teams$/);
+    if (addToTeamMatch && req.method === 'POST') {
+      const targetUserId = addToTeamMatch[1];
+      if (!isValidUUID(targetUserId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid user ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const body = await req.json();
+      const { team_id, role, player_name } = body;
+
+      if (!team_id || !isValidUUID(team_id)) {
+        return new Response(
+          JSON.stringify({ error: 'Valid team_id is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const memberRole = ['coach', 'player', 'parent'].includes(role) ? role : 'player';
+      console.log(`[admin-api] Adding user ${targetUserId} to team ${team_id} as ${memberRole}`);
+
+      // Check if already a member
+      const { data: existing } = await supabaseAdmin
+        .from('team_members')
+        .select('id')
+        .eq('team_id', team_id)
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+
+      if (existing) {
+        return new Response(
+          JSON.stringify({ error: 'User is already a member of this team' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: newMember, error: insertError } = await supabaseAdmin
+        .from('team_members')
+        .insert({
+          team_id,
+          user_id: targetUserId,
+          role: memberRole,
+          player_name: player_name || null,
+          status: 'active',
+          joined_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('[admin-api] Error adding team member:', insertError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to add to team' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Also add to team_member_players if player/parent with a name
+      if (player_name && (memberRole === 'player' || memberRole === 'parent')) {
+        await supabaseAdmin
+          .from('team_member_players')
+          .insert({ team_member_id: newMember.id, player_name });
+      }
+
+      console.log('[admin-api] User added to team successfully');
+      return new Response(
+        JSON.stringify({ success: true, member: newMember }),
+        { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // DELETE /users/:userId/teams/:teamId - Remove user from a team
+    const removeFromTeamMatch = path.match(/^\/users\/([a-f0-9-]+)\/teams\/([a-f0-9-]+)$/);
+    if (removeFromTeamMatch && req.method === 'DELETE') {
+      const targetUserId = removeFromTeamMatch[1];
+      const teamId = removeFromTeamMatch[2];
+      if (!isValidUUID(targetUserId) || !isValidUUID(teamId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(`[admin-api] Removing user ${targetUserId} from team ${teamId}`);
+
+      // Get the team_member record first to clean up players
+      const { data: member } = await supabaseAdmin
+        .from('team_members')
+        .select('id')
+        .eq('team_id', teamId)
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+
+      if (member) {
+        // Delete associated players first
+        await supabaseAdmin
+          .from('team_member_players')
+          .delete()
+          .eq('team_member_id', member.id);
+
+        // Delete the membership
+        const { error: deleteError } = await supabaseAdmin
+          .from('team_members')
+          .delete()
+          .eq('id', member.id);
+
+        if (deleteError) {
+          console.error('[admin-api] Error removing from team:', deleteError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to remove from team' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      console.log('[admin-api] User removed from team successfully');
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Route not found
     console.log(`[admin-api] Route not found: ${req.method} ${path}`);
     return new Response(
