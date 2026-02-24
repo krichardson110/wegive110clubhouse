@@ -303,10 +303,16 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Generate password reset link
+      // Generate password reset link with redirect to the app
+      const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || '';
+      const redirectTo = `${origin}/auth`;
+      
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'recovery',
         email: userData.user.email,
+        options: {
+          redirectTo,
+        },
       });
 
       if (linkError) {
@@ -317,12 +323,25 @@ Deno.serve(async (req) => {
         );
       }
 
+      // The action_link from generateLink points to Supabase's domain.
+      // We need to construct a proper link that redirects to our app.
+      const actionLink = linkData.properties?.action_link || '';
+      // The action link contains token_hash and type params - extract and rebuild for our app
+      const linkUrl = new URL(actionLink);
+      const tokenHash = linkUrl.searchParams.get('token');
+      const linkType = linkUrl.searchParams.get('type');
+      const hashed_token = linkData.properties?.hashed_token || tokenHash;
+      
+      // Build a link that goes through Supabase auth verify but redirects to our app
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+      const resetLink = `${supabaseUrl}/auth/v1/verify?token=${hashed_token}&type=recovery&redirect_to=${encodeURIComponent(redirectTo)}`;
+      
       console.log('[admin-api] Password reset link generated');
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: 'Password reset link generated',
-          reset_link: linkData.properties?.action_link
+          reset_link: resetLink,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
