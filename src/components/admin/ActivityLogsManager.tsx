@@ -58,7 +58,9 @@ const ActivityLogsManager = () => {
         .order('visited_at', { ascending: false });
 
       if (selectedUserId) {
-        query = query.limit(500).eq('user_id', selectedUserId);
+        query = query.eq('user_id', selectedUserId).limit(500);
+      } else {
+        query = query.limit(5000);
       }
 
       const { data, error } = await query;
