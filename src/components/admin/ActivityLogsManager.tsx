@@ -55,11 +55,10 @@ const ActivityLogsManager = () => {
       let query = supabase
         .from('user_activity_logs')
         .select('*')
-        .order('visited_at', { ascending: false })
-        .limit(500);
+        .order('visited_at', { ascending: false });
 
       if (selectedUserId) {
-        query = query.eq('user_id', selectedUserId);
+        query = query.limit(500).eq('user_id', selectedUserId);
       }
 
       const { data, error } = await query;
