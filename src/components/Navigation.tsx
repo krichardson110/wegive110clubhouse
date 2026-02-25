@@ -22,12 +22,10 @@ const mainNavItems = [
 
 const trainingItems = [
   { name: "Workouts", href: "/workouts", icon: Dumbbell },
-  { name: "Practices", href: "/practices", icon: Calendar },
-  { name: "Schedule", href: "/schedule", icon: Calendar },
+  { name: "Videos", href: "/videos", icon: Video },
 ];
 
 const resourceItems = [
-  { name: "Videos", href: "/videos", icon: Video },
   { name: "Playbook", href: "/playbook", icon: BookOpen },
   { name: "Return & Report", href: "/return-report", icon: MessageSquare },
 ];
