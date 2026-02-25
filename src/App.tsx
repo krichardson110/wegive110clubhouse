@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useActivityTracker } from "./hooks/useActivityTracker";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForcePasswordChange from "./components/auth/ForcePasswordChange";
-import NotificationPrompt from "./components/notifications/NotificationPrompt";
+
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Workouts from "./pages/Workouts";
@@ -89,7 +89,7 @@ const App = () => (
         <BrowserRouter>
           <ForcePasswordWrapper>
             <ActivityTracker>
-              <NotificationPrompt />
+              
               <Routes>
                 <Route path="/" element={<RootRedirect />} />
                 <Route path="/landing" element={<Landing />} />
