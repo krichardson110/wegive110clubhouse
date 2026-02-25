@@ -118,6 +118,10 @@ const TeamPage = () => {
                   <Flame className="w-4 h-4" />
                   <span className="hidden sm:inline">Drive 5</span>
                 </TabsTrigger>
+                <TabsTrigger value="revive5" className="gap-1.5">
+                  <Heart className="w-4 h-4" />
+                  <span className="hidden sm:inline">Revive 5</span>
+                </TabsTrigger>
                 <TabsTrigger value="roster" className="gap-1.5">
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">Roster</span>
@@ -141,10 +145,6 @@ const TeamPage = () => {
                 <TabsTrigger value="playbook" className="gap-1.5">
                   <BookOpen className="w-4 h-4" />
                   <span className="hidden sm:inline">Playbook</span>
-                </TabsTrigger>
-                <TabsTrigger value="revive5" className="gap-1.5">
-                  <Heart className="w-4 h-4" />
-                  <span className="hidden sm:inline">Revive 5</span>
                 </TabsTrigger>
                 <TabsTrigger value="depthchart" className="gap-1.5">
                   <LayoutGrid className="w-4 h-4" />
