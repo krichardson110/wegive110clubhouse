@@ -30,19 +30,21 @@ const DepthChart = ({ teamId, members, isCoach }: DepthChartProps) => {
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newMemberId, setNewMemberId] = useState<string>("");
 
-  const rosterPlayers = members.flatMap((m) => {
-    if (m.players && m.players.length > 0) {
-      return m.players.map((p) => ({
-        memberId: m.id,
-        name: p.player_name,
-        number: p.player_number,
-      }));
-    }
-    if (m.player_name) {
-      return [{ memberId: m.id, name: m.player_name, number: m.player_number }];
-    }
-    return [];
-  });
+  const rosterPlayers = members
+    .filter((m) => m.role === "player" || m.role === "parent")
+    .flatMap((m) => {
+      if (m.players && m.players.length > 0) {
+        return m.players.map((p) => ({
+          memberId: m.id,
+          name: p.player_name,
+          number: p.player_number,
+        }));
+      }
+      if (m.player_name) {
+        return [{ memberId: m.id, name: m.player_name, number: m.player_number }];
+      }
+      return [];
+    });
 
   const getEntriesForPosition = (posKey: string) =>
     entries.filter((e) => e.position === posKey).sort((a, b) => a.depth_order - b.depth_order);
@@ -167,11 +169,17 @@ const DepthChart = ({ teamId, members, isCoach }: DepthChartProps) => {
                               <SelectValue placeholder="Pick from roster" />
                             </SelectTrigger>
                             <SelectContent>
-                              {rosterPlayers.map((p, i) => (
-                                <SelectItem key={i} value={p.memberId + "|" + p.name}>
-                                  {p.name}{p.number ? ` #${p.number}` : ""}
+                              {rosterPlayers.length === 0 ? (
+                                <SelectItem value="no-roster-players" disabled>
+                                  No roster players available
                                 </SelectItem>
-                              ))}
+                              ) : (
+                                rosterPlayers.map((p) => (
+                                  <SelectItem key={`${p.memberId}|${p.name}`} value={p.memberId + "|" + p.name}>
+                                    {p.name}{p.number ? ` #${p.number}` : ""}
+                                  </SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                           <span className="text-xs text-muted-foreground text-center">or</span>
