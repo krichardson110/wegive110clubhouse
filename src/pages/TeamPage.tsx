@@ -14,11 +14,12 @@ import TeamVideosContent from "@/components/teams/TeamVideosContent";
 import TeamPlaybookContent from "@/components/teams/TeamPlaybookContent";
 import TeamPracticesContent from "@/components/teams/TeamPracticesContent";
 import Drive5Dashboard from "@/components/drive5/Drive5Dashboard";
+import Revive5Dashboard from "@/components/revive5/Revive5Dashboard";
 import DepthChart from "@/components/teams/DepthChart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings, Dumbbell, Video, BookOpen, Clipboard, Flame, ClipboardList, LayoutGrid } from "lucide-react";
+import { ArrowLeft, Trophy, UserPlus, Users, MessageSquare, Calendar, Settings, Dumbbell, Video, BookOpen, Clipboard, Flame, ClipboardList, LayoutGrid, Heart } from "lucide-react";
 
 const TeamPage = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -108,7 +109,7 @@ const TeamPage = () => {
         <section className="py-6">
           <div className="container mx-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-9 mb-6">
+              <TabsList className="grid w-full grid-cols-10 mb-6">
                 <TabsTrigger value="feed" className="gap-1.5">
                   <MessageSquare className="w-4 h-4" />
                   <span className="hidden sm:inline">Feed</span>
@@ -140,6 +141,10 @@ const TeamPage = () => {
                 <TabsTrigger value="playbook" className="gap-1.5">
                   <BookOpen className="w-4 h-4" />
                   <span className="hidden sm:inline">Playbook</span>
+                </TabsTrigger>
+                <TabsTrigger value="revive5" className="gap-1.5">
+                  <Heart className="w-4 h-4" />
+                  <span className="hidden sm:inline">Revive 5</span>
                 </TabsTrigger>
                 <TabsTrigger value="depthchart" className="gap-1.5">
                   <LayoutGrid className="w-4 h-4" />
@@ -201,6 +206,10 @@ const TeamPage = () => {
 
               <TabsContent value="playbook">
                 <TeamPlaybookContent />
+              </TabsContent>
+
+              <TabsContent value="revive5">
+                <Revive5Dashboard teamId={teamId} />
               </TabsContent>
 
               <TabsContent value="depthchart">
