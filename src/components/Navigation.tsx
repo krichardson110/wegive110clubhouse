@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Flame, LogIn, LogOut, MessageSquare, ChevronDown, Trophy, Shield, TrendingUp } from "lucide-react";
+import { Home, Dumbbell, Calendar, Video, Users, BookOpen, Menu, X, Flame, Heart, LogIn, LogOut, MessageSquare, ChevronDown, Trophy, Shield, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import clubhouseLogo from "@/assets/clubhouse-logo.png";
@@ -16,6 +16,7 @@ import {
 const mainNavItems = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Drive 5", href: "/drive5", icon: Flame },
+  { name: "Revive 5", href: "/revive5", icon: Heart },
   { name: "Progress", href: "/progress", icon: TrendingUp },
   { name: "Clubhouse", href: "/community", icon: Users },
 ];
