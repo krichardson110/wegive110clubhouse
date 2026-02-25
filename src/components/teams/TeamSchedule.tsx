@@ -31,7 +31,7 @@ interface TeamScheduleProps {
 }
 
 const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
-  const { upcomingEvents, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useTeamEvents();
+  const { events: allEvents, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useTeamEvents();
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
@@ -54,7 +54,7 @@ const TeamSchedule = ({ isCoach, teamId }: TeamScheduleProps) => {
   const dateRange = getDateRange();
 
   // Filter events to show only team-specific or organization-wide events within date range
-  const teamEvents = upcomingEvents.filter(event => {
+  const teamEvents = allEvents.filter(event => {
     if (event.team_id && event.team_id !== teamId) return false;
     const eventDate = new Date(event.event_date + "T00:00:00");
     return isWithinInterval(eventDate, { start: dateRange.start, end: dateRange.end });
