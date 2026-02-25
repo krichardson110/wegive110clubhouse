@@ -961,6 +961,252 @@ export type Database = {
         }
         Relationships: []
       }
+      revive5_categories: {
+        Row: {
+          color_gradient: string
+          created_at: string
+          description: string | null
+          display_order: number
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color_gradient?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      revive5_checkins: {
+        Row: {
+          category_id: string
+          checkin_date: string
+          completed: boolean
+          created_at: string
+          duration_minutes: number | null
+          goal_id: string | null
+          id: string
+          notes: string | null
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          checkin_date?: string
+          completed?: boolean
+          created_at?: string
+          duration_minutes?: number | null
+          goal_id?: string | null
+          id?: string
+          notes?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          checkin_date?: string
+          completed?: boolean
+          created_at?: string
+          duration_minutes?: number | null
+          goal_id?: string | null
+          id?: string
+          notes?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revive5_checkins_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "revive5_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revive5_checkins_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "revive5_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revive5_checkins_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revive5_goal_tasks: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          goal_id: string
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          goal_id: string
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          goal_id?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revive5_goal_tasks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "revive5_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revive5_goal_tasks_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "revive5_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revive5_goals: {
+        Row: {
+          category_id: string
+          created_at: string
+          current_value: number | null
+          description: string | null
+          end_date: string
+          id: string
+          start_date: string
+          status: string
+          target_value: number | null
+          team_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          target_value?: number | null
+          team_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          status?: string
+          target_value?: number | null
+          team_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revive5_goals_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "revive5_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revive5_goals_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revive5_task_completions: {
+        Row: {
+          completed: boolean
+          completion_date: string
+          created_at: string
+          id: string
+          notes: string | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completion_date?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completion_date?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revive5_task_completions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "revive5_goal_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_events: {
         Row: {
           attachments: Json | null
