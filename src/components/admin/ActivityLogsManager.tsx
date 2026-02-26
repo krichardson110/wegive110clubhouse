@@ -126,13 +126,27 @@ const ActivityLogsManager = () => {
 
   const profileMap = new Map(profiles.map(p => [p.user_id, p]));
 
-  // Compute user activity summaries
+  // Compute user activity summaries - include ALL users from profiles
   const userSummaries: UserActivitySummary[] = (() => {
     const summaryMap = new Map<string, UserActivitySummary>();
+    
+    // First, seed with ALL profiles so every user appears
+    profiles.forEach(profile => {
+      summaryMap.set(profile.user_id, {
+        user_id: profile.user_id,
+        display_name: profile.display_name || null,
+        total_visits: 0,
+        total_time_seconds: 0,
+        most_visited_page: '',
+        last_activity: '',
+      });
+    });
+    
+    // Then merge activity log data
     activityLogs.forEach(log => {
       const existing = summaryMap.get(log.user_id);
-      const profile = profileMap.get(log.user_id);
       if (!existing) {
+        const profile = profileMap.get(log.user_id);
         summaryMap.set(log.user_id, {
           user_id: log.user_id,
           display_name: profile?.display_name || null,
@@ -144,7 +158,10 @@ const ActivityLogsManager = () => {
       } else {
         existing.total_visits += 1;
         existing.total_time_seconds += log.time_spent_seconds || 0;
-        if (new Date(log.visited_at) > new Date(existing.last_activity)) {
+        if (!existing.most_visited_page) {
+          existing.most_visited_page = log.page_title || log.page_path;
+        }
+        if (!existing.last_activity || new Date(log.visited_at) > new Date(existing.last_activity)) {
           existing.last_activity = log.visited_at;
         }
       }
@@ -567,7 +584,7 @@ const ActivityLogsManager = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{userSummaries.length}</p>
-                <p className="text-sm text-muted-foreground">Active Users</p>
+                <p className="text-sm text-muted-foreground">Total Users</p>
               </div>
             </div>
           </CardContent>
@@ -650,7 +667,7 @@ const ActivityLogsManager = () => {
                     <span className="font-mono text-sm">{formatDuration(summary.total_time_seconds)}</span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {format(new Date(summary.last_activity), 'MMM d, h:mm a')}
+                    {summary.last_activity ? format(new Date(summary.last_activity), 'MMM d, h:mm a') : 'No activity yet'}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
