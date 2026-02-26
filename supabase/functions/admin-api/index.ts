@@ -1060,6 +1060,112 @@ Deno.serve(async (req) => {
       );
     }
 
+    // GET /users/:userId/engagement - Get user engagement data
+    const engagementMatch = path.match(/^\/users\/([a-f0-9-]+)\/engagement$/);
+    if (engagementMatch && req.method === 'GET') {
+      const targetUserId = engagementMatch[1];
+      if (!isValidUUID(targetUserId)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid user ID format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(`[admin-api] Fetching engagement data for user: ${targetUserId}`);
+
+      const [
+        watchSessionsRes,
+        exerciseResponsesRes,
+        activityLogsRes,
+        badgesRes,
+        checkinsRes,
+        trainingLogsRes,
+        postsRes,
+      ] = await Promise.all([
+        supabaseAdmin
+          .from('video_watch_sessions')
+          .select('id, workout_id, duration_seconds, started_at, workouts(title, category_id, workout_categories:category_id(name))')
+          .eq('user_id', targetUserId)
+          .order('started_at', { ascending: false })
+          .limit(100),
+        supabaseAdmin
+          .from('exercise_responses')
+          .select('id, chapter_id, exercise_id, time_spent_seconds, completed_at, chapters(title, journey_id, journeys:journey_id(title))')
+          .eq('user_id', targetUserId)
+          .order('completed_at', { ascending: false })
+          .limit(100),
+        supabaseAdmin
+          .from('user_activity_logs')
+          .select('id, page_path, page_title, time_spent_seconds, visited_at, left_at')
+          .eq('user_id', targetUserId)
+          .order('visited_at', { ascending: false })
+          .limit(500),
+        supabaseAdmin
+          .from('user_badges')
+          .select('id, awarded_at, badges(name, icon_name, color_gradient)')
+          .eq('user_id', targetUserId),
+        supabaseAdmin
+          .from('daily_checkins')
+          .select('id, checkin_date, completed, category_id, drive5_categories(name)')
+          .eq('user_id', targetUserId)
+          .order('checkin_date', { ascending: false })
+          .limit(30),
+        supabaseAdmin
+          .from('training_logs')
+          .select('id, title, duration_minutes, logged_at')
+          .eq('user_id', targetUserId)
+          .order('logged_at', { ascending: false })
+          .limit(50),
+        supabaseAdmin
+          .from('posts')
+          .select('id, content, likes_count, comments_count, created_at')
+          .eq('user_id', targetUserId)
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ]);
+
+      const watchSessions = watchSessionsRes.data || [];
+      const exerciseResponses = exerciseResponsesRes.data || [];
+      const activityLogs = activityLogsRes.data || [];
+      const badges = badgesRes.data || [];
+      const checkins = checkinsRes.data || [];
+      const trainingLogs = trainingLogsRes.data || [];
+      const posts = postsRes.data || [];
+
+      // Compute summary stats
+      const totalWatchTime = watchSessions.reduce((s, w) => s + (w.duration_seconds || 0), 0);
+      const uniqueWorkouts = new Set(watchSessions.map(w => w.workout_id)).size;
+      const totalExerciseTime = exerciseResponses.reduce((s, e) => s + (e.time_spent_seconds || 0), 0);
+      const uniqueChapters = new Set(exerciseResponses.map(e => e.chapter_id)).size;
+      const totalPageTime = activityLogs.reduce((s, a) => s + (a.time_spent_seconds || 0), 0);
+      const completedCheckins = checkins.filter(c => c.completed).length;
+
+      return new Response(
+        JSON.stringify({
+          summary: {
+            total_watch_time_seconds: totalWatchTime,
+            unique_workouts_watched: uniqueWorkouts,
+            total_exercise_time_seconds: totalExerciseTime,
+            exercises_completed: exerciseResponses.length,
+            unique_chapters_engaged: uniqueChapters,
+            total_page_time_seconds: totalPageTime,
+            total_page_visits: activityLogs.length,
+            badges_earned: badges.length,
+            drive5_checkins: completedCheckins,
+            training_logs_count: trainingLogs.length,
+            posts_count: posts.length,
+          },
+          watch_sessions: watchSessions.slice(0, 50),
+          exercise_responses: exerciseResponses.slice(0, 50),
+          activity_logs: activityLogs,
+          badges,
+          checkins: checkins.slice(0, 30),
+          training_logs: trainingLogs.slice(0, 30),
+          posts: posts.slice(0, 10),
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Route not found
     console.log(`[admin-api] Route not found: ${req.method} ${path}`);
     return new Response(
