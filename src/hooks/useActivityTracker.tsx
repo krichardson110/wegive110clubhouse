@@ -124,26 +124,21 @@ export const useActivityTracker = () => {
     };
   }, [location.pathname, user]);
 
-  // Also update on page unload - simplified approach
+  // Also update on page unload using visibility change
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && activityIdRef.current && user) {
         const timeSpent = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        // Use sendBeacon for reliable tracking when page becomes hidden
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/user_activity_logs?id=eq.${activityIdRef.current}`;
-        const headers = {
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          'Prefer': 'return=minimal',
-        };
-        
-        navigator.sendBeacon?.(
-          url,
-          new Blob([JSON.stringify({
+        const currentActivityId = activityIdRef.current;
+        // Fire and forget update via supabase client
+        supabase
+          .from('user_activity_logs')
+          .update({
             time_spent_seconds: timeSpent,
             left_at: new Date().toISOString(),
-          })], { type: 'application/json' })
-        );
+          })
+          .eq('id', currentActivityId)
+          .then(() => {});
       }
     };
 
