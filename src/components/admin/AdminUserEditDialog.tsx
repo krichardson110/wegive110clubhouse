@@ -3,17 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, Users, UserCog } from "lucide-react";
+import { Loader2, Plus, Trash2, Users, UserCog, Save } from "lucide-react";
 
 interface UserData {
   id: string;
   email: string;
   profile: {
     display_name: string | null;
+    bio?: string | null;
+    avatar_url?: string | null;
+    posts_count?: number;
+    comments_count?: number;
+    likes_given_count?: number;
   } | null;
   team_memberships: Array<{
     team_id: string;
@@ -38,6 +44,7 @@ interface AdminUserEditDialogProps {
 const AdminUserEditDialog = ({ user, open, onOpenChange, onSaved }: AdminUserEditDialogProps) => {
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(false);
@@ -50,6 +57,7 @@ const AdminUserEditDialog = ({ user, open, onOpenChange, onSaved }: AdminUserEdi
   useEffect(() => {
     if (user && open) {
       setDisplayName(user.profile?.display_name || "");
+      setBio(user.profile?.bio || "");
       fetchTeams();
     }
   }, [user, open]);
@@ -89,7 +97,7 @@ const AdminUserEditDialog = ({ user, open, onOpenChange, onSaved }: AdminUserEdi
       const res = await fetch(`${baseUrl}/users/${user.id}/profile`, {
         method: "PUT",
         headers,
-        body: JSON.stringify({ display_name: displayName }),
+        body: JSON.stringify({ display_name: displayName, bio }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -172,23 +180,38 @@ const AdminUserEditDialog = ({ user, open, onOpenChange, onSaved }: AdminUserEdi
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Display Name */}
-          <div className="space-y-2">
-            <Label>Display Name</Label>
-            <div className="flex gap-2">
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Enter display name"
-              />
-              <Button onClick={handleSaveProfile} disabled={saving} size="sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+          {/* Profile Details */}
+          <div className="space-y-4">
+            <Label className="text-base font-semibold">Profile Details</Label>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="edit-display-name">Display Name</Label>
+                <Input
+                  id="edit-display-name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Enter display name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-bio">Bio</Label>
+                <Textarea
+                  id="edit-bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Enter bio..."
+                  rows={3}
+                />
+              </div>
+              <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Profile
               </Button>
             </div>
           </div>
 
           {/* Current Teams */}
-          <div className="space-y-3">
+          <div className="space-y-3 border-t border-border pt-4">
             <Label className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Team Memberships
