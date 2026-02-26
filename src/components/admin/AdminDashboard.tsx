@@ -298,6 +298,31 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              // Find the current user in the users list, or construct a minimal object
+              const currentUserData = users.find(u => u.id === user?.id);
+              if (currentUserData) {
+                setSelectedUser(currentUserData);
+                setShowEditDialog(true);
+              } else {
+                // Construct minimal user data for editing own profile
+                setSelectedUser({
+                  id: user?.id || '',
+                  email: user?.email || '',
+                  profile: null,
+                  team_memberships: [],
+                  is_super_admin: true,
+                  user_type: 'Super Admin',
+                  email_confirmed_at: null,
+                  created_at: '',
+                  last_sign_in_at: null,
+                } as UserData);
+                setShowEditDialog(true);
+              }
+            }}>
+              <UserCog className="w-4 h-4 mr-2" />
+              My Profile
+            </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/')}>
               <Home className="w-4 h-4 mr-2" />
               Main Site

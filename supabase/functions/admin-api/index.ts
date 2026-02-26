@@ -895,7 +895,7 @@ Deno.serve(async (req) => {
       console.log(`[admin-api] Updating profile for user: ${targetUserId}`);
 
       const body = await req.json();
-      const { display_name } = body;
+      const { display_name, bio } = body;
 
       if (display_name !== undefined && typeof display_name !== 'string') {
         return new Response(
@@ -904,13 +904,22 @@ Deno.serve(async (req) => {
         );
       }
 
+      if (bio !== undefined && typeof bio !== 'string') {
+        return new Response(
+          JSON.stringify({ error: 'bio must be a string' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Build update object
+      const profileUpdate: Record<string, any> = { user_id: targetUserId };
+      if (display_name !== undefined) profileUpdate.display_name = display_name?.trim() || null;
+      if (bio !== undefined) profileUpdate.bio = bio?.trim() || null;
+
       // Upsert profile
       const { error: upsertError } = await supabaseAdmin
         .from('profiles')
-        .upsert(
-          { user_id: targetUserId, display_name: display_name?.trim() || null },
-          { onConflict: 'user_id' }
-        );
+        .upsert(profileUpdate, { onConflict: 'user_id' });
 
       if (upsertError) {
         console.error('[admin-api] Error updating profile:', upsertError);
