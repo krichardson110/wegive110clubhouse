@@ -5,11 +5,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, MoreHorizontal, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import type { Post } from "@/types/community";
 import CommentsSection from "./CommentsSection";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
