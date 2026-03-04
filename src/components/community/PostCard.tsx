@@ -136,24 +136,30 @@ const PostCard = ({ post }: PostCardProps) => {
         {post.media_urls && post.media_urls.length > 0 && (
           <div className={`grid gap-2 mb-3 ${
             post.media_urls.length === 1 ? "grid-cols-1" :
-            post.media_urls.length === 2 ? "grid-cols-2" :
             "grid-cols-2"
           }`}>
             {post.media_urls.map((url, index) => {
               const isVideo = url.includes(".mp4") || url.includes(".webm") || url.includes(".mov");
               return isVideo ? (
-                <video
+                <div
                   key={index}
-                  src={url}
-                  controls
-                  className="w-full rounded-lg max-h-96 object-cover"
-                />
+                  className="cursor-pointer rounded-lg overflow-hidden"
+                  onClick={() => setMediaPreview({ url, isVideo: true })}
+                >
+                  <video
+                    src={url}
+                    className="w-full rounded-lg object-contain max-h-[500px]"
+                    muted
+                    playsInline
+                  />
+                </div>
               ) : (
                 <img
                   key={index}
                   src={url}
                   alt=""
-                  className="w-full rounded-lg max-h-96 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                  className="w-full rounded-lg object-contain max-h-[500px] cursor-pointer hover:opacity-90 transition-opacity bg-secondary"
+                  onClick={() => setMediaPreview({ url, isVideo: false })}
                 />
               );
             })}
