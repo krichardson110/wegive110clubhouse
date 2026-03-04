@@ -212,6 +212,32 @@ const PostCard = ({ post }: PostCardProps) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Media Lightbox */}
+        <Dialog open={!!mediaPreview} onOpenChange={() => setMediaPreview(null)}>
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-black/95 border-none overflow-hidden flex items-center justify-center">
+            <button
+              onClick={() => setMediaPreview(null)}
+              className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {mediaPreview?.isVideo ? (
+              <video
+                src={mediaPreview.url}
+                controls
+                autoPlay
+                className="max-w-full max-h-[85vh] object-contain"
+              />
+            ) : (
+              <img
+                src={mediaPreview?.url}
+                alt=""
+                className="max-w-full max-h-[85vh] object-contain"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
