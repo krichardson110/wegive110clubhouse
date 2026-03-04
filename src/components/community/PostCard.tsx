@@ -5,11 +5,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, MoreHorizontal, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import type { Post } from "@/types/community";
 import CommentsSection from "./CommentsSection";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +41,7 @@ const PostCard = ({ post }: PostCardProps) => {
   const queryClient = useQueryClient();
   const [showComments, setShowComments] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<{ url: string; isVideo: boolean } | null>(null);
 
   const isOwner = user?.id === post.user_id;
   const canDelete = isOwner || isSuperAdmin;
@@ -131,24 +136,30 @@ const PostCard = ({ post }: PostCardProps) => {
         {post.media_urls && post.media_urls.length > 0 && (
           <div className={`grid gap-2 mb-3 ${
             post.media_urls.length === 1 ? "grid-cols-1" :
-            post.media_urls.length === 2 ? "grid-cols-2" :
             "grid-cols-2"
           }`}>
             {post.media_urls.map((url, index) => {
               const isVideo = url.includes(".mp4") || url.includes(".webm") || url.includes(".mov");
               return isVideo ? (
-                <video
+                <div
                   key={index}
-                  src={url}
-                  controls
-                  className="w-full rounded-lg max-h-96 object-cover"
-                />
+                  className="cursor-pointer rounded-lg overflow-hidden"
+                  onClick={() => setMediaPreview({ url, isVideo: true })}
+                >
+                  <video
+                    src={url}
+                    className="w-full rounded-lg object-contain max-h-[500px]"
+                    muted
+                    playsInline
+                  />
+                </div>
               ) : (
                 <img
                   key={index}
                   src={url}
                   alt=""
-                  className="w-full rounded-lg max-h-96 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                  className="w-full rounded-lg object-contain max-h-[500px] cursor-pointer hover:opacity-90 transition-opacity bg-secondary"
+                  onClick={() => setMediaPreview({ url, isVideo: false })}
                 />
               );
             })}
@@ -201,6 +212,32 @@ const PostCard = ({ post }: PostCardProps) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Media Lightbox */}
+        <Dialog open={!!mediaPreview} onOpenChange={() => setMediaPreview(null)}>
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-black/95 border-none overflow-hidden flex items-center justify-center">
+            <button
+              onClick={() => setMediaPreview(null)}
+              className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {mediaPreview?.isVideo ? (
+              <video
+                src={mediaPreview.url}
+                controls
+                autoPlay
+                className="max-w-full max-h-[85vh] object-contain"
+              />
+            ) : (
+              <img
+                src={mediaPreview?.url}
+                alt=""
+                className="max-w-full max-h-[85vh] object-contain"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
