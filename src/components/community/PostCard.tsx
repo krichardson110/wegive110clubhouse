@@ -41,6 +41,7 @@ const PostCard = ({ post }: PostCardProps) => {
   const queryClient = useQueryClient();
   const [showComments, setShowComments] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<{ url: string; isVideo: boolean } | null>(null);
 
   const isOwner = user?.id === post.user_id;
   const canDelete = isOwner || isSuperAdmin;
