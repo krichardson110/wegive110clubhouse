@@ -34,7 +34,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import TeamAdmin from "./pages/TeamAdmin";
 import Drive5 from "./pages/Drive5";
-import Revive5 from "./pages/Revive5";
+// import Revive5 from "./pages/Revive5"; // Temporarily disabled
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -116,7 +116,7 @@ const App = () => (
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
                 <Route path="/drive5" element={<ProtectedRoute><Drive5 /></ProtectedRoute>} />
-                <Route path="/revive5" element={<ProtectedRoute><Revive5 /></ProtectedRoute>} />
+                {/* <Route path="/revive5" element={<ProtectedRoute><Revive5 /></ProtectedRoute>} /> */}
                 <Route path="/admin" element={<Admin />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

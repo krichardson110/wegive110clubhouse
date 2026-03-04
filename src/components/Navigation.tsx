@@ -16,7 +16,7 @@ import {
 const mainNavItems = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Drive 5", href: "/drive5", icon: Flame },
-  { name: "Revive 5", href: "/revive5", icon: Heart },
+  // { name: "Revive 5", href: "/revive5", icon: Heart }, // Temporarily disabled
   { name: "Progress", href: "/progress", icon: TrendingUp },
   { name: "Clubhouse", href: "/community", icon: Users },
 ];
