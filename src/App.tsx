@@ -119,6 +119,7 @@ const App = () => (
                 <Route path="/drive5" element={<ProtectedRoute><Drive5 /></ProtectedRoute>} />
                 {/* <Route path="/revive5" element={<ProtectedRoute><Revive5 /></ProtectedRoute>} /> */}
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/documentation" element={<Documentation />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
