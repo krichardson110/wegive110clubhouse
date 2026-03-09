@@ -11,11 +11,15 @@ const PAGE_TITLES: Record<string, string> = {
   '/videos': 'Videos',
   '/playbook': 'Playbook',
   '/schedule': 'Schedule',
+  '/practices': 'Practices',
   '/return-report': 'Return Report',
   '/community': 'Clubhouse',
   '/community/badges': 'Badges',
   '/teams': 'My Teams',
   '/profile': 'Profile',
+  '/progress': 'Progress',
+  '/drive5': 'Drive 5',
+  '/revive5': 'Revive 5',
   '/auth': 'Authentication',
 };
 
