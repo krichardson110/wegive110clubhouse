@@ -36,6 +36,7 @@ import TeamAdmin from "./pages/TeamAdmin";
 import Drive5 from "./pages/Drive5";
 // import Revive5 from "./pages/Revive5"; // Temporarily disabled
 import NotFound from "./pages/NotFound";
+import Documentation from "./pages/Documentation";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,7 @@ const App = () => (
                 <Route path="/drive5" element={<ProtectedRoute><Drive5 /></ProtectedRoute>} />
                 {/* <Route path="/revive5" element={<ProtectedRoute><Revive5 /></ProtectedRoute>} /> */}
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/documentation" element={<Documentation />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
