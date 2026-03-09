@@ -36,6 +36,7 @@ import TeamAdmin from "./pages/TeamAdmin";
 import Drive5 from "./pages/Drive5";
 // import Revive5 from "./pages/Revive5"; // Temporarily disabled
 import NotFound from "./pages/NotFound";
+import Documentation from "./pages/Documentation";
 
 const queryClient = new QueryClient();
 
