@@ -51,6 +51,16 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
       return [];
     });
 
+  // Build a lookup: player_name -> uniform number from roster
+  const rosterNumberLookup = new Map<string, string>();
+  rosterPlayers.forEach((p) => {
+    if (p.number) rosterNumberLookup.set(p.name, p.number);
+  });
+
+  const getPlayerNumber = (entry: DepthChartEntry) => {
+    return rosterNumberLookup.get(entry.player_name) || entry.player_number || null;
+  };
+
   const getEntriesForPosition = (posKey: string) =>
     entries.filter((e) => e.position === posKey).sort((a, b) => a.depth_order - b.depth_order);
 
