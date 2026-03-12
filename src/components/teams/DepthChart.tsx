@@ -200,6 +200,12 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                             className="sm:flex-1"
                             onKeyDown={(e) => e.key === "Enter" && handleAdd(pos.key)}
                           />
+                          <Input
+                            placeholder="#"
+                            value={newPlayerNumber}
+                            onChange={(e) => setNewPlayerNumber(e.target.value)}
+                            className="w-16"
+                          />
                           <div className="flex gap-2">
                             <Button size="sm" onClick={() => handleAdd(pos.key)} disabled={!newPlayerName.trim()}>
                               <Save className="w-3.5 h-3.5 mr-1" />
@@ -211,6 +217,7 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                               onClick={() => {
                                 setAddingPosition(null);
                                 setNewPlayerName("");
+                                setNewPlayerNumber("");
                                 setNewMemberId("");
                               }}
                             >
