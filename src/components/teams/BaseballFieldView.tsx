@@ -7,6 +7,7 @@ import type { DepthChartEntry } from "@/hooks/useDepthChart";
 
 interface BaseballFieldViewProps {
   entries: DepthChartEntry[];
+  rosterNumberLookup?: Map<string, string>;
 }
 
 // Position coordinates on the field (percentage-based for responsiveness)
@@ -44,8 +45,11 @@ const depthLabel = (order: number) => {
   return `#${order}`;
 };
 
-const BaseballFieldView = ({ entries }: BaseballFieldViewProps) => {
+const BaseballFieldView = ({ entries, rosterNumberLookup }: BaseballFieldViewProps) => {
   const [selectedPlayer, setSelectedPlayer] = useState<DepthChartEntry | null>(null);
+
+  const getNumber = (entry: DepthChartEntry) =>
+    rosterNumberLookup?.get(entry.player_name) || entry.player_number || null;
 
   const getEntriesForPosition = (posKey: string) =>
     entries.filter((e) => e.position === posKey).sort((a, b) => a.depth_order - b.depth_order);
@@ -170,7 +174,7 @@ const BaseballFieldView = ({ entries }: BaseballFieldViewProps) => {
                       }`}
                     >
                       <span className="truncate max-w-[70px] sm:max-w-[100px]">
-                        {entry.player_number ? `#${entry.player_number} ` : ""}{entry.player_name}
+                        {getNumber(entry) ? `#${getNumber(entry)} ` : ""}{entry.player_name}
                       </span>
                       <span className={`text-[9px] sm:text-[11px] ${
                         entry.depth_order === 1 ? "text-primary" : "text-muted-foreground/70"

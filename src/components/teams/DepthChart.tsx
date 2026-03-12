@@ -51,6 +51,16 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
       return [];
     });
 
+  // Build a lookup: player_name -> uniform number from roster
+  const rosterNumberLookup = new Map<string, string>();
+  rosterPlayers.forEach((p) => {
+    if (p.number) rosterNumberLookup.set(p.name, p.number);
+  });
+
+  const getPlayerNumber = (entry: DepthChartEntry) => {
+    return rosterNumberLookup.get(entry.player_name) || entry.player_number || null;
+  };
+
   const getEntriesForPosition = (posKey: string) =>
     entries.filter((e) => e.position === posKey).sort((a, b) => a.depth_order - b.depth_order);
 
@@ -141,7 +151,7 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
           </TabsList>
 
           <TabsContent value="field" className="mt-0">
-            <BaseballFieldView entries={entries} />
+            <BaseballFieldView entries={entries} rosterNumberLookup={rosterNumberLookup} />
           </TabsContent>
 
           {isCoach && (
@@ -209,9 +219,9 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                             </>
                           ) : (
                             <>
-                              {entry.player_number && (
+                              {getPlayerNumber(entry) && (
                                 <Badge variant="secondary" className="text-xs font-bold min-w-[32px] justify-center">
-                                  #{entry.player_number}
+                                  #{getPlayerNumber(entry)}
                                 </Badge>
                               )}
                               <span className="flex-1 text-sm font-medium">{entry.player_name}</span>
