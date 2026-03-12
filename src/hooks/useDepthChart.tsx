@@ -8,6 +8,7 @@ export interface DepthChartEntry {
   position: string;
   depth_order: number;
   player_name: string;
+  player_number: string | null;
   team_member_id: string | null;
   notes: string | null;
   created_at: string;
