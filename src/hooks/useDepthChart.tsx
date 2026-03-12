@@ -25,6 +25,7 @@ export const BASEBALL_POSITIONS = [
   { key: "CF", label: "Center Field" },
   { key: "RF", label: "Right Field" },
   { key: "DH", label: "Designated Hitter" },
+  { key: "EH", label: "Extra Hitter" },
 ] as const;
 
 export const useDepthChart = (teamId?: string) => {
