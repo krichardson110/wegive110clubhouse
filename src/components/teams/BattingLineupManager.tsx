@@ -59,6 +59,12 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
       return [];
     });
 
+  // Build a lookup: player name -> uniform number from roster
+  const uniformNumberLookup = new Map<string, string>();
+  rosterPlayers.forEach((p) => {
+    if (p.number) uniformNumberLookup.set(p.name, p.number);
+  });
+
   const handleSelectPlayer = (value: string) => {
     const player = rosterPlayers.find((p) => p.memberId + "|" + p.name === value);
     if (player) {
