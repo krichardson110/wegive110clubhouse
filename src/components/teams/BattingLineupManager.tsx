@@ -59,10 +59,14 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
       return [];
     });
 
-  // Build a lookup: player name -> uniform number from roster
+  // Build a lookup: player name -> uniform number from depth chart first, then roster as fallback
   const uniformNumberLookup = new Map<string, string>();
   rosterPlayers.forEach((p) => {
     if (p.number) uniformNumberLookup.set(p.name, p.number);
+  });
+  // Depth chart numbers take priority (these are what the coach edits in Manage tab)
+  depthChartEntries.forEach((e) => {
+    if (e.player_number) uniformNumberLookup.set(e.player_name, e.player_number);
   });
 
   const handleSelectPlayer = (value: string) => {
