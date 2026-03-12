@@ -32,6 +32,8 @@ import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
 import Drive5Dashboard from "@/components/drive5/Drive5Dashboard";
 import DepthChart from "@/components/teams/DepthChart";
+import BattingLineupManager from "@/components/teams/BattingLineupManager";
+import { useDepthChart } from "@/hooks/useDepthChart";
 
 const TeamAdmin = () => {
   const { teamId } = useParams<{ teamId: string }>();
