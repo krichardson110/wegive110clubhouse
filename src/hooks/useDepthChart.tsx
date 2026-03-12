@@ -56,6 +56,7 @@ export const useUpsertDepthChart = () => {
       position: string;
       depth_order: number;
       player_name: string;
+      player_number?: string | null;
       team_member_id?: string | null;
       notes?: string | null;
     }) => {
@@ -64,6 +65,7 @@ export const useUpsertDepthChart = () => {
           .from("depth_chart")
           .update({
             player_name: entry.player_name,
+            player_number: entry.player_number || null,
             team_member_id: entry.team_member_id || null,
             notes: entry.notes || null,
           })
@@ -75,6 +77,7 @@ export const useUpsertDepthChart = () => {
           position: entry.position,
           depth_order: entry.depth_order,
           player_name: entry.player_name,
+          player_number: entry.player_number || null,
           team_member_id: entry.team_member_id || null,
           notes: entry.notes || null,
         });

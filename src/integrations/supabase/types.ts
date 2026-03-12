@@ -302,6 +302,7 @@ export type Database = {
           id: string
           notes: string | null
           player_name: string
+          player_number: string | null
           position: string
           team_id: string
           team_member_id: string | null
@@ -313,6 +314,7 @@ export type Database = {
           id?: string
           notes?: string | null
           player_name: string
+          player_number?: string | null
           position: string
           team_id: string
           team_member_id?: string | null
@@ -324,6 +326,7 @@ export type Database = {
           id?: string
           notes?: string | null
           player_name?: string
+          player_number?: string | null
           position?: string
           team_id?: string
           team_member_id?: string | null
