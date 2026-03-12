@@ -75,6 +75,7 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
     const player = rosterPlayers.find((p) => p.memberId + "|" + p.name === value);
     if (player) {
       setNewPlayerName(player.name);
+      setNewPlayerNumber(player.number || "");
       setNewMemberId(player.memberId);
     }
   };
