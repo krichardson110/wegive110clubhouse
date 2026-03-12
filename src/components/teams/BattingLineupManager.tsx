@@ -4,18 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Save, ListOrdered, ArrowRightLeft, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Save, ListOrdered, ArrowRightLeft, RotateCcw, ChevronUp, ChevronDown } from "lucide-react";
 import {
   useBattingLineup,
   useUpsertBattingLineup,
   useDeleteBattingLineup,
   useClearBattingLineup,
+  useSwapBattingOrder,
 } from "@/hooks/useBattingLineup";
-import { BASEBALL_POSITIONS } from "@/hooks/useDepthChart";
-import type { DepthChartEntry } from "@/hooks/useDepthChart";
-import type { TeamMember } from "@/types/team";
-import LineupPdfGenerator from "./LineupPdfGenerator";
-
 interface BattingLineupManagerProps {
   teamId: string;
   members: TeamMember[];
