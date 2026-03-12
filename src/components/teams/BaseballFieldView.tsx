@@ -7,6 +7,7 @@ import type { DepthChartEntry } from "@/hooks/useDepthChart";
 
 interface BaseballFieldViewProps {
   entries: DepthChartEntry[];
+  rosterNumberLookup?: Map<string, string>;
 }
 
 // Position coordinates on the field (percentage-based for responsiveness)
