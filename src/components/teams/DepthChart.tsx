@@ -24,7 +24,7 @@ interface DepthChartProps {
   teamName?: string;
 }
 
-const DepthChart = ({ teamId, members, isCoach }: DepthChartProps) => {
+const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => {
   const { data: entries = [], isLoading } = useDepthChart(teamId);
   const upsert = useUpsertDepthChart();
   const deleteEntry = useDeleteDepthChartEntry();
