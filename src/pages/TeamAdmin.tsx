@@ -41,6 +41,7 @@ const TeamAdmin = () => {
   const { user, loading: authLoading } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
   const { members, isLoading: membersLoading, removeMember, editMemberPlayers, isEditingPlayers, refetch: refetchMembers } = useTeamMembers(teamId);
+  const { data: depthChartEntries = [] } = useDepthChart(teamId);
   const [activeTab, setActiveTab] = useState("feed");
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [defaultRole, setDefaultRole] = useState<'player' | 'parent' | 'coach'>('player');

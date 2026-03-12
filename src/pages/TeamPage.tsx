@@ -28,6 +28,7 @@ const TeamPage = () => {
   const { user } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
   const { members, isLoading: membersLoading, removeMember, refetch: refetchMembers } = useTeamMembers(teamId);
+  const { data: depthChartEntries = [] } = useDepthChart(teamId);
 
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [defaultRole, setDefaultRole] = useState<'player' | 'parent' | 'coach'>('player');
