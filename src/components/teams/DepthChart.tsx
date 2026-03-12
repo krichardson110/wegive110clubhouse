@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Save, LayoutGrid, List } from "lucide-react";
+import LineupPdfGenerator from "./LineupPdfGenerator";
 import {
   useDepthChart,
   useUpsertDepthChart,
