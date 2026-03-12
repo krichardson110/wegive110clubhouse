@@ -31,6 +31,9 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerNumber, setNewPlayerNumber] = useState("");
   const [newMemberId, setNewMemberId] = useState<string>("");
+  const [editingEntry, setEditingEntry] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editNumber, setEditNumber] = useState("");
 
   const rosterPlayers = members
     .filter((m) => m.role === "player" || m.role === "parent")
