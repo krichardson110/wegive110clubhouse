@@ -2,42 +2,35 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
 import type { DepthChartEntry } from "@/hooks/useDepthChart";
-import { BASEBALL_POSITIONS } from "@/hooks/useDepthChart";
+import type { BattingLineupEntry } from "@/hooks/useBattingLineup";
 
 interface LineupPdfGeneratorProps {
-  entries: DepthChartEntry[];
+  battingLineup: BattingLineupEntry[];
+  depthChartEntries: DepthChartEntry[];
   teamName?: string;
 }
 
 const POSITION_COORDS: Record<string, { x: number; y: number }> = {
-  P:  { x: 50, y: 60 },
-  C:  { x: 50, y: 86 },
-  "1B": { x: 64, y: 61 },
-  "2B": { x: 59, y: 50 },
-  "3B": { x: 36, y: 61 },
-  SS: { x: 41, y: 50 },
-  LF: { x: 24, y: 34 },
-  CF: { x: 50, y: 20 },
-  RF: { x: 76, y: 34 },
-  DH: { x: 84, y: 90 },
+  P:  { x: 50, y: 62 },
+  C:  { x: 50, y: 88 },
+  "1B": { x: 66, y: 62 },
+  "2B": { x: 60, y: 48 },
+  "3B": { x: 34, y: 62 },
+  SS: { x: 40, y: 48 },
+  LF: { x: 22, y: 30 },
+  CF: { x: 50, y: 18 },
+  RF: { x: 78, y: 30 },
+  DH: { x: 86, y: 92 },
 };
 
-const getEntriesForPosition = (entries: DepthChartEntry[], posKey: string) =>
-  entries.filter((e) => e.position === posKey).sort((a, b) => a.depth_order - b.depth_order);
+const getStarterForPosition = (entries: DepthChartEntry[], posKey: string) =>
+  entries.filter((e) => e.position === posKey).sort((a, b) => a.depth_order - b.depth_order)[0] || null;
 
-// Traditional batting order positions
-const BATTING_ORDER_POSITIONS = ["1B", "2B", "SS", "3B", "LF", "CF", "RF", "C", "P", "DH"];
-
-const LineupPdfGenerator = ({ entries, teamName }: LineupPdfGeneratorProps) => {
+const LineupPdfGenerator = ({ battingLineup, depthChartEntries, teamName }: LineupPdfGeneratorProps) => {
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Build batting order from starters
-  const starters = BATTING_ORDER_POSITIONS
-    .map((pos) => {
-      const posEntries = getEntriesForPosition(entries, pos);
-      return posEntries.length > 0 ? { ...posEntries[0], position: pos } : null;
-    })
-    .filter(Boolean) as DepthChartEntry[];
+  const starters = battingLineup.filter((e) => !e.is_substitute).sort((a, b) => a.batting_order - b.batting_order);
+  const substitutes = battingLineup.filter((e) => e.is_substitute).sort((a, b) => a.batting_order - b.batting_order);
 
   const handleGeneratePdf = () => {
     const printContent = printRef.current;
@@ -46,108 +39,83 @@ const LineupPdfGenerator = ({ entries, teamName }: LineupPdfGeneratorProps) => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
-    const today = new Date().toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<title>${teamName || "Team"} Lineup</title>
+<style>
+  @page { size: letter; margin: 0.4in 0.5in; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, Helvetica, sans-serif; color: #1a1a1a; background: white; }
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${teamName || "Team"} Lineup</title>
-        <style>
-          @page { size: letter; margin: 0.5in; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; background: white; }
-          
-          .page { page-break-after: always; }
-          .page:last-child { page-break-after: auto; }
-          
-          /* HEADER */
-          .header { text-align: center; padding: 16px 0 12px; border-bottom: 3px solid #1a1a1a; margin-bottom: 16px; }
-          .header h1 { font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
-          .header .date { font-size: 12px; color: #666; margin-top: 4px; }
-          
-          /* LINEUP TABLE */
-          .lineup-section { margin-bottom: 24px; }
-          .lineup-section h2 { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #333; padding-bottom: 6px; margin-bottom: 0; }
-          
-          .lineup-table { width: 100%; border-collapse: collapse; }
-          .lineup-table th { 
-            background: #1a1a1a; color: white; font-size: 11px; font-weight: 700; 
-            text-transform: uppercase; letter-spacing: 1px; padding: 8px 12px; text-align: left; 
-          }
-          .lineup-table td { 
-            padding: 10px 12px; border-bottom: 1px solid #ddd; font-size: 14px; 
-          }
-          .lineup-table tr:nth-child(even) { background: #f8f8f8; }
-          .lineup-table .order-num { 
-            font-weight: 800; font-size: 18px; width: 40px; text-align: center; color: #333;
-          }
-          .lineup-table .pos { 
-            font-weight: 700; width: 50px; text-align: center; 
-            background: #e8e8e8; border-radius: 4px; font-size: 13px;
-          }
-          .lineup-table .player-name { font-weight: 600; font-size: 15px; }
-          
-          /* BENCH */
-          .bench-section { margin-top: 16px; }
-          .bench-section h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #666; margin-bottom: 6px; }
-          .bench-list { display: flex; flex-wrap: wrap; gap: 8px; }
-          .bench-item { 
-            padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
-            background: #f5f5f5;
-          }
-          .bench-item .pos-tag { font-weight: 700; margin-right: 4px; }
-          
-          /* FIELD VIEW */
-          .field-section { margin-top: 20px; }
-          .field-section h2 { font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #333; padding-bottom: 6px; margin-bottom: 12px; }
-          .field-container { position: relative; width: 100%; max-width: 500px; margin: 0 auto; }
-          .field-container svg { width: 100%; height: auto; }
-          
-          .field-player { 
-            position: absolute; transform: translate(-50%, -50%); text-align: center; 
-            font-size: 10px; white-space: nowrap; 
-          }
-          .field-player .fp-pos { 
-            font-weight: 800; font-size: 12px; background: #333; color: white; 
-            padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 2px;
-          }
-          .field-player .fp-name { 
-            display: block; font-weight: 600; font-size: 11px; background: white;
-            border: 1px solid #999; padding: 2px 6px; border-radius: 4px; margin-top: 1px;
-          }
-          
-          .footer { text-align: center; font-size: 10px; color: #aaa; margin-top: 24px; padding-top: 8px; border-top: 1px solid #eee; }
+  .page-1, .page-2 { page-break-after: always; }
+  .page-2 { page-break-after: auto; }
 
-          @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          }
-        </style>
-      </head>
-      <body>
-        ${printContent.innerHTML}
-      </body>
-      </html>
-    `);
+  /* PAGE 1: LINEUP */
+  .header { text-align: center; padding: 20px 0 14px; border-bottom: 4px double #1a1a1a; margin-bottom: 20px; }
+  .header h1 { font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; }
+  .header .subtitle { font-size: 14px; color: #666; margin-top: 4px; font-weight: 500; }
+
+  .section-title { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #333;
+    border-bottom: 2px solid #333; padding-bottom: 6px; margin-bottom: 0; }
+
+  /* Lineup table */
+  .lineup-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  .lineup-table th {
+    background: #1a1a1a; color: white; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; padding: 10px 12px; text-align: left;
+  }
+  .lineup-table th:first-child { text-align: center; width: 50px; }
+  .lineup-table th:nth-child(2) { text-align: center; width: 60px; }
+  .lineup-table td { padding: 12px 12px; border-bottom: 1px solid #ddd; font-size: 15px; }
+  .lineup-table tr:nth-child(even) td { background: #f7f7f7; }
+  .lineup-table .order-num { font-weight: 900; font-size: 20px; text-align: center; color: #222; width: 50px; }
+  .lineup-table .pos-cell { text-align: center; width: 60px; }
+  .lineup-table .pos-badge {
+    display: inline-block; font-weight: 800; font-size: 12px; background: #e8e8e8;
+    padding: 3px 10px; border-radius: 4px; min-width: 36px; text-align: center;
+  }
+  .lineup-table .player-name { font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
+
+  /* Substitutions */
+  .subs-section { margin-top: 8px; }
+  .subs-table { width: 100%; border-collapse: collapse; }
+  .subs-table th {
+    background: #555; color: white; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; padding: 8px 10px; text-align: left;
+  }
+  .subs-table td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
+  .subs-table .pos-badge {
+    display: inline-block; font-weight: 700; font-size: 11px; background: #eee;
+    padding: 2px 8px; border-radius: 3px;
+  }
+  .subs-table .sub-name { font-weight: 600; }
+  .subs-table .sub-detail { color: #888; font-size: 11px; }
+
+  .notes-area { margin-top: 24px; border: 1px solid #ccc; border-radius: 4px; padding: 12px; min-height: 80px; }
+  .notes-area h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #999; margin-bottom: 8px; }
+  .notes-lines { border-bottom: 1px solid #e8e8e8; height: 24px; }
+
+  /* PAGE 2: FIELD */
+  .field-header { text-align: center; margin-bottom: 12px; }
+  .field-header h2 { font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; }
+  .field-wrapper { width: 100%; aspect-ratio: 1 / 0.9; position: relative; }
+  .field-wrapper svg { width: 100%; height: 100%; }
+
+  .footer { text-align: center; font-size: 9px; color: #bbb; margin-top: 12px; }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>${printContent.innerHTML}</body>
+</html>`);
     printWindow.document.close();
-    
-    // Wait for content to load, then print
     printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print();
-      }, 300);
+      setTimeout(() => printWindow.print(), 300);
     };
   };
-
-  // Get bench players (depth_order > 1)
-  const benchPlayers = entries
-    .filter((e) => e.depth_order > 1)
-    .sort((a, b) => a.position.localeCompare(b.position) || a.depth_order - b.depth_order);
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -171,157 +139,217 @@ const LineupPdfGenerator = ({ entries, teamName }: LineupPdfGeneratorProps) => {
 
       {/* Hidden printable content */}
       <div ref={printRef} style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        <div className="page">
-          {/* Header */}
+        {/* PAGE 1: Lineup Card */}
+        <div className="page-1">
           <div className="header">
             <h1>{teamName || "Team"} Lineup</h1>
-            <div className="date">{today}</div>
+            <div className="subtitle">{today}</div>
           </div>
 
-          {/* Batting Order */}
-          <div className="lineup-section">
-            <h2>Batting Order</h2>
-            <table className="lineup-table">
-              <thead>
-                <tr>
-                  <th style={{ width: "40px", textAlign: "center" }}>#</th>
-                  <th style={{ width: "50px", textAlign: "center" }}>Pos</th>
-                  <th>Player</th>
+          <div className="section-title">Batting Order</div>
+          <table className="lineup-table">
+            <thead>
+              <tr>
+                <th style={{ textAlign: "center", width: "50px" }}>#</th>
+                <th style={{ textAlign: "center", width: "60px" }}>Pos</th>
+                <th>Player</th>
+              </tr>
+            </thead>
+            <tbody>
+              {starters.map((entry) => (
+                <tr key={entry.id}>
+                  <td className="order-num">{entry.batting_order}</td>
+                  <td className="pos-cell">
+                    <span className="pos-badge">{entry.position}</span>
+                  </td>
+                  <td className="player-name">{entry.player_name}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {starters.map((entry, idx) => (
-                  <tr key={entry.id}>
-                    <td className="order-num">{idx + 1}</td>
-                    <td className="pos">{entry.position}</td>
-                    <td className="player-name">{entry.player_name}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
 
-          {/* Bench */}
-          {benchPlayers.length > 0 && (
-            <div className="bench-section">
-              <h3>Bench / Reserves</h3>
-              <div className="bench-list">
-                {benchPlayers.map((entry) => (
-                  <span key={entry.id} className="bench-item">
-                    <span className="pos-tag">{entry.position}</span>
-                    {entry.player_name}
-                  </span>
-                ))}
-              </div>
+          {substitutes.length > 0 && (
+            <div className="subs-section">
+              <div className="section-title">Substitutions</div>
+              <table className="subs-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "50px" }}>Pos</th>
+                    <th>Player</th>
+                    <th style={{ width: "120px" }}>Replaces</th>
+                    <th style={{ width: "70px" }}>Inning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {substitutes.map((sub) => {
+                    const replacingStarter = sub.substitutes_for
+                      ? starters.find((s) => s.batting_order === sub.substitutes_for)
+                      : null;
+                    return (
+                      <tr key={sub.id}>
+                        <td><span className="pos-badge">{sub.position}</span></td>
+                        <td className="sub-name">{sub.player_name}</td>
+                        <td className="sub-detail">{replacingStarter ? replacingStarter.player_name : "—"}</td>
+                        <td className="sub-detail">{sub.inning_enter ? `Inn ${sub.inning_enter}` : "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
 
-          {/* Field View */}
-          <div className="field-section">
-            <h2>Field Positions</h2>
-            <div className="field-container" style={{ position: "relative", paddingBottom: "90%" }}>
-              <svg
-                viewBox="0 0 500 450"
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <defs>
-                  <pattern id="gs" patternUnits="userSpaceOnUse" width="24" height="24">
-                    <rect width="24" height="12" fill="#2d6b3f" />
-                    <rect y="12" width="24" height="12" fill="#327344" />
-                  </pattern>
-                  <radialGradient id="dg" cx="50%" cy="50%">
-                    <stop offset="0%" stopColor="#c4956a" />
-                    <stop offset="100%" stopColor="#a67c52" />
-                  </radialGradient>
-                  <radialGradient id="mg" cx="50%" cy="40%">
-                    <stop offset="0%" stopColor="#d4a574" />
-                    <stop offset="100%" stopColor="#a67c52" />
-                  </radialGradient>
-                </defs>
-                <rect width="500" height="450" fill="#1a472a" />
-                <ellipse cx="250" cy="290" rx="245" ry="230" fill="url(#gs)" />
-                <path d="M 5,141 Q 250,-10 495,141" fill="none" stroke="#1a3a1a" strokeWidth="6" />
-                <polygon points="250,365 0,100 0,450 250,450" fill="#1a472a" fillOpacity="0.85" />
-                <polygon points="250,365 500,100 500,450 250,450" fill="#1a472a" fillOpacity="0.85" />
-                <polygon points="250,195 345,285 250,375 155,285" fill="url(#dg)" />
-                <circle cx="250" cy="285" r="52" fill="#327344" />
-                <circle cx="250" cy="272" r="11" fill="url(#mg)" />
-                <rect x="245" y="270" width="10" height="2.5" rx="0.5" fill="white" />
-                <line x1="250" y1="195" x2="345" y2="285" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
-                <line x1="345" y1="285" x2="250" y2="375" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
-                <line x1="250" y1="375" x2="155" y2="285" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
-                <line x1="155" y1="285" x2="250" y2="195" stroke="white" strokeWidth="1.5" strokeOpacity="0.7" />
-                <line x1="250" y1="375" x2="5" y2="141" stroke="white" strokeWidth="2" strokeOpacity="0.8" />
-                <line x1="250" y1="375" x2="495" y2="141" stroke="white" strokeWidth="2" strokeOpacity="0.8" />
-                <rect x="244" y="189" width="12" height="12" rx="1" transform="rotate(45 250 195)" fill="white" />
-                <rect x="339" y="279" width="12" height="12" rx="1" transform="rotate(45 345 285)" fill="white" />
-                <rect x="149" y="279" width="12" height="12" rx="1" transform="rotate(45 155 285)" fill="white" />
-                <polygon points="245,370 250,378 255,370 255,366 245,366" fill="white" />
+          <div className="notes-area">
+            <h4>Coach Notes</h4>
+            <div className="notes-lines"></div>
+            <div className="notes-lines"></div>
+            <div className="notes-lines"></div>
+          </div>
+        </div>
 
-                {/* Player labels on field */}
-                {Object.entries(POSITION_COORDS).map(([posKey, coords]) => {
-                  const posEntries = getEntriesForPosition(entries, posKey);
-                  const starter = posEntries[0];
-                  const svgX = (coords.x / 100) * 500;
-                  const svgY = (coords.y / 100) * 450;
-                  return (
-                    <g key={posKey}>
-                      <rect
-                        x={svgX - 20}
-                        y={svgY - 16}
-                        width="40"
-                        height="16"
-                        rx="8"
-                        fill="#333"
-                      />
+        {/* PAGE 2: Full-width Field View */}
+        <div className="page-2">
+          <div className="field-header">
+            <h2>{teamName || "Team"} Field Positions</h2>
+          </div>
+
+          <div className="field-wrapper">
+            <svg
+              viewBox="0 0 600 540"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ width: "100%", height: "100%" }}
+            >
+              <defs>
+                <pattern id="gs2" patternUnits="userSpaceOnUse" width="24" height="24">
+                  <rect width="24" height="12" fill="#2d6b3f" />
+                  <rect y="12" width="24" height="12" fill="#327344" />
+                </pattern>
+                <radialGradient id="dg2" cx="50%" cy="50%">
+                  <stop offset="0%" stopColor="#c4956a" />
+                  <stop offset="100%" stopColor="#a67c52" />
+                </radialGradient>
+                <radialGradient id="mg2" cx="50%" cy="40%">
+                  <stop offset="0%" stopColor="#d4a574" />
+                  <stop offset="100%" stopColor="#a67c52" />
+                </radialGradient>
+              </defs>
+
+              {/* Background */}
+              <rect width="600" height="540" fill="#1a472a" />
+              <ellipse cx="300" cy="340" rx="290" ry="270" fill="url(#gs2)" />
+
+              {/* Outfield wall */}
+              <path d="M 10,165 Q 300,-15 590,165" fill="none" stroke="#1a3a1a" strokeWidth="7" />
+              <path d="M 10,165 Q 300,-15 590,165" fill="none" stroke="#ffdd00" strokeWidth="2" strokeOpacity="0.5" />
+
+              {/* Foul territory */}
+              <polygon points="300,440 0,120 0,540 300,540" fill="#1a472a" fillOpacity="0.85" />
+              <polygon points="300,440 600,120 600,540 300,540" fill="#1a472a" fillOpacity="0.85" />
+
+              {/* Infield dirt diamond */}
+              <polygon points="300,235 415,340 300,450 185,340" fill="url(#dg2)" />
+              {/* Infield grass */}
+              <circle cx="300" cy="340" r="62" fill="#327344" />
+              <circle cx="300" cy="340" r="62" fill="url(#gs2)" fillOpacity="0.5" />
+
+              {/* Pitcher's mound */}
+              <circle cx="300" cy="325" r="14" fill="url(#mg2)" />
+              <rect x="294" y="323" width="12" height="3" rx="0.5" fill="white" />
+
+              {/* Base paths */}
+              <line x1="300" y1="235" x2="415" y2="340" stroke="white" strokeWidth="2" strokeOpacity="0.7" />
+              <line x1="415" y1="340" x2="300" y2="450" stroke="white" strokeWidth="2" strokeOpacity="0.7" />
+              <line x1="300" y1="450" x2="185" y2="340" stroke="white" strokeWidth="2" strokeOpacity="0.7" />
+              <line x1="185" y1="340" x2="300" y2="235" stroke="white" strokeWidth="2" strokeOpacity="0.7" />
+
+              {/* Foul lines */}
+              <line x1="300" y1="450" x2="10" y2="165" stroke="white" strokeWidth="2.5" strokeOpacity="0.8" />
+              <line x1="300" y1="450" x2="590" y2="165" stroke="white" strokeWidth="2.5" strokeOpacity="0.8" />
+
+              {/* Bases */}
+              <rect x="293" y="228" width="14" height="14" rx="1" transform="rotate(45 300 235)" fill="white" />
+              <rect x="408" y="333" width="14" height="14" rx="1" transform="rotate(45 415 340)" fill="white" />
+              <rect x="178" y="333" width="14" height="14" rx="1" transform="rotate(45 185 340)" fill="white" />
+
+              {/* Home plate */}
+              <polygon points="294,444 300,454 306,444 306,439 294,439" fill="white" />
+
+              {/* Player labels */}
+              {Object.entries(POSITION_COORDS).map(([posKey, coords]) => {
+                const starter = getStarterForPosition(depthChartEntries, posKey);
+                const svgX = (coords.x / 100) * 600;
+                const svgY = (coords.y / 100) * 540;
+                return (
+                  <g key={posKey}>
+                    {/* Position badge */}
+                    <rect
+                      x={svgX - 24}
+                      y={svgY - 20}
+                      width="48"
+                      height="20"
+                      rx="10"
+                      fill="#222"
+                    />
+                    <text
+                      x={svgX}
+                      y={svgY - 6}
+                      textAnchor="middle"
+                      fill="white"
+                      fontSize="13"
+                      fontWeight="900"
+                      fontFamily="Arial, sans-serif"
+                    >
+                      {posKey}
+                    </text>
+                    {/* Player name card */}
+                    {starter && (
+                      <>
+                        <rect
+                          x={svgX - 55}
+                          y={svgY + 4}
+                          width="110"
+                          height="22"
+                          rx="4"
+                          fill="white"
+                          stroke="#666"
+                          strokeWidth="1"
+                        />
+                        <text
+                          x={svgX}
+                          y={svgY + 19}
+                          textAnchor="middle"
+                          fill="#1a1a1a"
+                          fontSize="12"
+                          fontWeight="700"
+                          fontFamily="Arial, sans-serif"
+                        >
+                          {starter.player_name.length > 16
+                            ? starter.player_name.slice(0, 14) + "…"
+                            : starter.player_name}
+                        </text>
+                      </>
+                    )}
+                    {!starter && (
                       <text
                         x={svgX}
-                        y={svgY - 5}
+                        y={svgY + 15}
                         textAnchor="middle"
-                        fill="white"
-                        fontSize="10"
-                        fontWeight="800"
-                        fontFamily="sans-serif"
+                        fill="rgba(255,255,255,0.4)"
+                        fontSize="11"
+                        fontStyle="italic"
+                        fontFamily="Arial, sans-serif"
                       >
-                        {posKey}
+                        —
                       </text>
-                      {starter && (
-                        <>
-                          <rect
-                            x={svgX - 40}
-                            y={svgY + 2}
-                            width="80"
-                            height="16"
-                            rx="3"
-                            fill="white"
-                            stroke="#999"
-                            strokeWidth="0.5"
-                          />
-                          <text
-                            x={svgX}
-                            y={svgY + 13}
-                            textAnchor="middle"
-                            fill="#1a1a1a"
-                            fontSize="9"
-                            fontWeight="600"
-                            fontFamily="sans-serif"
-                          >
-                            {starter.player_name.length > 14
-                              ? starter.player_name.slice(0, 12) + "…"
-                              : starter.player_name}
-                          </text>
-                        </>
-                      )}
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
           </div>
 
           <div className="footer">
-            Generated on {today}
+            {teamName || "Team"} • Generated {today}
           </div>
         </div>
       </div>

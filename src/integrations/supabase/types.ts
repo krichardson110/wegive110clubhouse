@@ -80,6 +80,66 @@ export type Database = {
         }
         Relationships: []
       }
+      batting_lineups: {
+        Row: {
+          batting_order: number
+          created_at: string
+          id: string
+          inning_enter: number | null
+          is_substitute: boolean
+          notes: string | null
+          player_name: string
+          position: string
+          substitutes_for: number | null
+          team_id: string
+          team_member_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          batting_order: number
+          created_at?: string
+          id?: string
+          inning_enter?: number | null
+          is_substitute?: boolean
+          notes?: string | null
+          player_name: string
+          position: string
+          substitutes_for?: number | null
+          team_id: string
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batting_order?: number
+          created_at?: string
+          id?: string
+          inning_enter?: number | null
+          is_substitute?: boolean
+          notes?: string | null
+          player_name?: string
+          position?: string
+          substitutes_for?: number | null
+          team_id?: string
+          team_member_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batting_lineups_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batting_lineups_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chapters: {
         Row: {
           chapter_number: number

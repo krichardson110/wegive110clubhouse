@@ -16,6 +16,8 @@ import TeamPracticesContent from "@/components/teams/TeamPracticesContent";
 import Drive5Dashboard from "@/components/drive5/Drive5Dashboard";
 // import Revive5Dashboard from "@/components/revive5/Revive5Dashboard"; // Temporarily disabled
 import DepthChart from "@/components/teams/DepthChart";
+import BattingLineupManager from "@/components/teams/BattingLineupManager";
+import { useDepthChart } from "@/hooks/useDepthChart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,6 +28,7 @@ const TeamPage = () => {
   const { user } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
   const { members, isLoading: membersLoading, removeMember, refetch: refetchMembers } = useTeamMembers(teamId);
+  const { data: depthChartEntries = [] } = useDepthChart(teamId);
 
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [defaultRole, setDefaultRole] = useState<'player' | 'parent' | 'coach'>('player');
@@ -208,7 +211,16 @@ const TeamPage = () => {
               {/* Revive 5 content temporarily disabled */}
 
               <TabsContent value="depthchart">
-                <DepthChart teamId={teamId!} members={members} isCoach={isCoach} teamName={team?.name} />
+                <div className="space-y-6">
+                  <DepthChart teamId={teamId!} members={members} isCoach={isCoach} teamName={team?.name} />
+                  <BattingLineupManager
+                    teamId={teamId!}
+                    members={members}
+                    isCoach={isCoach}
+                    teamName={team?.name}
+                    depthChartEntries={depthChartEntries}
+                  />
+                </div>
               </TabsContent>
             </Tabs>
           </div>

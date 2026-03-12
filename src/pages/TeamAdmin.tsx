@@ -32,6 +32,8 @@ import CreatePostForm from "@/components/community/CreatePostForm";
 import PostsFeed from "@/components/community/PostsFeed";
 import Drive5Dashboard from "@/components/drive5/Drive5Dashboard";
 import DepthChart from "@/components/teams/DepthChart";
+import BattingLineupManager from "@/components/teams/BattingLineupManager";
+import { useDepthChart } from "@/hooks/useDepthChart";
 
 const TeamAdmin = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -39,6 +41,7 @@ const TeamAdmin = () => {
   const { user, loading: authLoading } = useAuth();
   const { team, isLoading: teamLoading, isCoach, isMember } = useTeam(teamId);
   const { members, isLoading: membersLoading, removeMember, editMemberPlayers, isEditingPlayers, refetch: refetchMembers } = useTeamMembers(teamId);
+  const { data: depthChartEntries = [] } = useDepthChart(teamId);
   const [activeTab, setActiveTab] = useState("feed");
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [defaultRole, setDefaultRole] = useState<'player' | 'parent' | 'coach'>('player');
@@ -212,7 +215,16 @@ const TeamAdmin = () => {
                 </TabsContent>
 
                 <TabsContent value="depthchart" className="mt-0">
-                  <DepthChart teamId={teamId!} members={members} isCoach={isCoach} teamName={team?.name} />
+                  <div className="space-y-6">
+                    <DepthChart teamId={teamId!} members={members} isCoach={isCoach} teamName={team?.name} />
+                    <BattingLineupManager
+                      teamId={teamId!}
+                      members={members}
+                      isCoach={isCoach}
+                      teamName={team?.name}
+                      depthChartEntries={depthChartEntries}
+                    />
+                  </div>
                 </TabsContent>
               </div>
             </Tabs>
