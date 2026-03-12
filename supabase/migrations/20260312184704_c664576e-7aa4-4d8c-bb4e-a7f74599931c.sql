@@ -1,0 +1,1 @@
+ALTER TABLE public.depth_chart ADD COLUMN player_number text DEFAULT NULL;

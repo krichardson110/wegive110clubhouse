@@ -29,6 +29,7 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
   const deleteEntry = useDeleteDepthChartEntry();
   const [addingPosition, setAddingPosition] = useState<string | null>(null);
   const [newPlayerName, setNewPlayerName] = useState("");
+  const [newPlayerNumber, setNewPlayerNumber] = useState("");
   const [newMemberId, setNewMemberId] = useState<string>("");
 
   const rosterPlayers = members
@@ -59,9 +60,11 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
       position: posKey,
       depth_order: nextOrder,
       player_name: newPlayerName.trim(),
+      player_number: newPlayerNumber.trim() || null,
       team_member_id: newMemberId || null,
     });
     setNewPlayerName("");
+    setNewPlayerNumber("");
     setNewMemberId("");
     setAddingPosition(null);
   };
@@ -72,6 +75,7 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
     const player = rosterPlayers.find((p) => p.memberId + "|" + p.name === value);
     if (player) {
       setNewPlayerName(player.name);
+      setNewPlayerNumber(player.number || "");
       setNewMemberId(player.memberId);
     }
   };
@@ -148,6 +152,11 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                           <span className="text-xs font-medium text-muted-foreground w-14">
                             {depthLabel(entry.depth_order)}
                           </span>
+                          {entry.player_number && (
+                            <Badge variant="secondary" className="text-xs font-bold min-w-[32px] justify-center">
+                              #{entry.player_number}
+                            </Badge>
+                          )}
                           <span className="flex-1 text-sm font-medium">{entry.player_name}</span>
                           {entry.notes && (
                             <span className="text-xs text-muted-foreground hidden sm:inline">{entry.notes}</span>
@@ -191,6 +200,12 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                             className="sm:flex-1"
                             onKeyDown={(e) => e.key === "Enter" && handleAdd(pos.key)}
                           />
+                          <Input
+                            placeholder="#"
+                            value={newPlayerNumber}
+                            onChange={(e) => setNewPlayerNumber(e.target.value)}
+                            className="w-16"
+                          />
                           <div className="flex gap-2">
                             <Button size="sm" onClick={() => handleAdd(pos.key)} disabled={!newPlayerName.trim()}>
                               <Save className="w-3.5 h-3.5 mr-1" />
@@ -202,6 +217,7 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                               onClick={() => {
                                 setAddingPosition(null);
                                 setNewPlayerName("");
+                                setNewPlayerNumber("");
                                 setNewMemberId("");
                               }}
                             >
