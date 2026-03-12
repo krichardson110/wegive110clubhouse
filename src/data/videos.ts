@@ -256,29 +256,4 @@ export const videoCategories: VideoCategory[] = [
       },
     ],
   },
-  {
-    id: "zoom",
-    name: "Team Meetings",
-    description: "Recorded coaching sessions and film study",
-    icon: Users,
-    color: "from-indigo-500/20 to-indigo-600/20 border-indigo-500/40",
-    videos: [
-      {
-        id: "z1",
-        title: "Elite Catcher Training Session",
-        description: "Advanced catching drills and techniques breakdown",
-        youtubeId: "gjOZJuQUciw",
-        duration: "22:00",
-        category: "zoom",
-      },
-      {
-        id: "z2",
-        title: "Pop Time & Transfer Drills",
-        description: "Professional catcher Kyle Schmidt shares receiving techniques",
-        youtubeId: "FSJyHemMBfY",
-        duration: "18:30",
-        category: "zoom",
-      },
-    ],
-  },
 ];
