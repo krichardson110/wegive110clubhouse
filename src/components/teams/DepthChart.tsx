@@ -29,6 +29,7 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
   const deleteEntry = useDeleteDepthChartEntry();
   const [addingPosition, setAddingPosition] = useState<string | null>(null);
   const [newPlayerName, setNewPlayerName] = useState("");
+  const [newPlayerNumber, setNewPlayerNumber] = useState("");
   const [newMemberId, setNewMemberId] = useState<string>("");
 
   const rosterPlayers = members
@@ -59,9 +60,11 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
       position: posKey,
       depth_order: nextOrder,
       player_name: newPlayerName.trim(),
+      player_number: newPlayerNumber.trim() || null,
       team_member_id: newMemberId || null,
     });
     setNewPlayerName("");
+    setNewPlayerNumber("");
     setNewMemberId("");
     setAddingPosition(null);
   };
