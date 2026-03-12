@@ -211,7 +211,7 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
               starters.map((entry) => (
                 <div
                   key={entry.id}
-                  className="grid grid-cols-[40px_60px_1fr] sm:grid-cols-[40px_60px_1fr_120px] gap-2 px-4 py-2.5 border-t border-border items-center"
+                  className="grid grid-cols-[40px_60px_1fr] sm:grid-cols-[40px_60px_1fr_auto] gap-2 px-4 py-2.5 border-t border-border items-center"
                 >
                   <span className="text-center font-bold text-lg text-foreground">{entry.batting_order}</span>
                   <Badge variant="outline" className="justify-center font-bold text-xs">
@@ -219,7 +219,31 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
                   </Badge>
                   <span className="font-medium text-sm truncate">{entry.player_name}</span>
                   {isCoach && (
-                    <div className="hidden sm:flex justify-end">
+                    <div className="hidden sm:flex items-center justify-end gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={entry.batting_order === 1 || swapOrder.isPending}
+                        onClick={() => {
+                          const idx = starters.findIndex((s) => s.id === entry.id);
+                          if (idx > 0) swapOrder.mutate({ entryA: entry, entryB: starters[idx - 1] });
+                        }}
+                      >
+                        <ChevronUp className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={entry.batting_order === starters.length || swapOrder.isPending}
+                        onClick={() => {
+                          const idx = starters.findIndex((s) => s.id === entry.id);
+                          if (idx < starters.length - 1) swapOrder.mutate({ entryA: entry, entryB: starters[idx + 1] });
+                        }}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
