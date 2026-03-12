@@ -210,7 +210,16 @@ const TeamPage = () => {
               {/* Revive 5 content temporarily disabled */}
 
               <TabsContent value="depthchart">
-                <DepthChart teamId={teamId!} members={members} isCoach={isCoach} teamName={team?.name} />
+                <div className="space-y-6">
+                  <DepthChart teamId={teamId!} members={members} isCoach={isCoach} teamName={team?.name} />
+                  <BattingLineupManager
+                    teamId={teamId!}
+                    members={members}
+                    isCoach={isCoach}
+                    teamName={team?.name}
+                    depthChartEntries={depthChartEntries}
+                  />
+                </div>
               </TabsContent>
             </Tabs>
           </div>
