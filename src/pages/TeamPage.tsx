@@ -16,6 +16,8 @@ import TeamPracticesContent from "@/components/teams/TeamPracticesContent";
 import Drive5Dashboard from "@/components/drive5/Drive5Dashboard";
 // import Revive5Dashboard from "@/components/revive5/Revive5Dashboard"; // Temporarily disabled
 import DepthChart from "@/components/teams/DepthChart";
+import BattingLineupManager from "@/components/teams/BattingLineupManager";
+import { useDepthChart } from "@/hooks/useDepthChart";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
