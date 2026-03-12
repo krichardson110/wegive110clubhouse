@@ -12,6 +12,11 @@ import {
   useClearBattingLineup,
   useSwapBattingOrder,
 } from "@/hooks/useBattingLineup";
+import { BASEBALL_POSITIONS } from "@/hooks/useDepthChart";
+import type { DepthChartEntry } from "@/hooks/useDepthChart";
+import type { TeamMember } from "@/types/team";
+import LineupPdfGenerator from "./LineupPdfGenerator";
+
 interface BattingLineupManagerProps {
   teamId: string;
   members: TeamMember[];
