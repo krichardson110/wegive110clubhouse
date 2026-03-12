@@ -45,8 +45,11 @@ const depthLabel = (order: number) => {
   return `#${order}`;
 };
 
-const BaseballFieldView = ({ entries }: BaseballFieldViewProps) => {
+const BaseballFieldView = ({ entries, rosterNumberLookup }: BaseballFieldViewProps) => {
   const [selectedPlayer, setSelectedPlayer] = useState<DepthChartEntry | null>(null);
+
+  const getNumber = (entry: DepthChartEntry) =>
+    rosterNumberLookup?.get(entry.player_name) || entry.player_number || null;
 
   const getEntriesForPosition = (posKey: string) =>
     entries.filter((e) => e.position === posKey).sort((a, b) => a.depth_order - b.depth_order);
