@@ -219,9 +219,9 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                             </>
                           ) : (
                             <>
-                              {entry.player_number && (
+                              {getPlayerNumber(entry) && (
                                 <Badge variant="secondary" className="text-xs font-bold min-w-[32px] justify-center">
-                                  #{entry.player_number}
+                                  #{getPlayerNumber(entry)}
                                 </Badge>
                               )}
                               <span className="flex-1 text-sm font-medium">{entry.player_name}</span>
