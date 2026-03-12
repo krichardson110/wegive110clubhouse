@@ -74,6 +74,26 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
 
   const handleDelete = (id: string) => deleteEntry.mutate(id);
 
+  const startEdit = (entry: DepthChartEntry) => {
+    setEditingEntry(entry.id);
+    setEditName(entry.player_name);
+    setEditNumber(entry.player_number || "");
+  };
+
+  const handleSaveEdit = (entry: DepthChartEntry) => {
+    if (!editName.trim()) return;
+    upsert.mutate({
+      id: entry.id,
+      team_id: entry.team_id,
+      position: entry.position,
+      depth_order: entry.depth_order,
+      player_name: editName.trim(),
+      player_number: editNumber.trim() || null,
+      team_member_id: entry.team_member_id,
+    });
+    setEditingEntry(null);
+  };
+
   const handleSelectRosterPlayer = (value: string) => {
     const player = rosterPlayers.find((p) => p.memberId + "|" + p.name === value);
     if (player) {
