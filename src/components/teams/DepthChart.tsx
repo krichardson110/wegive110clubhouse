@@ -152,6 +152,11 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                           <span className="text-xs font-medium text-muted-foreground w-14">
                             {depthLabel(entry.depth_order)}
                           </span>
+                          {entry.player_number && (
+                            <Badge variant="secondary" className="text-xs font-bold min-w-[32px] justify-center">
+                              #{entry.player_number}
+                            </Badge>
+                          )}
                           <span className="flex-1 text-sm font-medium">{entry.player_name}</span>
                           {entry.notes && (
                             <span className="text-xs text-muted-foreground hidden sm:inline">{entry.notes}</span>
