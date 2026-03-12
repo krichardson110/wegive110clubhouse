@@ -35,6 +35,7 @@ const POSITION_LABELS: Record<string, string> = {
   CF: "Center Field",
   RF: "Right Field",
   DH: "Designated Hitter",
+  EH: "Extra Hitter",
 };
 
 const depthLabel = (order: number) => {
