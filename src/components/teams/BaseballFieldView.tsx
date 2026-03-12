@@ -174,7 +174,7 @@ const BaseballFieldView = ({ entries, rosterNumberLookup }: BaseballFieldViewPro
                       }`}
                     >
                       <span className="truncate max-w-[70px] sm:max-w-[100px]">
-                        {entry.player_number ? `#${entry.player_number} ` : ""}{entry.player_name}
+                        {getNumber(entry) ? `#${getNumber(entry)} ` : ""}{entry.player_name}
                       </span>
                       <span className={`text-[9px] sm:text-[11px] ${
                         entry.depth_order === 1 ? "text-primary" : "text-muted-foreground/70"
