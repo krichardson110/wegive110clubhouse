@@ -93,13 +93,10 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <LayoutGrid className="w-5 h-5 text-primary" />
-            Depth Chart
-          </CardTitle>
-          <LineupPdfGenerator entries={entries} teamName={teamName} />
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <LayoutGrid className="w-5 h-5 text-primary" />
+          Depth Chart
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="field">
