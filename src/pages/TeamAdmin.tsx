@@ -212,7 +212,7 @@ const TeamAdmin = () => {
                 </TabsContent>
 
                 <TabsContent value="depthchart" className="mt-0">
-                  <DepthChart teamId={teamId!} members={members} isCoach={isCoach} />
+                  <DepthChart teamId={teamId!} members={members} isCoach={isCoach} teamName={team?.name} />
                 </TabsContent>
               </div>
             </Tabs>

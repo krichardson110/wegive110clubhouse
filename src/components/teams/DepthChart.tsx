@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Save, LayoutGrid, List } from "lucide-react";
+import LineupPdfGenerator from "./LineupPdfGenerator";
 import {
   useDepthChart,
   useUpsertDepthChart,
@@ -20,9 +21,10 @@ interface DepthChartProps {
   teamId: string;
   members: TeamMember[];
   isCoach: boolean;
+  teamName?: string;
 }
 
-const DepthChart = ({ teamId, members, isCoach }: DepthChartProps) => {
+const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => {
   const { data: entries = [], isLoading } = useDepthChart(teamId);
   const upsert = useUpsertDepthChart();
   const deleteEntry = useDeleteDepthChartEntry();
@@ -92,10 +94,13 @@ const DepthChart = ({ teamId, members, isCoach }: DepthChartProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <LayoutGrid className="w-5 h-5 text-primary" />
-          Depth Chart
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <LayoutGrid className="w-5 h-5 text-primary" />
+            Depth Chart
+          </CardTitle>
+          <LineupPdfGenerator entries={entries} teamName={teamName} />
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="field">
