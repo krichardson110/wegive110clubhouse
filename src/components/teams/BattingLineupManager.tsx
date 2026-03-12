@@ -30,6 +30,7 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
   const upsert = useUpsertBattingLineup();
   const deleteEntry = useDeleteBattingLineup();
   const clearLineup = useClearBattingLineup();
+  const swapOrder = useSwapBattingOrder();
 
   const [addingStarter, setAddingStarter] = useState(false);
   const [addingSub, setAddingSub] = useState(false);
