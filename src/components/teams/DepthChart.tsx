@@ -21,6 +21,7 @@ interface DepthChartProps {
   teamId: string;
   members: TeamMember[];
   isCoach: boolean;
+  teamName?: string;
 }
 
 const DepthChart = ({ teamId, members, isCoach }: DepthChartProps) => {
