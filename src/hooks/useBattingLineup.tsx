@@ -105,6 +105,30 @@ export const useDeleteBattingLineup = () => {
   });
 };
 
+export const useSwapBattingOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ entryA, entryB }: { entryA: { id: string; batting_order: number }; entryB: { id: string; batting_order: number } }) => {
+      const { error: err1 } = await supabase
+        .from("batting_lineups")
+        .update({ batting_order: entryB.batting_order })
+        .eq("id", entryA.id);
+      if (err1) throw err1;
+      const { error: err2 } = await supabase
+        .from("batting_lineups")
+        .update({ batting_order: entryA.batting_order })
+        .eq("id", entryB.id);
+      if (err2) throw err2;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["batting-lineup"] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to reorder lineup");
+    },
+  });
+};
+
 export const useClearBattingLineup = () => {
   const queryClient = useQueryClient();
   return useMutation({

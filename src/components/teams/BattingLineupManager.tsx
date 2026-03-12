@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Save, ListOrdered, ArrowRightLeft, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Save, ListOrdered, ArrowRightLeft, RotateCcw, ChevronUp, ChevronDown } from "lucide-react";
 import {
   useBattingLineup,
   useUpsertBattingLineup,
   useDeleteBattingLineup,
   useClearBattingLineup,
+  useSwapBattingOrder,
 } from "@/hooks/useBattingLineup";
 import { BASEBALL_POSITIONS } from "@/hooks/useDepthChart";
 import type { DepthChartEntry } from "@/hooks/useDepthChart";
@@ -29,6 +30,7 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
   const upsert = useUpsertBattingLineup();
   const deleteEntry = useDeleteBattingLineup();
   const clearLineup = useClearBattingLineup();
+  const swapOrder = useSwapBattingOrder();
 
   const [addingStarter, setAddingStarter] = useState(false);
   const [addingSub, setAddingSub] = useState(false);
@@ -209,7 +211,7 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
               starters.map((entry) => (
                 <div
                   key={entry.id}
-                  className="grid grid-cols-[40px_60px_1fr] sm:grid-cols-[40px_60px_1fr_120px] gap-2 px-4 py-2.5 border-t border-border items-center"
+                  className="grid grid-cols-[40px_60px_1fr] sm:grid-cols-[40px_60px_1fr_auto] gap-2 px-4 py-2.5 border-t border-border items-center"
                 >
                   <span className="text-center font-bold text-lg text-foreground">{entry.batting_order}</span>
                   <Badge variant="outline" className="justify-center font-bold text-xs">
@@ -217,7 +219,31 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
                   </Badge>
                   <span className="font-medium text-sm truncate">{entry.player_name}</span>
                   {isCoach && (
-                    <div className="hidden sm:flex justify-end">
+                    <div className="hidden sm:flex items-center justify-end gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={entry.batting_order === 1 || swapOrder.isPending}
+                        onClick={() => {
+                          const idx = starters.findIndex((s) => s.id === entry.id);
+                          if (idx > 0) swapOrder.mutate({ entryA: entry, entryB: starters[idx - 1] });
+                        }}
+                      >
+                        <ChevronUp className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={entry.batting_order === starters.length || swapOrder.isPending}
+                        onClick={() => {
+                          const idx = starters.findIndex((s) => s.id === entry.id);
+                          if (idx < starters.length - 1) swapOrder.mutate({ entryA: entry, entryB: starters[idx + 1] });
+                        }}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
