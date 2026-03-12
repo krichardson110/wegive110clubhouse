@@ -59,6 +59,12 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
       return [];
     });
 
+  // Build a lookup: player name -> uniform number from roster
+  const uniformNumberLookup = new Map<string, string>();
+  rosterPlayers.forEach((p) => {
+    if (p.number) uniformNumberLookup.set(p.name, p.number);
+  });
+
   const handleSelectPlayer = (value: string) => {
     const player = rosterPlayers.find((p) => p.memberId + "|" + p.name === value);
     if (player) {
@@ -213,7 +219,7 @@ const BattingLineupManager = ({ teamId, members, isCoach, teamName, depthChartEn
                   key={entry.id}
                   className="grid grid-cols-[40px_60px_1fr] sm:grid-cols-[40px_60px_1fr_auto] gap-2 px-4 py-2.5 border-t border-border items-center"
                 >
-                  <span className="text-center font-bold text-lg text-foreground">{entry.batting_order}</span>
+                  <span className="text-center font-bold text-lg text-foreground">{uniformNumberLookup.get(entry.player_name) || "—"}</span>
                   <Badge variant="outline" className="justify-center font-bold text-xs">
                     {entry.position}
                   </Badge>
