@@ -151,7 +151,7 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
           </TabsList>
 
           <TabsContent value="field" className="mt-0">
-            <BaseballFieldView entries={entries} />
+            <BaseballFieldView entries={entries} rosterNumberLookup={rosterNumberLookup} />
           </TabsContent>
 
           {isCoach && (
