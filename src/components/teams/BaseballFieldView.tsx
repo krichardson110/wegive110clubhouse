@@ -20,7 +20,8 @@ const POSITION_COORDS: Record<string, { x: number; y: number }> = {
   LF: { x: 24, y: 34 },
   CF: { x: 50, y: 20 },
   RF: { x: 76, y: 34 },
-  DH: { x: 84, y: 90 },
+  DH: { x: 84, y: 86 },
+  EH: { x: 84, y: 96 },
 };
 
 const POSITION_LABELS: Record<string, string> = {
