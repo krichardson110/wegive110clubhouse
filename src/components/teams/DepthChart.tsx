@@ -175,23 +175,69 @@ const DepthChart = ({ teamId, members, isCoach, teamName }: DepthChartProps) => 
                           <span className="text-xs font-medium text-muted-foreground w-14">
                             {depthLabel(entry.depth_order)}
                           </span>
-                          {entry.player_number && (
-                            <Badge variant="secondary" className="text-xs font-bold min-w-[32px] justify-center">
-                              #{entry.player_number}
-                            </Badge>
+                          {editingEntry === entry.id ? (
+                            <>
+                              <Input
+                                value={editNumber}
+                                onChange={(e) => setEditNumber(e.target.value)}
+                                placeholder="#"
+                                className="w-16 h-8 text-xs"
+                              />
+                              <Input
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                placeholder="Player name"
+                                className="flex-1 h-8 text-sm"
+                                onKeyDown={(e) => e.key === "Enter" && handleSaveEdit(entry)}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-primary"
+                                onClick={() => handleSaveEdit(entry)}
+                              >
+                                <Save className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => setEditingEntry(null)}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              {entry.player_number && (
+                                <Badge variant="secondary" className="text-xs font-bold min-w-[32px] justify-center">
+                                  #{entry.player_number}
+                                </Badge>
+                              )}
+                              <span className="flex-1 text-sm font-medium">{entry.player_name}</span>
+                              {entry.notes && (
+                                <span className="text-xs text-muted-foreground hidden sm:inline">{entry.notes}</span>
+                              )}
+                              {isCoach && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() => startEdit(entry)}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive/70 hover:text-destructive"
+                                onClick={() => handleDelete(entry.id)}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
                           )}
-                          <span className="flex-1 text-sm font-medium">{entry.player_name}</span>
-                          {entry.notes && (
-                            <span className="text-xs text-muted-foreground hidden sm:inline">{entry.notes}</span>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive/70 hover:text-destructive"
-                            onClick={() => handleDelete(entry.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
                         </div>
                       ))}
 
